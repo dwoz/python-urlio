@@ -1,6 +1,7 @@
 """
 Methods and Classes related to configuration
 """
+import ConfigParser
 
 __all__ = [
     'load_config',

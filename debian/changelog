@@ -1,3 +1,9 @@
+python-traxcommon (0.0.10) stable-dev; urgency=low
+
+  * Fix missing name exception in config parser
+
+ -- Trax DevOps <devops@traxtech.com>  Fri, 01 Aug 2014 02:00:01 -0700
+
 python-traxcommon (0.0.8) stable-dev; urgency=low
 
   * Version bump to test index updates
