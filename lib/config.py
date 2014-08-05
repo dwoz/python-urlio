@@ -20,7 +20,7 @@ def load_config(config_file):
             config.update(parse_config(fp, 'credentials'))
     return config
 
-def parse_config(fp, section='general'):
+def parse_config(fp, default_section='general'):
     """
     Load values from a configuration file into a dictionary. Items in
     the 'general' section of the config file will be placed as key,
@@ -33,7 +33,7 @@ def parse_config(fp, section='general'):
     config = {}
     for section in parser.sections():
         for k, v in parser.items(section):
-            if section == 'general':
+            if section == default_section:
                 config[k] = v
                 continue
             if section not in config:
