@@ -1,3 +1,9 @@
+python-traxcommon (0.1.0) stable-dev; urgency=low
+
+  * Adding path class
+
+ -- Trax DevOps <devops@traxtech.com>  Tue, 26 Aug 2014 09:27:01 -0700
+
 python-traxcommon (0.0.11) stable-dev; urgency=low
 
   * Config parser accepts default section
