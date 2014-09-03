@@ -1,3 +1,10 @@
+python-traxcommon (0.1.5) stable-dev; urgency=low
+
+  * Fix dfs cache load method
+  * Normalize both bytestrings and unicode strings
+
+ -- Trax DevOps <devops@traxtech.com>  Wed, 03 Sept 2014 00:47:01 -0700
+
 python-traxcommon (0.1.4) stable-dev; urgency=low
 
   * Add missing 'symbols' module

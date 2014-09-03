@@ -17,15 +17,15 @@ log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter'
 DFS_REF_API = "http://dfs-reference-dev.s03.filex.com/cache/"
-SMB_USER = 'Traxtech.service'
-SMB_PASS = None
+SMB_USER = os.environ.get('SMBUSER', None)
+SMB_PASS = os.environ.get('SMBPASS', None)
 
 DFSCACHE = {}
 
 def load_cache(path='/tmp/dfscache'):
     if os.path.exists(path):
         with open(path, 'r') as f:
-            DFSCACHE = json.loads(f.read())
+            DFSCACHE.update(json.loads(f.read()))
 
 
 class FindDfsShare(Exception):
@@ -191,13 +191,15 @@ def Path(path, mode='r'):
     return LocalPath(path, mode)
 
 
+def lower(s):
+    return s.lower()
+
 class BasePath(object):
     """
     Base class for path types to inherit from
     """
     _path_delim = '/'
-    _normalize_path = staticmethod(normalize_path)
-    _normalize_path = staticmethod(str.lower)
+    _normalize_path = staticmethod(lower)
 
     def _set_path(self, path):
         self._original_path = path
