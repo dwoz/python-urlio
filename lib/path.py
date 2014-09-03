@@ -9,7 +9,6 @@ import smb
 import multiprocessing
 from threading import Lock
 from smb.SMBConnection import SMBConnection
-import pytds
 import logging
 import repoze.lru
 from traxcommon.symbols import ONLINE
