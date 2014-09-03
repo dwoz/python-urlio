@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 python-traxcommon (0.1.6) stable-dev; urgency=low
 
   * Version bump for ci
@@ -97,7 +95,10 @@ python-traxcommon (0.0.2) stable-dev; urgency=low
 
  -- Trax DevOps <devops@traxtech.com>  Wed, 01 Aug 2014 08:39:01 -0700
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> 825dc93443bc54056379ba5c701276c08512d507
 python-traxcommon (0.0.1) unstable; urgency=low
 
   * Initial package
