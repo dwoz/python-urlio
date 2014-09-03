@@ -22,7 +22,10 @@ SMB_PASS = os.environ.get('SMBPASS', None)
 
 DFSCACHE = {}
 
-def load_cache(path='/tmp/dfscache'):
+def load_cache(path='/tmp/dfscache', fetch=True):
+    if not os.path.exists(path):
+        if fetch:
+            fetch_dfs_cache(path)
     if os.path.exists(path):
         with open(path, 'r') as f:
             DFSCACHE.update(json.loads(f.read()))
