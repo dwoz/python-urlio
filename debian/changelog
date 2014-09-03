@@ -1,3 +1,9 @@
+python-traxcommon (0.1.7) stable; urgency=low
+
+  * Update to stable index
+
+ -- Trax DevOps <devops@traxtech.com>  Wed, 03 Sept 2014 11:26:01 -0700
+
 python-traxcommon (0.1.6) stable-dev; urgency=low
 
   * Version bump for ci
