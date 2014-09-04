@@ -96,11 +96,11 @@ def default_find_dfs_share(uri, **opts):
         hostname = parts[2].split('.', 1)[0]
         domain = parts[2].split('.', 1)[1]
         service = parts[3]
-        dfspath = '/'.join(parts[4:])
+        dfspath = '\\'.join(parts[4:])
         log.debug("Using parts from uri %s %s %s %s",
             hostname, service, domain, dfspath
         )
-        return hostname, service, domain, '/' + dfspath
+        return hostname, service, domain, '\\' + dfspath
     domain, _ = split_host_path(uri)
     domain_cache = DFSCACHE['\\\\{0}'.format(domain)]
     assert domain_cache
@@ -144,14 +144,14 @@ class WriteLock(object):
 
     def acquire(self, server, share, path):
         key = (server, share, path)
-        log.debug('acquire: %s', key)
+        log.debug('write-lock acquire: %s', key)
         if key not in self.locks:
             self.locks[key] = multiprocessing.Lock()
         self.locks[key].acquire()
 
     def release(self, server, share, path):
         key = (server, share, path)
-        log.debug('release: %s', key)
+        log.debug('write-lock release: %s', key)
         if key not in self.locks:
             self.locks[key] = multiprocessing.Lock()
         self.locks[key].release()
