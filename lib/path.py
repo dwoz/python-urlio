@@ -303,6 +303,9 @@ class LocalPath(BasePath):
     def readline(self):
         return self.fp.readline()
 
+    def readlines(self):
+        return self.fp.readlines()
+
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
@@ -319,6 +322,7 @@ def get_smb_connection(
     conn = SMBConnection(user, pas, client, server, domain=domain)
     conn.connect(server_ip, 139, timeout=30)
     return conn
+
 
 def smb_dirname(inpath):
     host = None
@@ -555,3 +559,9 @@ class SMBPath(BasePath):
         line = chunk[:chunk.find('\n') + 1]
         self.seek(start_pos + len(line))
         return line
+
+    def readlines(self):
+        line = self.readline()
+        while line:
+            yield line
+            line = self.readline()
