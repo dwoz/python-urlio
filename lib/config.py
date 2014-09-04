@@ -2,10 +2,15 @@
 Methods and Classes related to configuration
 """
 import ConfigParser
+import logging
+import os
 
 __all__ = [
     'load_config',
 ]
+
+log = logging.getLogger(__name__)
+
 
 def load_config(config_file):
     """
@@ -13,11 +18,18 @@ def load_config(config_file):
     addition, if the conifg file has an option 'credentials_file' in the
     'general' section, the file will be loaded and parsed.
     """
+    config = {}
+    if not os.path.exists(config_file):
+        log.warn("Log file does not exists: %s", config_file)
+        return config
     with open(config_file) as fp:
         config = parse_config(fp)
     if 'credentials_file' in config:
-        with open(config['credentials_file']) as fp:
-            config.update(parse_config(fp, 'credentials'))
+        if os.path.exists(config['credentials_file']):
+            with open(config['credentials_file']) as fp:
+                config.update(parse_config(fp, 'credentials'))
+        else:
+            log.warn("Log file does not exists: %s", config['credentials_file'])
     return config
 
 def parse_config(fp, default_section='general'):
