@@ -1,3 +1,13 @@
+python-traxcommon (0.1.9~1409848817) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #39. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * add readlines method to path objects
+
+ -- Jenkins <devops@traxtech.com>  Thu, 04 Sep 2014 16:40:51 +0000
+
 python-traxcommon (0.1.5) stable-dev; urgency=low
 
   * Fix dfs cache load method
