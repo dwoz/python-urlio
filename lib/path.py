@@ -108,9 +108,7 @@ def default_find_dfs_share(uri, **opts):
     domain, _ = split_host_path(uri)
     domain_cache = DFSCACHE['\\\\{0}'.format(domain)]
     assert domain_cache
-    print uri, domain_cache.keys()
     result = find_target_in_cache(uri, domain_cache)
-    print result
     if not result:
         log.error("No domain cache found")
     path, tgt = result
@@ -343,7 +341,10 @@ def smb_dirname(inpath):
         path = inpath
     if inpath.endswith('\\'):
         path = inpath.rstrip('\\')
-    dirname = path.rsplit('\\', 1)[0]
+    if not '\\' in path:
+        dirname = '.'
+    else:
+        dirname = path.rsplit('\\', 1)[0]
     if host:
         return '\\\\' + host + '\\' + (dirname or '\\')
     return dirname or '\\'
