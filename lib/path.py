@@ -34,6 +34,32 @@ class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
 
 
+def depth_first_resources(domain_cache):
+    resources = []
+    for ns in domain_cache:
+        for resource in domain_cache[ns]:
+            resources.append(
+                (
+                    "{0}\\{1}".format(ns.rstrip('\\'), resource.lstrip('\\')),
+                    domain_cache[ns][resource]
+                )
+            )
+    resources.sort(by_depth, reverse=True)
+    return resources
+
+
+def find_target_in_cache(uri, cache):
+    uri = uri.lower()
+    for path, conf in depth_first_resources(cache):
+        path = path.lower().rstrip('\\')
+        if uri.startswith(path + '\\') or path == uri:
+            log.error('path=%s uri=%s', path, uri)
+            for tgt in conf['targets']:
+                if tgt['state'] == ONLINE:
+                    if path.rstrip('\\') == uri:
+                        return path.rstrip('\\'), tgt
+                    return path, tgt
+
 def fetch_dfs_cache(path, uri=None):
     uri = uri or DFS_REF_API
     r = requests.get(uri, stream=True)
@@ -55,14 +81,6 @@ def split_host_path(s):
     return s.lstrip('\\').split('\\', 1)
 
 
-def find_target_in_cache(uri, cache):
-    for path, conf in depth_first_resources(cache):
-        if uri.lower().startswith(path.lower() + '\\'):
-            for tgt in conf['targets']:
-                if tgt['state'] == ONLINE:
-                    return path, tgt
-
-
 def by_depth(x, y):
     nx = len(x[0].split('\\'))
     ny = len(y[0].split('\\'))
@@ -72,20 +90,6 @@ def by_depth(x, y):
         return 0
     else:
         return 1
-
-
-def depth_first_resources(domain_cache):
-    resources = []
-    for ns in domain_cache:
-        for resource in domain_cache[ns]:
-            resources.append(
-                (
-                    "{0}\\{1}".format(ns, resource),
-                    domain_cache[ns][resource]
-                )
-            )
-    resources.sort(by_depth, reverse=True)
-    return resources
 
 
 @repoze.lru.lru_cache(500)
@@ -104,7 +108,9 @@ def default_find_dfs_share(uri, **opts):
     domain, _ = split_host_path(uri)
     domain_cache = DFSCACHE['\\\\{0}'.format(domain)]
     assert domain_cache
+    print uri, domain_cache.keys()
     result = find_target_in_cache(uri, domain_cache)
+    print result
     if not result:
         log.error("No domain cache found")
     path, tgt = result
