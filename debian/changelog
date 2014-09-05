@@ -1,3 +1,13 @@
+python-traxcommon (0.1.9~1409960468) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #43. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Fix dirname wart and add regression test for it
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:41:25 +0000
+
 python-traxcommon (0.1.9~1409958649) stable-dev; urgency=low
 
   [ Jenkins ]
