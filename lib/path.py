@@ -411,6 +411,8 @@ class SMBPath(BasePath):
         conn = self.get_connection()
         rel_dirname = smb_dirname(relpath).lower()
         rel_basename = smb_basename(relpath).lower()
+        if rel_dirname == '.':
+            rel_dirname = ''
         self.WRITELOCK.acquire(self.server_name, self.share, relpath)
         try:
             paths = conn.listPath(
