@@ -1,3 +1,13 @@
+python-traxcommon (0.1.9~1409958649) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #41. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Fix warts that were already fixed in dfs-reference
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:11:15 +0000
+
 python-traxcommon (0.1.9~1409848817) stable-dev; urgency=low
 
   [ Jenkins ]
