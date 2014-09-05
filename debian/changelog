@@ -1,3 +1,15 @@
+python-traxcommon (0.1.9~1409960998) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #45. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * SMBConnection.listPath cant handle .
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:50:14 +0000
+
 python-traxcommon (0.1.9~1409960468) stable-dev; urgency=low
 
   [ Jenkins ]
