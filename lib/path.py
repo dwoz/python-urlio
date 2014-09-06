@@ -270,7 +270,7 @@ class LocalPath(BasePath):
     def exists(self):
         return os.path.exists(self.path)
 
-    def ls(self, glb):
+    def ls(self, glb='*'):
         for a in glob.glob(os.path.join(self.path, glb)):
             yield a
 
