@@ -485,7 +485,7 @@ class SMBPath(BasePath):
     def files(self, glob='*'):
         for a in self.ls(glob):
             if not a.isDirectory:
-                yield "{0}\\{1}".format(self.orig_path, a.filename)
+                yield self.join(self.orig_path, a.filename)
 
     def close(self):
         pass
@@ -552,7 +552,10 @@ class SMBPath(BasePath):
 
     @staticmethod
     def join(dirname, basename):
-        return "{0}\\{1}".format(dirname, basename)
+        return "{0}\\{1}".format(
+            dirname.rstrip('\\'),
+            basename.lstrip('\\')
+        )
 
     def readline(self):
         size = 1024
