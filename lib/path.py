@@ -34,6 +34,35 @@ class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
 
 
+def depth_first_resources(domain_cache):
+    resources = []
+    for ns in domain_cache:
+        for resource in domain_cache[ns]:
+            path = "{0}\\{1}".format(
+                ns.rstrip('\\'), resource.lstrip('\\')
+            ).rstrip('\\')
+            resources.append(
+                (
+                    path,
+                    domain_cache[ns][resource]
+                )
+            )
+    resources.sort(by_depth, reverse=True)
+    return resources
+
+
+def find_target_in_cache(uri, cache):
+    uri = uri.lower()
+    for path, conf in depth_first_resources(cache):
+        path = path.lower().rstrip('\\')
+        if uri.startswith(path + '\\') or path == uri:
+            for tgt in conf['targets']:
+                if tgt['state'] == ONLINE:
+                    if path.rstrip('\\') == uri:
+                        return path.rstrip('\\'), tgt
+                    return path, tgt
+
+
 def fetch_dfs_cache(path, uri=None):
     uri = uri or DFS_REF_API
     r = requests.get(uri, stream=True)
@@ -55,14 +84,6 @@ def split_host_path(s):
     return s.lstrip('\\').split('\\', 1)
 
 
-def find_target_in_cache(uri, cache):
-    for path, conf in depth_first_resources(cache):
-        if uri.lower().startswith(path.lower() + '\\'):
-            for tgt in conf['targets']:
-                if tgt['state'] == ONLINE:
-                    return path, tgt
-
-
 def by_depth(x, y):
     nx = len(x[0].split('\\'))
     ny = len(y[0].split('\\'))
@@ -72,20 +93,6 @@ def by_depth(x, y):
         return 0
     else:
         return 1
-
-
-def depth_first_resources(domain_cache):
-    resources = []
-    for ns in domain_cache:
-        for resource in domain_cache[ns]:
-            resources.append(
-                (
-                    "{0}\\{1}".format(ns, resource),
-                    domain_cache[ns][resource]
-                )
-            )
-    resources.sort(by_depth, reverse=True)
-    return resources
 
 
 @repoze.lru.lru_cache(500)
@@ -266,7 +273,7 @@ class LocalPath(BasePath):
     def exists(self):
         return os.path.exists(self.path)
 
-    def ls(self, glb):
+    def ls(self, glb='*'):
         for a in glob.glob(os.path.join(self.path, glb)):
             yield a
 
@@ -303,6 +310,9 @@ class LocalPath(BasePath):
     def readline(self):
         return self.fp.readline()
 
+    def readlines(self):
+        return self.fp.readlines()
+
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
@@ -320,6 +330,7 @@ def get_smb_connection(
     conn.connect(server_ip, 139, timeout=30)
     return conn
 
+
 def smb_dirname(inpath):
     host = None
     if inpath.startswith('\\\\'):
@@ -333,7 +344,10 @@ def smb_dirname(inpath):
         path = inpath
     if inpath.endswith('\\'):
         path = inpath.rstrip('\\')
-    dirname = path.rsplit('\\', 1)[0]
+    if not '\\' in path:
+        dirname = '.'
+    else:
+        dirname = path.rsplit('\\', 1)[0]
     if host:
         return '\\\\' + host + '\\' + (dirname or '\\')
     return dirname or '\\'
@@ -400,6 +414,8 @@ class SMBPath(BasePath):
         conn = self.get_connection()
         rel_dirname = smb_dirname(relpath).lower()
         rel_basename = smb_basename(relpath).lower()
+        if rel_dirname == '.':
+            rel_dirname = ''
         self.WRITELOCK.acquire(self.server_name, self.share, relpath)
         try:
             paths = conn.listPath(
@@ -472,7 +488,7 @@ class SMBPath(BasePath):
     def files(self, glob='*'):
         for a in self.ls(glob):
             if not a.isDirectory:
-                yield "{0}\\{1}".format(self.orig_path, a.filename)
+                yield self.join(self.orig_path, a.filename)
 
     def close(self):
         pass
@@ -539,7 +555,10 @@ class SMBPath(BasePath):
 
     @staticmethod
     def join(dirname, basename):
-        return "{0}\\{1}".format(dirname, basename)
+        return "{0}\\{1}".format(
+            dirname.rstrip('\\'),
+            basename.lstrip('\\')
+        )
 
     def readline(self):
         size = 1024
@@ -555,3 +574,9 @@ class SMBPath(BasePath):
         line = chunk[:chunk.find('\n') + 1]
         self.seek(start_pos + len(line))
         return line
+
+    def readlines(self):
+        line = self.readline()
+        while line:
+            yield line
+            line = self.readline()

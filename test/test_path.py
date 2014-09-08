@@ -1,6 +1,6 @@
 import os
 from traxcommon import path
-from traxcommon.path import Path, SMBPath, LocalPath
+from traxcommon.path import Path, SMBPath, LocalPath, smb_dirname
 
 if 'SMBUSER' in os.environ:
     path.SMB_USER = os.environ['SMBUSER']
@@ -83,26 +83,21 @@ def test_localpath_basename1():
 
 
 def test_smbpath_dirname1():
-    print SMBPath(
+    assert smb_dirname(
         '\\\\filex.com\\foo\\bar',
-        find_dfs_share=find_dfs_share
-    ).dirname
-    assert SMBPath(
-        '\\\\filex.com\\foo\\bar',
-        find_dfs_share=find_dfs_share
-    ).dirname == '\\\\filex.com\\foo'
-    assert SMBPath(
+    ) == '\\\\filex.com\\foo'
+    assert smb_dirname(
         '\\foo\\bar',
-        find_dfs_share=find_dfs_share
-    ).dirname == '\\foo'
-    assert SMBPath(
+    ) == '\\foo', '\\foo\\bar, {}'.format(smb_dirname('\\foo\\bar'))
+    assert smb_dirname(
         '\\foo\\',
-        find_dfs_share=find_dfs_share
-    ).dirname == '\\'
-    assert SMBPath(
+    ) == '\\', '\\foo\\, {}'.format(smb_dirname('\\foo\\'))
+    assert smb_dirname(
         '\\foo',
-        find_dfs_share=find_dfs_share
-    ).dirname == '\\'
+    ) == '\\', '\\foo, {}'.format(smb_dirname('\\foo'))
+    assert smb_dirname(
+        'wk_group.mdb'
+    ) == '.', 'workgroup.mdb, {}'.format(smb_dir('wk_group.mdb'))
 
 
 def test_smbpath_basename1():
