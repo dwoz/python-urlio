@@ -38,9 +38,12 @@ def depth_first_resources(domain_cache):
     resources = []
     for ns in domain_cache:
         for resource in domain_cache[ns]:
+            path = "{0}\\{1}".format(
+                ns.rstrip('\\'), resource.lstrip('\\')
+            ).rstrip('\\')
             resources.append(
                 (
-                    "{0}\\{1}".format(ns.rstrip('\\'), resource.lstrip('\\')),
+                    path,
                     domain_cache[ns][resource]
                 )
             )
@@ -53,12 +56,12 @@ def find_target_in_cache(uri, cache):
     for path, conf in depth_first_resources(cache):
         path = path.lower().rstrip('\\')
         if uri.startswith(path + '\\') or path == uri:
-            log.error('path=%s uri=%s', path, uri)
             for tgt in conf['targets']:
                 if tgt['state'] == ONLINE:
                     if path.rstrip('\\') == uri:
                         return path.rstrip('\\'), tgt
                     return path, tgt
+
 
 def fetch_dfs_cache(path, uri=None):
     uri = uri or DFS_REF_API
