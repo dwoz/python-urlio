@@ -1,3 +1,45 @@
+python-traxcommon (0.1.9~1409960998) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #45. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * SMBConnection.listPath cant handle .
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:50:14 +0000
+
+python-traxcommon (0.1.9~1409960468) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #43. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Fix dirname wart and add regression test for it
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:41:25 +0000
+
+python-traxcommon (0.1.9~1409958649) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #41. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Fix warts that were already fixed in dfs-reference
+
+ -- Jenkins <devops@traxtech.com>  Fri, 05 Sep 2014 23:11:15 +0000
+
+python-traxcommon (0.1.9~1409848817) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #39. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * add readlines method to path objects
+
+ -- Jenkins <devops@traxtech.com>  Thu, 04 Sep 2014 16:40:51 +0000
+
 python-traxcommon (0.1.7) stable; urgency=low
 
   * Update to stable index
