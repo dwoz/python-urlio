@@ -1,3 +1,20 @@
+python-traxcommon (0.1.9) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #10. Started by GitHub push by rekibnikufesin.
+
+  [ Daniel Wozniak ]
+  * More informative logging
+  * LocalPath ls works the same as SMBPath ls
+  * Do not add extra slashes in smb join
+  * Return root shares last
+  * Merge branch develop
+
+  [ Will Button ]
+  * Merge pull request #3 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Mon, 08 Sep 2014 15:50:11 +0000
+
 python-traxcommon (0.1.9~1409960998) stable-dev; urgency=low
 
   [ Jenkins ]
