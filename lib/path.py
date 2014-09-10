@@ -109,8 +109,15 @@ def default_find_dfs_share(uri, **opts):
         )
         return hostname, service, domain, '\\' + dfspath
     domain, _ = split_host_path(uri)
-    domain_cache = DFSCACHE['\\\\{0}'.format(domain)]
-    assert domain_cache
+    if not DFSCACHE:
+        load_cache()
+        log.warn("No dfs cache present")
+    slashed_domain = '\\\\{0}'.format(domain)
+    if slashed_domain in DFSCACHE:
+        domain_cache = DFSCACHE[slashed_domain]
+    else:
+        errmsg = "Domain not in cache: {}".format(domain)
+        raise FindDfsShare(errmsg)
     result = find_target_in_cache(uri, domain_cache)
     if not result:
         log.error("No domain cache found")
