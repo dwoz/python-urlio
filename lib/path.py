@@ -22,13 +22,16 @@ SMB_PASS = os.environ.get('SMBPASS', None)
 DFSCACHE = {}
 
 def load_cache(path='/tmp/dfscache', fetch=True):
+    log.warn("load_cache is depricated... user load_dfs_cache instead")
+    load_dfs_cache(path, fetch)
+
+def load_dfs_cache(path='/tmp/dfscache', fetch=True):
     if not os.path.exists(path):
         if fetch:
             fetch_dfs_cache(path)
     if os.path.exists(path):
         with open(path, 'r') as f:
             DFSCACHE.update(json.loads(f.read()))
-
 
 class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
@@ -97,6 +100,7 @@ def by_depth(x, y):
 
 @repoze.lru.lru_cache(500)
 def default_find_dfs_share(uri, **opts):
+    log.debug("find dfs share: %s", uri)
     uri = uri.lower()
     parts = uri.split('\\')
     if len(parts[2].split('.')) > 2:
@@ -109,8 +113,15 @@ def default_find_dfs_share(uri, **opts):
         )
         return hostname, service, domain, '\\' + dfspath
     domain, _ = split_host_path(uri)
-    domain_cache = DFSCACHE['\\\\{0}'.format(domain)]
-    assert domain_cache
+    if not DFSCACHE:
+        load_cache()
+        log.warn("No dfs cache present")
+    slashed_domain = '\\\\{0}'.format(domain)
+    if slashed_domain in DFSCACHE:
+        domain_cache = DFSCACHE[slashed_domain]
+    else:
+        errmsg = "Domain not in cache: {}".format(domain)
+        raise FindDfsShare(errmsg)
     result = find_target_in_cache(uri, domain_cache)
     if not result:
         log.error("No domain cache found")
@@ -275,7 +286,10 @@ class LocalPath(BasePath):
 
     def ls(self, glb='*'):
         for a in glob.glob(os.path.join(self.path, glb)):
-            yield a
+            yield Path(a)
+
+    def isdir(self):
+        return os.path.isdir(self.path)
 
     def files(self, glob='*'):
         for a in self.ls(glob):
@@ -286,8 +300,11 @@ class LocalPath(BasePath):
         self.fp.close()
 
     def remove(self):
-        self.fp.close()
-        os.remove(self.path)
+        if os.path.isdir(self.path):
+            os.removedirs(self.path)
+        else:
+            self.fp.close()
+            os.remove(self.path)
 
     @property
     def dirname(self):
@@ -507,7 +524,11 @@ class SMBPath(BasePath):
                 log.error("Directory does not exist: %s", self.orig_path)
         finally:
             pass
-        return paths
+        for a in paths:
+            if a.filename in ['.', '..']:
+                continue
+            sub_path = Path(self.path).join(self.path, a.filename)
+            yield Path(sub_path)
 
     def remove(self):
         conn = self.get_connection()
@@ -580,3 +601,30 @@ class SMBPath(BasePath):
         while line:
             yield line
             line = self.readline()
+
+    def isdir(self):
+        relpath =  self.relpath
+        conn = self.get_connection()
+        rel_dirname = smb_dirname(relpath).lower()
+        rel_basename = smb_basename(relpath).lower()
+        if rel_dirname == '.':
+            rel_dirname = ''
+        self.WRITELOCK.acquire(self.server_name, self.share, relpath)
+        isdir = False
+        try:
+            paths = conn.listPath(
+                self.share, rel_dirname,
+            )
+            for i in paths:
+                if i.filename.lower() == rel_basename:
+                    return i.isDirectory
+            log.debug(
+                "exists: %s, %s %s",
+                rel_basename,
+                [i.filename for i in paths],
+            )
+        except smb.smb_structs.OperationFailure as e:
+            isdir = False
+        finally:
+            self.WRITELOCK.release(self.server_name, self.share, relpath)
+        return isdir
