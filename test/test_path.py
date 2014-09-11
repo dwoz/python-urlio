@@ -53,8 +53,7 @@ def test_smbpath2():
         "{0}\\{1}".format(BASE, 'test_smbpath2\\one'),
         "{0}\\{1}".format(BASE, 'test_smbpath2\\two'),
     ]
-    # Cast iterator to list
-    files = list(p.files())
+    files = [i.path for i in p.files()]
     assert expect == files, "expect={} files={}".format(expect, files)
 
 
