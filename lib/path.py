@@ -504,8 +504,8 @@ class SMBPath(BasePath):
 
     def files(self, glob='*'):
         for a in self.ls(glob):
-            if not a.isDirectory:
-                yield self.join(self.orig_path, a.filename)
+            if not a.isdir():
+                yield a
 
     def close(self):
         pass
