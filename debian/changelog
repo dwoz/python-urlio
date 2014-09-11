@@ -1,3 +1,24 @@
+python-traxcommon (0.1.11) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #14. Started by user Daniel Wozniak.
+
+  [ Daniel Wozniak ]
+  * More informative errors
+  * Path.ls more consistant return types
+  * Log message it debug instead of info
+
+  [ dwoz ]
+  * Merge pull request #4 from TraxTechnologies/master
+
+  [ Daniel Wozniak ]
+  * Fix broken unit test
+
+  [ dwoz ]
+  * Merge pull request #5 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 11 Sep 2014 02:14:24 +0000
+
 python-traxcommon (0.1.10) stable-dev; urgency=low
 
   * Build #13. Started by user Daniel Wozniak.
