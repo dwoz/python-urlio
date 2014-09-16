@@ -1,3 +1,17 @@
+python-traxcommon (0.2.1) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #16. Started by user Daniel Wozniak.
+
+  [ Daniel Wozniak ]
+  * Use debians lib-magic wrapper
+  * Capture standard mime-type and mime-encoding
+
+  [ Mike Palmer ]
+  * Merge pull request #7 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 16 Sep 2014 17:24:56 +0000
+
 python-traxcommon (0.2.0) stable-dev; urgency=low
 
   [ Jenkins ]
