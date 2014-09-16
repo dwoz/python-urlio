@@ -714,6 +714,8 @@ def archive_file(
         meta_data['mime_type'] = mimetype(temp)
         sha1 = Column(String(256))
         sha1 = Column(String(256))
+    if 'mime_encoding' not in meta_data:
+        meta_data['mime_encoding'] = mimeencoding(temp)
     if 'hash' not in meta_data:
         hsh = hashlib.sha1(tmp_p.read()).hexdigest()
         tmp_p.seek(0)
@@ -756,11 +758,21 @@ def archive_file(
             raise ArchivingError(msg)
     return True
 
+def mimeencoding(path):
+    m = magic.open(magic.MAGIC_MIME_ENCODING)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    return m.file(path)
 
 def mimetype(path):
-    s = magic.from_file(path, mime=True)
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.file(path)
     edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-    if edi.search(Path(path).read()):
-        s = "application/EDI-X12;{}".format(s.split('/')[1])
+    if edi.search(Path(path).read(1024)):
+        s = "application/EDI-X12"
+    elif edifact.search(Path(path).read(1024)):
+        s = "application/EDIFACT"
     return s
