@@ -758,9 +758,12 @@ def archive_file(
 
 
 def mimetype(path):
-    s = magic.from_file(path, mime=True)
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.file('./Vagrantfile')
     edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
     if edi.search(Path(path).read()):
-        s = "application/EDI-X12;{}".format(s.split('/')[1])
+        s = "application/EDI-X12/{}".format(s.split('/')[1])
     return s
