@@ -1,3 +1,16 @@
+python-traxcommon (0.2.0) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #15. Started by user Daniel Wozniak.
+
+  [ Daniel Wozniak ]
+  * Add archive file method
+
+  [ Will Button ]
+  * Merge pull request #6 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 16 Sep 2014 15:32:30 +0000
+
 python-traxcommon (0.1.11) stable-dev; urgency=low
 
   [ Jenkins ]
