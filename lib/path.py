@@ -14,7 +14,6 @@ import magic
 import tempfile
 from boto.s3.key import Key
 import multiprocessing
-from threading import Lock
 from smb.SMBConnection import SMBConnection
 import logging
 import repoze.lru
@@ -22,19 +21,25 @@ from traxcommon.symbols import ONLINE
 log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
-DFS_REF_API = "http://dfs-reference-dev.s03.filex.com/cache/"
+DFS_REF_API = "http://dfs-reference-dev.s03.filex.com/cache"
 ES_API = 'http://elasticsearch.s03.filex.com/newfiles/file/'
 S3_BUCKET = 'traxtech-files'
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
+DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 
 DFSCACHE = {}
 
-def load_cache(path='/tmp/dfscache', fetch=True):
+class TraxCommonException(Exception):
+    """
+    Base class for traxcommon exceptions
+    """
+
+def load_cache(path=DFSCACHE_PATH, fetch=True):
     log.warn("load_cache is depricated... user load_dfs_cache instead")
     load_dfs_cache(path, fetch)
 
-def load_dfs_cache(path='/tmp/dfscache', fetch=True):
+def load_dfs_cache(path=DFSCACHE_PATH, fetch=True):
     if not os.path.exists(path):
         if fetch:
             fetch_dfs_cache(path)
@@ -75,11 +80,14 @@ def find_target_in_cache(uri, cache):
                     return path, tgt
 
 
-def fetch_dfs_cache(path, uri=None):
-    uri = uri or DFS_REF_API
-    r = requests.get(uri, stream=True)
+def fetch_dfs_cache(path=DFSCACHE_PATH, uri=DFS_REF_API):
+    response = requests.get(uri, stream=True)
+    if response.status_code != 200:
+        raise TraxCommonException(
+            "Non 200 response: {}".format(response.status_code)
+        )
     with open(path, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
+        for chunk in response.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
                 f.flush()
@@ -180,7 +188,9 @@ class WriteLock(object):
         key = (server, share, path)
         log.debug('write-lock release: %s', key)
         if key not in self.locks:
+            log.debug('write-lock release but adding lock: %s', key)
             self.locks[key] = multiprocessing.Lock()
+        log.debug('write-lock release call: %s', key)
         self.locks[key].release()
 
 
