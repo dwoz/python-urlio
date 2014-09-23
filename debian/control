@@ -15,6 +15,7 @@ Depends: ${misc:Depends},
  python-requests (>= 2.0.0),
  python-repoze.lru,
  python-magic,
+ python-boto,
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars
