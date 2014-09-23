@@ -1,3 +1,18 @@
+python-traxcommon (0.3.0) stable-dev; urgency=low
+
+  [ Jenkins ]
+  * Build #17. Started by user Daniel Wozniak.
+
+  [ Daniel Wozniak ]
+  * fetch_dfs_cache method gets default location
+  * General start/stop daemon methods
+  * Add missing python-boto dependency
+
+  [ Will Button ]
+  * Merge pull request #8 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 23 Sep 2014 22:14:05 +0000
+
 python-traxcommon (0.2.1) stable-dev; urgency=low
 
   [ Jenkins ]
