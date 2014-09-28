@@ -16,6 +16,9 @@ Depends: ${misc:Depends},
  python-repoze.lru,
  python-magic,
  python-boto,
+ python-kerberos,
+ krb5-user,
+ python-winrm,
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars
