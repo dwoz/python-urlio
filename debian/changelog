@@ -126,7 +126,7 @@ python-traxcommon (0.1.9~1409848817) stable-dev; urgency=low
 
  -- Jenkins <devops@traxtech.com>  Thu, 04 Sep 2014 16:40:51 +0000
 
-python-traxcommon (0.1.7) stable; urgency=low
+python-traxcommon (0.1.7) stable-dev; urgency=low
 
   * Update to stable index
 
@@ -229,11 +229,7 @@ python-traxcommon (0.0.2) stable-dev; urgency=low
 
  -- Trax DevOps <devops@traxtech.com>  Wed, 01 Aug 2014 08:39:01 -0700
 
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> 825dc93443bc54056379ba5c701276c08512d507
-python-traxcommon (0.0.1) unstable; urgency=low
+python-traxcommon (0.0.1) stable-dev; urgency=low
 
   * Initial package
 
