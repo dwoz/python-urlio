@@ -132,14 +132,24 @@ def test_smbpath_exists():
 
 def test_local_path_files():
     os.makedirs('/tmp/test_local_path_files')
-    with open('/tmp/test_local_path_files/foo.txt', 'w') as fp:
+    P1 = '/tmp/test_local_path_files/foo.xml'
+    P2 = '/tmp/test_local_path_files/foo.txt'
+    with open(P2, 'w') as fp:
         fp.write('foo.txt')
-    with open('/tmp/test_local_path_files/foo.xml', 'w') as fp:
+    with open(P1, 'w') as fp:
         fp.write('foo.xml')
     try:
         p = LocalPath('/tmp/test_local_path_files')
+        l = []
         for a in p.files():
-            print a
+            l.append(a.path)
+        assert P1 in l
+        assert P2 in l
+        l = []
+        for a in p.files('*.txt'):
+            l.append(a.path)
+        assert P1 not in l
+        assert P2 in l
     finally:
         os.remove('/tmp/test_local_path_files/foo.txt')
         os.remove('/tmp/test_local_path_files/foo.xml')
