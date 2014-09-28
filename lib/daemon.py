@@ -5,6 +5,8 @@ import logging
 import os
 import resource
 import signal
+import sys
+import time
 
 log = logging.getLogger(__name__)
 NULL = os.devnull
