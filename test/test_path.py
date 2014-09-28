@@ -129,3 +129,20 @@ def test_smbpath_exists():
         find_dfs_share=find_dfs_share
     )
     assert path.exists()
+
+def test_local_path_files():
+    os.makedirs('/tmp/test_local_path_files')
+    with open('/tmp/test_local_path_files/foo.txt', 'w') as fp:
+        fp.write('foo.txt')
+    with open('/tmp/test_local_path_files/foo.xml', 'w') as fp:
+        fp.write('foo.xml')
+    try:
+        p = LocalPath('/tmp/test_local_path_files')
+        for a in p.files():
+            print a
+    finally:
+        os.remove('/tmp/test_local_path_files/foo.txt')
+        os.remove('/tmp/test_local_path_files/foo.xml')
+        os.rmdir('/tmp/test_local_path_files')
+
+

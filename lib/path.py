@@ -315,7 +315,7 @@ class LocalPath(BasePath):
 
     def files(self, glob='*'):
         for a in self.ls(glob):
-            if os.path.isfile(a):
+            if os.path.isfile(a.path):
                 yield a
 
     def close(self):
