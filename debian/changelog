@@ -1,4 +1,4 @@
-python-traxcommon (0.3.0) stable-dev; urgency=low
+python-traxcommon (0.3.0) stable; urgency=low
 
   [ Jenkins ]
   * Build #17. Started by user Daniel Wozniak.
