@@ -1,4 +1,27 @@
-python-traxcommon (0.3.0) stable; urgency=low
+python-traxcommon (0.3.1) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #18. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Fix missing dependencies and imports
+
+  [ Mike Palmer ]
+  * Merge pull request #9 from TraxTechnologies/missing-deps
+
+  [ dwoz ]
+  * Merge pull request #10 from TraxTechnologies/release
+
+  [ Daniel Wozniak ]
+  * Builds use version in codebase
+  * Missing module in package
+  * Merge branch missing-deps
+  * Jenkins will change to dev branch when needed
+  * Fix bad changelog formatting
+
+ -- Jenkins <devops@traxtech.com>  Sun, 28 Sep 2014 02:46:49 +0000
+
+python-traxcommon (0.3.0) stable-dev; urgency=low
 
   [ Jenkins ]
   * Build #17. Started by user Daniel Wozniak.
