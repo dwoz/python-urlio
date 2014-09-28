@@ -26,6 +26,8 @@ ES_API = 'http://elasticsearch.s03.filex.com/newfiles/file/'
 S3_BUCKET = 'traxtech-files'
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
+AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY', None)
+AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 
 DFSCACHE = {}
@@ -693,7 +695,8 @@ class ArchivingError(Exception):
 
 import time
 def archive_file(
-        path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15, **meta_data
+        path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15,
+        aws_access_key=None, aws_secret_key=None, **meta_data
     ):
     orig_p = Path(path)
     if isinstance(orig_p, SMBPath):
@@ -733,8 +736,8 @@ def archive_file(
     if 's3' not in meta_data:
         meta_data['s3'] = 'https://s3.amazonaws.com/{}/{}'.format(bucket, hsh)
     s3 = boto.connect_s3(
-        os.environ.get('AWS_ACCESS_KEY'),
-        os.environ.get('AWS_SECRET_KEY'),
+        aws_access_key or AWS_ACCESS_KEY,
+        aws_secret_key or AWS_SECRET_KEY
     )
     bucket = s3.get_bucket(s3_bucket)
     key = Key(bucket)
