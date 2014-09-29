@@ -770,12 +770,43 @@ def archive_file(
             raise ArchivingError(msg)
     return True
 
+def mimeencoding_from_buffer(buffer):
+    m = magic.open(magic.MAGIC_MIME_ENCODING)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    return m.buffer(buffer)
+
 def mimeencoding(path):
     m = magic.open(magic.MAGIC_MIME_ENCODING)
     if m.load() != 0:
         raise Exception("Unable to load magic database")
     return m.file(path)
 
+def mimetype_from_buffer(buffer):
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.buffer(buffer)
+    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+    if edi.search(buffer):
+        s = "application/EDI-X12"
+    elif edifact.search(buffer):
+        s = "application/EDIFACT"
+    return s
+
+def mimetype(path):
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.file(path)
+    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+    if edi.search(Path(path).read(1024)):
+        s = "application/EDI-X12"
+    elif edifact.search(Path(path).read(1024)):
+        s = "application/EDIFACT"
+    return s
 def mimetype(path):
     m = magic.open(magic.MAGIC_MIME_TYPE)
     if m.load() != 0:
