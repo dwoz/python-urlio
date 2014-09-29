@@ -1,3 +1,19 @@
+python-traxcommon (0.3.2) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #21. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Bump version
+
+  [ dwoz ]
+  * Merge pull request #11 from TraxTechnologies/master
+
+  [ Daniel Wozniak ]
+  * Merge branch release
+
+ -- Jenkins <devops@traxtech.com>  Sun, 28 Sep 2014 02:59:23 +0000
+
 python-traxcommon (0.3.1) stable; urgency=low
 
   [ Jenkins ]

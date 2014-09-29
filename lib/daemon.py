@@ -7,6 +7,7 @@ import resource
 import signal
 import sys
 import time
+import traceback
 
 log = logging.getLogger(__name__)
 NULL = os.devnull
@@ -144,7 +145,7 @@ def start_daemon(
         nExit = exc.code
     except Exception as e:
         log.error(
-            "Unhandled exception. {0} {1}".format(e, traceback_format_exc(10))
+            "Unhandled exception. {0} {1}".format(e, traceback.format_exc(10))
         )
         nExit = 3
     if nExit:

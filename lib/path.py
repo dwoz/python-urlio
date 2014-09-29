@@ -26,6 +26,8 @@ ES_API = 'http://elasticsearch.s03.filex.com/newfiles/file/'
 S3_BUCKET = 'traxtech-files'
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
+AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY', None)
+AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 
 DFSCACHE = {}
@@ -315,7 +317,7 @@ class LocalPath(BasePath):
 
     def files(self, glob='*'):
         for a in self.ls(glob):
-            if os.path.isfile(a):
+            if os.path.isfile(a.path):
                 yield a
 
     def close(self):
@@ -473,9 +475,8 @@ class SMBPath(BasePath):
             )
             exists = rel_basename in [i.filename.lower() for i in paths]
             log.debug(
-                "exists: %s, %s %s",
+                "exists: %s, %s",
                 rel_basename,
-                [i.filename for i in paths],
                 exists
             )
         except smb.smb_structs.OperationFailure as e:
@@ -693,7 +694,8 @@ class ArchivingError(Exception):
 
 import time
 def archive_file(
-        path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15, **meta_data
+        path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15,
+        aws_access_key=None, aws_secret_key=None, **meta_data
     ):
     orig_p = Path(path)
     if isinstance(orig_p, SMBPath):
@@ -733,8 +735,8 @@ def archive_file(
     if 's3' not in meta_data:
         meta_data['s3'] = 'https://s3.amazonaws.com/{}/{}'.format(bucket, hsh)
     s3 = boto.connect_s3(
-        os.environ.get('AWS_ACCESS_KEY'),
-        os.environ.get('AWS_SECRET_KEY'),
+        aws_access_key or AWS_ACCESS_KEY,
+        aws_secret_key or AWS_SECRET_KEY
     )
     bucket = s3.get_bucket(s3_bucket)
     key = Key(bucket)
@@ -768,12 +770,43 @@ def archive_file(
             raise ArchivingError(msg)
     return True
 
+def mimeencoding_from_buffer(buffer):
+    m = magic.open(magic.MAGIC_MIME_ENCODING)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    return m.buffer(buffer)
+
 def mimeencoding(path):
     m = magic.open(magic.MAGIC_MIME_ENCODING)
     if m.load() != 0:
         raise Exception("Unable to load magic database")
     return m.file(path)
 
+def mimetype_from_buffer(buffer):
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.buffer(buffer)
+    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+    if edi.search(buffer):
+        s = "application/EDI-X12"
+    elif edifact.search(buffer):
+        s = "application/EDIFACT"
+    return s
+
+def mimetype(path):
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        raise Exception("Unable to load magic database")
+    s = m.file(path)
+    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+    if edi.search(Path(path).read(1024)):
+        s = "application/EDI-X12"
+    elif edifact.search(Path(path).read(1024)):
+        s = "application/EDIFACT"
+    return s
 def mimetype(path):
     m = magic.open(magic.MAGIC_MIME_TYPE)
     if m.load() != 0:
