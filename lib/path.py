@@ -475,9 +475,8 @@ class SMBPath(BasePath):
             )
             exists = rel_basename in [i.filename.lower() for i in paths]
             log.debug(
-                "exists: %s, %s %s",
+                "exists: %s, %s",
                 rel_basename,
-                [i.filename for i in paths],
                 exists
             )
         except smb.smb_structs.OperationFailure as e:
