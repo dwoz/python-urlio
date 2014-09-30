@@ -1,3 +1,23 @@
+python-traxcommon (0.3.3) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #22. Started by GitHub push by rekibnikufesin.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.2
+  * Next version will be 0.3.3
+  * Fix bug in Path.files
+  * Better tests for LocalPath.files
+  * Allow aws key override
+  * Fix missing import
+  * Sane debug message length
+  * Mime type and encoding from buffer
+
+  [ Will Button ]
+  * Merge pull request #12 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Mon, 29 Sep 2014 23:59:35 +0000
+
 python-traxcommon (0.3.2) stable; urgency=low
 
   [ Jenkins ]
