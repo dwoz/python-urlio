@@ -287,8 +287,8 @@ class LocalPath(BasePath):
             self._fp = open(self.path, self.mode)
         return self._fp
 
-    def seek(self, index):
-        self.fp.seek(index)
+    def seek(self, index, *args):
+        self.fp.seek(index, *args)
 
     def tell(self):
         return self.fp.tell()
@@ -441,7 +441,7 @@ class SMBPath(BasePath):
     def tell(self):
         return self._index
 
-    def seek(self, index):
+    def seek(self, index, *args):
         self._index = index
 
     def read(self, size=-1, con=None):
