@@ -3,3 +3,4 @@ lib/config.py traxcommon
 lib/path.py traxcommon
 lib/symbols.py traxcommon
 lib/daemon.py traxcommon
+lib/sql_session.py traxcommon
