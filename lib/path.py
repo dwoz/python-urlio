@@ -117,7 +117,7 @@ def by_depth(x, y):
         return 1
 
 
-@repoze.lru.lru_cache(500)
+@repoze.lru.lru_cache(100)
 def default_find_dfs_share(uri, **opts):
     log.debug("find dfs share: %s", uri)
     uri = uri.lower()
@@ -309,16 +309,40 @@ class LocalPath(BasePath):
         return os.path.exists(self.path)
 
     def ls(self, glb='*'):
-        for a in glob.glob(os.path.join(self.path, glb)):
+        """
+        Iterate over path objects for the files and directories in this
+        path.
+        """
+        for a in self.ls_names(glb):
             yield Path(a)
+
+    def ls_names(self, glb='*'):
+        """
+        Iterate over the names of files and directories within this
+        path.
+        """
+        for a in glob.glob(os.path.join(self.path, glb)):
+            yield a
 
     def isdir(self):
         return os.path.isdir(self.path)
 
-    def files(self, glob='*'):
-        for a in self.ls(glob):
-            if os.path.isfile(a.path):
+    def filenames(self, glob='*'):
+        """
+        Iterate over the names of files (not directories) within this
+        path.
+        """
+        for a in self.ls_names(glob):
+            if os.path.isfile(a):
                 yield a
+
+    def files(self, glob='*'):
+        """
+        Iterate over path objects for the files (not directories) within
+        this path.
+        """
+        for a in self.filenames(glob):
+            yield Path(a)
 
     def close(self):
         self.fp.close()
@@ -537,18 +561,37 @@ class SMBPath(BasePath):
             self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
     def files(self, glob='*'):
-        for a in self.ls(glob):
-            if not a.isdir():
-                yield a
+        for i in self.filenames(glob):
+            yield Path(i)
+
+    def filenames(self, glob='*'):
+        for i in self.ls_names(
+            glob=glob,
+            smb_attribs=smb.smb_constants.SMB_FILE_ATTRIBUTE_NORMAL
+        ):
+            yield i
 
     def close(self):
         pass
 
     def ls(self, glob='*'):
+        """
+        List a directory and return SMBPath objects for the files and
+        directories.
+        """
+        for pathname in self.ls_names(glob):
+            yield Path(sub_path)
+
+    def ls_names(self, glob='*', smb_attribs=55):
+        """
+        List a directory and return the names of the files and directories.
+        """
         conn = self.get_connection()
         paths = []
         try:
-            paths = conn.listPath(self.share, self.relpath, pattern=glob)
+            paths = conn.listPath(
+                self.share, self.relpath, search=smb_attribs, pattern=glob
+            )
         except smb.smb_structs.OperationFailure as e:
             # Determine if this failure is due to an invalid path or just
             # because the glob didn't return any results.
@@ -561,8 +604,7 @@ class SMBPath(BasePath):
         for a in paths:
             if a.filename in ['.', '..']:
                 continue
-            sub_path = Path(self.path).join(self.path, a.filename)
-            yield Path(sub_path)
+            yield Path(self.path).join(self.path, a.filename)
 
     def remove(self):
         conn = self.get_connection()
