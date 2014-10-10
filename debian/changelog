@@ -1,3 +1,24 @@
+python-traxcommon (0.3.5) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #26. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Consume less memory by caching less
+  * Return only files from the smb call
+
+  [ Mike Palmer ]
+  * Merge pull request #15 from TraxTechnologies/footprint
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.4 into develop
+  * Patch version bump
+
+  [ Mike Palmer ]
+  * Merge pull request #16 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Fri, 10 Oct 2014 17:41:26 +0000
+
 python-traxcommon (0.3.4) stable; urgency=low
 
   [ Jenkins ]
