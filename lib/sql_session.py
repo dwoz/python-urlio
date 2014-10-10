@@ -6,7 +6,7 @@ Usage:
     from mymodel import User
     from traxcommon.sql_session import Session, connect_session
 
-    connect_session('mysql+mysqldb://richard:stallman@localhost/mysickapp')
+    engine = connect_session('mysql+mysqldb://richard:stallman@localhost/mysickapp')
     Session.query(User).first()
 """
 import sqlalchemy
@@ -18,7 +18,7 @@ def echo_sql(echo=False):
 def connect_session(url, **opts):
     """
     Create a new database engine and bind it to the global session object,
-    returning the engine when done
+    returning the engine when done.
     """
     if hasattr(connect_session, 'last_url'):
         if url != connect_session.last_url:
@@ -27,3 +27,4 @@ def connect_session(url, **opts):
     Session.configure(bind=engine, autocommit=True)
     connect_session.last_url = url
     sqlalchemy.orm.configure_mappers()
+    return engine
