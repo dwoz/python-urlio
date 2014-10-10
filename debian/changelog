@@ -1,3 +1,23 @@
+python-traxcommon (0.3.4) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #24. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Allow more args for seek
+
+  [ dwoz ]
+  * Merge pull request #13 from TraxTechnologies/master
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.3
+  * Version bump
+
+  [ dwoz ]
+  * Merge pull request #14 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 30 Sep 2014 01:00:05 +0000
+
 python-traxcommon (0.3.3) stable; urgency=low
 
   [ Jenkins ]
