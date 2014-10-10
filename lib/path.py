@@ -117,7 +117,7 @@ def by_depth(x, y):
         return 1
 
 
-@repoze.lru.lru_cache(500)
+@repoze.lru.lru_cache(100)
 def default_find_dfs_share(uri, **opts):
     log.debug("find dfs share: %s", uri)
     uri = uri.lower()
