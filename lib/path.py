@@ -580,7 +580,7 @@ class SMBPath(BasePath):
         directories.
         """
         for pathname in self.ls_names(glob):
-            yield Path(sub_path)
+            yield Path(pathname)
 
     def ls_names(self, glob='*', smb_attribs=55):
         """
