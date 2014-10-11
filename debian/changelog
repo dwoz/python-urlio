@@ -1,3 +1,25 @@
+python-traxcommon (0.3.7) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #29. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Fix variable name
+
+  [ Mike Palmer ]
+  * Merge pull request #21 from TraxTechnologies/sasession
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.6 into develop
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+  * Patch version bump
+
+  [ dwoz ]
+  * Merge pull request #22 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sat, 11 Oct 2014 20:58:05 +0000
+
 python-traxcommon (0.3.6) stable; urgency=low
 
   [ Jenkins ]
