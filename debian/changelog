@@ -1,3 +1,26 @@
+python-traxcommon (0.3.6) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #27. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.5 into develop
+  * Patch version bump
+  * SA projects should use a single scoped_session
+  * Fix warts
+
+  [ Mike Palmer ]
+  * Merge pull request #17 from TraxTechnologies/sasession
+
+  [ Daniel Wozniak ]
+  * Do not use autocommit by default
+
+  [ Mike Palmer ]
+  * Merge pull request #19 from TraxTechnologies/sasession
+  * Merge pull request #20 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sat, 11 Oct 2014 00:20:30 +0000
+
 python-traxcommon (0.3.5) stable; urgency=low
 
   [ Jenkins ]
