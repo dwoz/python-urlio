@@ -15,7 +15,7 @@ Session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker())
 def echo_sql(echo=False):
     Session().bind.engine = echo
 
-def connect_session(url, **opts):
+def connect_session(url, autocommit=False, **opts):
     """
     Create a new database engine and bind it to the global session object,
     returning the engine when done.
@@ -24,7 +24,7 @@ def connect_session(url, **opts):
         if url != connect_session.last_url:
             log.warn('Connecting session to another db: old=%s new=%s', connect.last_url, url)
     engine = sqlalchemy.create_engine(url, **opts)
-    Session.configure(bind=engine, autocommit=True)
+    Session.configure(bind=engine, autocommit=autocommit)
     connect_session.last_url = url
     sqlalchemy.orm.configure_mappers()
     return engine
