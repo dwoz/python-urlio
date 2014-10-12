@@ -29,6 +29,15 @@ SMB_PASS = os.environ.get('SMBPASS', None)
 AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY', None)
 AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
+EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+ME = magic.open(magic.MAGIC_MIME_ENCODING)
+if ME.load() != 0:
+    raise Exception("Unable to load magic database")
+MT = magic.open(magic.MAGIC_MIME_TYPE)
+if MT.load() != 0:
+    raise Exception("Unable to load magic database")
+
 
 DFSCACHE = {}
 
@@ -194,6 +203,7 @@ class WriteLock(object):
             self.locks[key] = multiprocessing.Lock()
         log.debug('write-lock release call: %s', key)
         self.locks[key].release()
+        self.locks.pop(key)
 
 
 WRITELOCK = WriteLock()
@@ -403,7 +413,7 @@ def get_smb_connection(
         )
         raise
     conn = SMBConnection(user, pas, client, server, domain=domain)
-    conn.connect(server_ip, 139, timeout=30)
+    conn.connect(server_ip, port, timeout=timeout)
     return conn
 
 
@@ -572,7 +582,7 @@ class SMBPath(BasePath):
             yield i
 
     def close(self):
-        pass
+        self.get_connection().close()
 
     def ls(self, glob='*'):
         """
@@ -813,51 +823,25 @@ def archive_file(
     return True
 
 def mimeencoding_from_buffer(buffer):
-    m = magic.open(magic.MAGIC_MIME_ENCODING)
-    if m.load() != 0:
-        raise Exception("Unable to load magic database")
-    return m.buffer(buffer)
+    return ME.buffer(buffer)
 
 def mimeencoding(path):
-    m = magic.open(magic.MAGIC_MIME_ENCODING)
-    if m.load() != 0:
-        raise Exception("Unable to load magic database")
-    return m.file(path)
+    return ME.file(path)
 
 def mimetype_from_buffer(buffer):
-    m = magic.open(magic.MAGIC_MIME_TYPE)
-    if m.load() != 0:
-        raise Exception("Unable to load magic database")
-    s = m.buffer(buffer)
-    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
-    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-    if edi.search(buffer):
+    s = MT.buffer(buffer)
+    if EDIDET.search(buffer):
         s = "application/EDI-X12"
-    elif edifact.search(buffer):
+    elif EDIFACTDET.search(buffer):
         s = "application/EDIFACT"
     return s
 
 def mimetype(path):
-    m = magic.open(magic.MAGIC_MIME_TYPE)
-    if m.load() != 0:
-        raise Exception("Unable to load magic database")
-    s = m.file(path)
+    s = MT.file(path)
     edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-    if edi.search(Path(path).read(1024)):
+    if EDIDET.search(buffer):
         s = "application/EDI-X12"
-    elif edifact.search(Path(path).read(1024)):
-        s = "application/EDIFACT"
-    return s
-def mimetype(path):
-    m = magic.open(magic.MAGIC_MIME_TYPE)
-    if m.load() != 0:
-        raise Exception("Unable to load magic database")
-    s = m.file(path)
-    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
-    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-    if edi.search(Path(path).read(1024)):
-        s = "application/EDI-X12"
-    elif edifact.search(Path(path).read(1024)):
+    elif EDIFACTDET.search(buffer):
         s = "application/EDIFACT"
     return s
