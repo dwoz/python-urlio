@@ -838,8 +838,6 @@ def mimetype_from_buffer(buffer):
 
 def mimetype(path):
     s = MT.file(path)
-    edi = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
-    edifact = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
     if EDIDET.search(buffer):
         s = "application/EDI-X12"
     elif EDIFACTDET.search(buffer):
