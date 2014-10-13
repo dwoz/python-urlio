@@ -1,3 +1,22 @@
+python-traxcommon (0.3.8) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #30. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.7 into develop
+  * Patch version bump
+  * Fix magic memory leak
+  * Remove cruft
+
+  [ Mike Palmer ]
+  * Merge pull request #23 from TraxTechnologies/magicleak
+
+  [ dwoz ]
+  * Merge pull request #24 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Mon, 13 Oct 2014 05:02:22 +0000
+
 python-traxcommon (0.3.7) stable; urgency=low
 
   [ Jenkins ]
