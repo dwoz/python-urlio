@@ -31,14 +31,6 @@ AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
 EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-ME = magic.open(magic.MAGIC_MIME_ENCODING)
-if ME.load() != 0:
-    raise Exception("Unable to load magic database")
-MT = magic.open(magic.MAGIC_MIME_TYPE)
-if MT.load() != 0:
-    raise Exception("Unable to load magic database")
-
-
 DFSCACHE = {}
 
 class TraxCommonException(Exception):
@@ -823,13 +815,31 @@ def archive_file(
     return True
 
 def mimeencoding_from_buffer(buffer):
-    return ME.buffer(buffer)
+    m = magic.open(magic.MAGIC_MIME_ENCODING)
+    if m.load() != 0:
+        m.close()
+        raise Exception("Unable to load magic database")
+    rslt = m.buffer(buffer)
+    m.close()
+    return rslt
+
 
 def mimeencoding(path):
-    return ME.file(path)
+    m = magic.open(magic.MAGIC_MIME_ENCODING)
+    if m.load() != 0:
+        m.close()
+        raise Exception("Unable to load magic database")
+    rslt = m.file(path)
+    m.close()
+    return rslt
 
 def mimetype_from_buffer(buffer):
-    s = MT.buffer(buffer)
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        m.close()
+        raise Exception("Unable to load magic database")
+    s = m.file(path)
+    m.close()
     if EDIDET.search(buffer):
         s = "application/EDI-X12"
     elif EDIFACTDET.search(buffer):
@@ -837,7 +847,12 @@ def mimetype_from_buffer(buffer):
     return s
 
 def mimetype(path):
-    s = MT.file(path)
+    m = magic.open(magic.MAGIC_MIME_TYPE)
+    if m.load() != 0:
+        m.close()
+        raise Exception("Unable to load magic database")
+    s = m.file(path)
+    m.close()
     if EDIDET.search(buffer):
         s = "application/EDI-X12"
     elif EDIFACTDET.search(buffer):
