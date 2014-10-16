@@ -1,3 +1,17 @@
+python-traxcommon (0.3.11) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #33. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.10 into develop
+  * Dont lock on exists calls
+
+  [ Mike Palmer ]
+  * Merge pull request #28 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Thu, 16 Oct 2014 05:47:10 +0000
+
 python-traxcommon (0.3.10) stable; urgency=low
 
   [ Jenkins ]
