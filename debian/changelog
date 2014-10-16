@@ -1,3 +1,17 @@
+python-traxcommon (0.3.10) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #32. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.9 into develop
+  * Use correct buffer method
+
+  [ Mike Palmer ]
+  * Merge pull request #27 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Tue, 14 Oct 2014 18:31:08 +0000
+
 python-traxcommon (0.3.9) stable; urgency=low
 
   [ Jenkins ]
