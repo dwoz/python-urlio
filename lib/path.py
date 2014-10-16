@@ -494,7 +494,6 @@ class SMBPath(BasePath):
         rel_basename = smb_basename(relpath).lower()
         if rel_dirname == '.':
             rel_dirname = ''
-        self.WRITELOCK.acquire(self.server_name, self.share, relpath)
         try:
             paths = conn.listPath(
                 self.share, rel_dirname,
@@ -507,8 +506,6 @@ class SMBPath(BasePath):
             )
         except smb.smb_structs.OperationFailure as e:
             exists = False
-        finally:
-            self.WRITELOCK.release(self.server_name, self.share, relpath)
         return exists
 
     def makedirs(self, relpath=None, is_dir=False):
