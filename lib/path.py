@@ -608,7 +608,10 @@ class SMBPath(BasePath):
         for a in paths:
             if a.filename in ['.', '..']:
                 continue
-            yield Path(self.path).join(self.path, a.filename)
+            yield Path(self.path).join(
+                self.path,
+                a.filename.encode('UTF-16LE')
+            )
 
     def remove(self):
         conn = self.get_connection()
