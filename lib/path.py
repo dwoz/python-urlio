@@ -394,7 +394,10 @@ class LocalPath(BasePath):
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
+        is_direct_tcp=True,
     ):
+    if is_direct_tcp:
+        port = 445
     hostname = "{0}.{1}".format(server, domain)
     try:
         server_ip = socket.gethostbyname(hostname)
@@ -404,7 +407,9 @@ def get_smb_connection(
             hostname
         )
         raise
-    conn = SMBConnection(user, pas, client, server, domain=domain)
+    conn = SMBConnection(
+        user, pas, client, server, domain=domain, is_direct_tcp=is_direct_tcp
+    )
     conn.connect(server_ip, port, timeout=timeout)
     return conn
 
@@ -603,7 +608,10 @@ class SMBPath(BasePath):
         for a in paths:
             if a.filename in ['.', '..']:
                 continue
-            yield Path(self.path).join(self.path, a.filename)
+            yield Path(self.path).join(
+                self.path,
+                a.filename.encode('UTF-16LE')
+            )
 
     def remove(self):
         conn = self.get_connection()
