@@ -610,7 +610,7 @@ class SMBPath(BasePath):
                 continue
             yield Path(self.path).join(
                 self.path,
-                a.filename.encode('UTF-16LE')
+                a.filename.encode('iso-8859-1')
             )
 
     def remove(self):
