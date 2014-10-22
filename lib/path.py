@@ -352,7 +352,7 @@ class LocalPath(BasePath):
             yield Path(a)
 
     def dirnames(self, glob='*', limit=0):
-        for a in self.ls_names(glob limit=limit):
+        for a in self.ls_names(glob, limit=limit):
             if os.path.isdir(a):
                 yield a
 
