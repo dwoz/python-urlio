@@ -352,7 +352,7 @@ class LocalPath(BasePath):
             yield Path(a)
 
     def dirnames(self, glob='*', limit=0):
-        for a in self.ls_names(glob limit=limit):
+        for a in self.ls_names(glob, limit=limit):
             if os.path.isdir(a):
                 yield a
 
@@ -591,7 +591,7 @@ class SMBPath(BasePath):
             yield i
 
     def dirs(self, glob='*', limit=0):
-        for i in self.dirnames(glob=glob, limit=limit)
+        for i in self.dirnames(glob=glob, limit=limit):
             yield Path(i)
 
     def dirnames(self, glob='*', limit=0):
@@ -599,7 +599,7 @@ class SMBPath(BasePath):
             glob=glob,
             smb_attribs=smb.smb_contants.SMB_FILE_ATTRIBUTE_DIRECTORY,
             limit=limit,
-        )
+        ):
             yield i
 
     def close(self):
