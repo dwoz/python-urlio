@@ -18,6 +18,7 @@ from smb.SMBConnection import SMBConnection
 import logging
 import repoze.lru
 from traxcommon.symbols import ONLINE
+from smb_ext import listPath
 log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
@@ -310,40 +311,53 @@ class LocalPath(BasePath):
     def exists(self):
         return os.path.exists(self.path)
 
-    def ls(self, glb='*'):
+    def ls(self, glb='*', limit=0):
         """
         Iterate over path objects for the files and directories in this
         path.
         """
-        for a in self.ls_names(glb):
+        for a in self.ls_names(glb, limit=limit):
             yield Path(a)
 
-    def ls_names(self, glb='*'):
+    def ls_names(self, glb='*', limit=0):
         """
         Iterate over the names of files and directories within this
         path.
         """
+        n = 0
         for a in glob.glob(os.path.join(self.path, glb)):
             yield a
+            n += 1
+            if limit > 0 and n >= limit:
+                raise StopIteration
 
     def isdir(self):
         return os.path.isdir(self.path)
 
-    def filenames(self, glob='*'):
+    def filenames(self, glob='*', limit=0):
         """
         Iterate over the names of files (not directories) within this
         path.
         """
-        for a in self.ls_names(glob):
+        for a in self.ls_names(glob, limit=limit):
             if os.path.isfile(a):
                 yield a
 
-    def files(self, glob='*'):
+    def files(self, glob='*', limit=0):
         """
         Iterate over path objects for the files (not directories) within
         this path.
         """
-        for a in self.filenames(glob):
+        for a in self.filenames(glob, limit=limit):
+            yield Path(a)
+
+    def dirnames(self, glob='*', limit=0):
+        for a in self.ls_names(glob, limit=limit):
+            if os.path.isdir(a):
+                yield a
+
+    def dirs(self, glob='*', limit=0):
+        for a in self.dirnames(glob, limit=limit):
             yield Path(a)
 
     def close(self):
@@ -564,37 +578,55 @@ class SMBPath(BasePath):
         finally:
             self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
-    def files(self, glob='*'):
-        for i in self.filenames(glob):
+    def files(self, glob='*', limit=0):
+        for i in self.filenames(glob=glob, limit=limit):
             yield Path(i)
 
-    def filenames(self, glob='*'):
+    def filenames(self, glob='*', limit=0):
         for i in self.ls_names(
             glob=glob,
-            smb_attribs=smb.smb_constants.SMB_FILE_ATTRIBUTE_NORMAL
+            smb_attribs=smb.smb_constants.SMB_FILE_ATTRIBUTE_NORMAL,
+            limit=limit,
+        ):
+            yield i
+
+    def dirs(self, glob='*', limit=0):
+        for i in self.dirnames(glob=glob, limit=limit):
+            yield Path(i)
+
+    def dirnames(self, glob='*', limit=0):
+        for i in self.ls_names(
+            glob=glob,
+            smb_attribs=smb.smb_contants.SMB_FILE_ATTRIBUTE_DIRECTORY,
+            limit=limit,
         ):
             yield i
 
     def close(self):
         self.get_connection().close()
 
-    def ls(self, glob='*'):
+    def ls(self, glob='*', limit=0):
         """
         List a directory and return SMBPath objects for the files and
         directories.
         """
-        for pathname in self.ls_names(glob):
+        for pathname in self.ls_names(glob=glob, limit=limit):
             yield Path(pathname)
 
-    def ls_names(self, glob='*', smb_attribs=55):
+    def ls_names(self, glob='*', smb_attribs=55, limit=0):
         """
         List a directory and return the names of the files and directories.
         """
         conn = self.get_connection()
         paths = []
         try:
-            paths = conn.listPath(
-                self.share, self.relpath, search=smb_attribs, pattern=glob
+            paths = listPath(
+                conn,
+                self.share,
+                self.relpath,
+                search=smb_attribs,
+                pattern=glob,
+                limit=limit,
             )
         except smb.smb_structs.OperationFailure as e:
             # Determine if this failure is due to an invalid path or just

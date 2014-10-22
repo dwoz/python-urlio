@@ -1,3 +1,25 @@
+python-traxcommon (0.3.12) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #35. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.11 into develop
+  * Patch version bump
+  * Default to NetBIOS over TCP/IP mode
+  * Decode filenames
+
+  [ Mike Palmer ]
+  * Merge pull request #29 from TraxTechnologies/develop
+
+  [ Daniel Wozniak ]
+  * Fix tests
+
+  [ Mike Palmer ]
+  * Merge pull request #30 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sun, 19 Oct 2014 00:39:14 +0000
+
 python-traxcommon (0.3.11) stable; urgency=low
 
   [ Jenkins ]
