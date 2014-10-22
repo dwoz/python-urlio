@@ -1,3 +1,38 @@
+python-traxcommon (0.4.0) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #36. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.3.12 into develop
+  * Bump minor version
+  * Limit smb file list
+
+  [ Mike Palmer ]
+  * Merge pull request #31 from TraxTechnologies/limitls
+
+  [ Daniel Wozniak ]
+  * Methods to list directories only
+
+  [ Mike Palmer ]
+  * Merge pull request #32 from TraxTechnologies/limitls
+
+  [ Daniel Wozniak ]
+  * SyNt4x
+  * Fix sytax errors
+
+  [ Mike Palmer ]
+  * Merge pull request #34 from TraxTechnologies/limitls
+
+  [ Daniel Wozniak ]
+  * Add smb_ext module to package
+
+  [ Mike Palmer ]
+  * Merge pull request #35 from TraxTechnologies/limitls
+  * Merge pull request #36 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 22 Oct 2014 20:34:48 +0000
+
 python-traxcommon (0.3.12) stable; urgency=low
 
   [ Jenkins ]
