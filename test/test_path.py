@@ -178,6 +178,9 @@ def test_smb_remove():
     assert not p.exists()
 
 def test_smb_mkdirs():
+    """
+    SMBPath.makedirs
+    """
     BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
@@ -211,3 +214,22 @@ def test_smb_mkdirs():
     )
     if p.exists():
         p.remove()
+
+def test_ls_glob():
+    """
+    List directory contents and filter on glob
+    """
+    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_ls_names'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    for i in p.ls_names('ab*'):
+        assert i in [
+            "{}\\test_ls_names\\{}".format(BASE, 'abcd'),
+            "{}\\test_ls_names\\{}".format(BASE, 'abef'),
+        ]
+        assert i not in [
+            "{}\\test_ls_names\\{}".format(BASE, 'defg'),
+        ]

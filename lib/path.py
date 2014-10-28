@@ -7,6 +7,7 @@ import os
 import datetime
 import requests
 import re
+import time
 import smb
 import boto
 import hashlib
@@ -15,6 +16,8 @@ import tempfile
 from boto.s3.key import Key
 import multiprocessing
 from smb.SMBConnection import SMBConnection
+from smb.smb_constants import *
+from smb.smb2_constants import *
 import smbc
 import logging
 import repoze.lru
@@ -35,6 +38,16 @@ EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
 EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 DFSCACHE = {}
 USE_SMBC = True
+SMBC_TYPE_FILE = 8
+SMBC_TYPE_DIR = 7
+DFLTSEARCH = (
+    SMB2_FILE_ATTRIBUTE_READONLY |
+    SMB2_FILE_ATTRIBUTE_HIDDEN |
+    SMB2_FILE_ATTRIBUTE_SYSTEM |
+    SMB2_FILE_ATTRIBUTE_DIRECTORY |
+    SMB2_FILE_ATTRIBUTE_ARCHIVE |
+    SMB2_FILE_ATTRIBUTE_NORMAL
+)
 
 class TraxCommonException(Exception):
     """
@@ -639,12 +652,9 @@ class SMBPath(BasePath):
             for a in dirs:
                 path = self.join(path, a)
                 path.lstrip('\\')
-                print 'wtf1', path
                 self.relpath = path
-                print 'wtf2', self.exists()
                 if self.exists():
                     continue
-                print 'wtf3', self.uri
                 ctx.mkdir(self.uri)
         finally:
             #self.WRITELOCK.release(self.server_name, self.share, self.relpath)
@@ -700,7 +710,7 @@ class SMBPath(BasePath):
     def filenames(self, glob='*', limit=0):
         for i in self.ls_names(
             glob=glob,
-            smb_attribs=smb.smb_constants.SMB_FILE_ATTRIBUTE_NORMAL,
+            smb_attribs=smb.smb2_constants.SMB2_FILE_ATTRIBUTE_NORMAL,
             limit=limit,
         ):
             yield i
@@ -712,7 +722,7 @@ class SMBPath(BasePath):
     def dirnames(self, glob='*', limit=0):
         for i in self.ls_names(
             glob=glob,
-            smb_attribs=smb.smb_contants.SMB_FILE_ATTRIBUTE_DIRECTORY,
+            smb_attribs=smb.smb2_contants.SMB2_FILE_ATTRIBUTE_DIRECTORY,
             limit=limit,
         ):
             yield i
@@ -728,7 +738,7 @@ class SMBPath(BasePath):
         for pathname in self.ls_names(glob=glob, limit=limit):
             yield Path(pathname)
 
-    def _smbc_ls_names(self, glob='*', smb_attribs=55, limit=0):
+    def _smbc_ls_names(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
         """
         List a directory and return the names of the files and directories.
         """
@@ -740,12 +750,23 @@ class SMBPath(BasePath):
         for a in paths:
             if a.name in ['.', '..']:
                 continue
-            yield Path(self.path).join(
-                self.path,
-                a.name
-            )
+            if a.smbc_type == SMBC_TYPE_FILE:
+                if smb_attribs & SMB2_FILE_ATTRIBUTE_NORMAL != SMB2_FILE_ATTRIBUTE_NORMAL:
+                    continue
+            elif a.smbc_type == SMBC_TYPE_DIRECTORY:
+                if smb_attribs & SMB2_FILE_ATTRIBUTE_DIRECTORY != SMB2_FILE_ATTRIBUTE_DIRECTORY:
+                    continue
+            else:
+                log.warn("Unhandled smbc type: %s %s", a, a.smbc_type)
+                continue
+            if glob.fnmatch.fnmatch(a.name, glb):
+                _ = Path(self.path).join(
+                    self.path,
+                    a.name
+                )
+                yield _
 
-    def _pysmb_ls_names(self, glob='*', smb_attribs=55, limit=0):
+    def _pysmb_ls_names(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
         """
         List a directory and return the names of the files and directories.
         """
@@ -757,7 +778,7 @@ class SMBPath(BasePath):
                 self.share,
                 self.relpath,
                 search=smb_attribs,
-                pattern=glob,
+                pattern=glb,
                 limit=limit,
                 timeout=self.timeout,
             )
@@ -778,16 +799,16 @@ class SMBPath(BasePath):
                 a.filename.encode('iso-8859-1')
             )
 
-    def ls_names(self, glob='*', smb_attribs=55, limit=0):
+    def ls_names(self, glob='*', smb_attribs=DFLTSEARCH, limit=0):
         """
         List a directory and return the names of the files and directories.
         """
         if USE_SMBC:
             return self._smbc_ls_names(
-                glob=glob, smb_attribs=smb_attribs, limit=limit,
+                glb=glob, smb_attribs=smb_attribs, limit=limit,
             )
         return self._pysmb_ls_names(
-            glob=glob, smb_attribs=smb_attribs, limit=limit,
+            glb=glob, smb_attribs=smb_attribs, limit=limit,
         )
 
     def _smbc_remove(self):
@@ -815,22 +836,6 @@ class SMBPath(BasePath):
     @staticmethod
     def _dirname(inpath):
         return smb_dirname(inpath)
-        host = None
-        if inpath.startswith('\\\\'):
-            parts = inpath.strip('\\\\').split('\\', 1)
-            if len(parts) == 2:
-                host = parts[0]
-                path = parts[1]
-            else:
-                path = inpath[2:]
-        else:
-            path = inpath
-        if inpath.endswith('\\'):
-            path = inpath.rstrip('\\')
-        dirname = path.rsplit('\\', 1)[0]
-        if host:
-            return '\\\\' + host + '\\' + (dirname or '\\')
-        return dirname or '\\'
 
     def _smbc_atime(self):
         ctx = smbc.Context()
@@ -884,14 +889,19 @@ class SMBPath(BasePath):
         ret = fd.fstat()[7]
         return ret
 
-    @property
-    def size(self):
+    def _pysmb_size(self):
         conn = self.get_connection()
         paths = conn.listPath(
             self.share, self.rel_dirname, pattern=self.rel_basename,
             timeout=self.timeout,
         )
         return paths[0].file_size
+
+    @property
+    def size(self):
+        if USE_SMBC:
+            return self._smbc_size()
+        return self._pysmb_size()
 
     @property
     def dirname(self):
@@ -991,7 +1001,6 @@ class SMBPath(BasePath):
 class ArchivingError(Exception):
     pass
 
-import time
 def archive_file(
         path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15,
         aws_access_key=None, aws_secret_key=None, **meta_data
