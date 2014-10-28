@@ -843,7 +843,7 @@ class SMBPath(BasePath):
         ctx.optionNoAutoAnonymousLogin = True
         fd = ctx.open(self.uri)
         ret = fd.fstat()[8]
-        return ret
+        return datetime.datetime.utcfromtimestamp(ret)
 
     def _pysmb_atime(self):
         conn = self.get_connection()
@@ -864,8 +864,10 @@ class SMBPath(BasePath):
         ctx = smbc.Context()
         ctx.functionAuthData = self._smbc_authn
         ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri)
         ret = fd.fstat()[9]
-        return ret
+        fd.close()
+        return datetime.datetime.utcfromtimestamp(ret)
 
     def _pysmb_mtime(self):
         conn = self.get_connection()
@@ -886,7 +888,9 @@ class SMBPath(BasePath):
         ctx = smbc.Context()
         ctx.functionAuthData = self._smbc_authn
         ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri)
         ret = fd.fstat()[7]
+        fd.close()
         return ret
 
     def _pysmb_size(self):
