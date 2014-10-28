@@ -66,14 +66,15 @@ def daemonize(
 
     #XXX Causes JoinableQueue to fail with bad file descriptor
     # Close all open file descriptors
-    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-    if (maxfd == resource.RLIM_INFINITY):
-        maxfd = 1024
-    for fd in range(0, maxfd):
-        try:
-            os.close(fd)
-        except OSError:
-            pass
+
+    #maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+    #if (maxfd == resource.RLIM_INFINITY):
+    #    maxfd = 1024
+    #for fd in range(0, maxfd):
+    #    try:
+    #        os.close(fd)
+    #    except OSError:
+    #        pass
 
     pid = os.fork()
     if pid > 0:
