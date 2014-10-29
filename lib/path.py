@@ -7,6 +7,7 @@ import os
 import datetime
 import requests
 import re
+import time
 import smb
 import boto
 import hashlib
@@ -15,6 +16,9 @@ import tempfile
 from boto.s3.key import Key
 import multiprocessing
 from smb.SMBConnection import SMBConnection
+from smb.smb_constants import *
+from smb.smb2_constants import *
+import smbc
 import logging
 import repoze.lru
 from traxcommon.symbols import ONLINE
@@ -33,6 +37,17 @@ DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
 EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 DFSCACHE = {}
+USE_SMBC = True
+SMBC_TYPE_FILE = 8
+SMBC_TYPE_DIR = 7
+DFLTSEARCH = (
+    SMB2_FILE_ATTRIBUTE_READONLY |
+    SMB2_FILE_ATTRIBUTE_HIDDEN |
+    SMB2_FILE_ATTRIBUTE_SYSTEM |
+    SMB2_FILE_ATTRIBUTE_DIRECTORY |
+    SMB2_FILE_ATTRIBUTE_ARCHIVE |
+    SMB2_FILE_ATTRIBUTE_NORMAL
+)
 
 class TraxCommonException(Exception):
     """
@@ -465,11 +480,12 @@ class SMBPath(BasePath):
 
     def __init__(
             self, path, mode='r', user=None, password=None, api=None,
-            clientname=CLIENTNAME, find_dfs_share=None, write_lock=None
+            clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
+            timeout=120,
             ):
         self._set_path(path)
-        find_dfs_share = find_dfs_share or default_find_dfs_share
-        server_name, share, domain, relpath = find_dfs_share(self.path)
+        self.find_dfs_share = find_dfs_share or default_find_dfs_share
+        server_name, share, domain, relpath = self.find_dfs_share(self.path)
         self.server_name = server_name
         self.share = share
         self.relpath = relpath
@@ -477,11 +493,19 @@ class SMBPath(BasePath):
         self.user = user or SMB_USER
         self.password = password or SMB_PASS
         self.clientname = clientname
+        self.timeout = timeout
         self._index = 0
         self.mode = mode
         self._conn = None
         if write_lock:
             self.WRITELOCK = write_lock
+
+    @property
+    def uri(self):
+        return 'smb://{}.{}/{}/{}'.format(
+            self.server_name, self.domain, self.share.replace('\\', '/'),
+            self.relpath.replace('\\', '/')
+        )
 
     def tell(self):
         return self._index
@@ -489,9 +513,24 @@ class SMBPath(BasePath):
     def seek(self, index, *args):
         self._index = index
 
-    def read(self, size=-1, con=None):
+    def _smbc_read(self, size=-1, ctx=None):
+        if ctx is None:
+            ctx = smbc.Context()
+            ctx.functionAuthData = self._smbc_authn
+            ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri, os.O_RDONLY)
+        fd.seek(self._index)
+        if size > -1:
+            chunk = fd.read(size)
+        else:
+            chunk = fd.read()
+        fd.close()
+        return chunk
+
+    def _pysmb_read(self, size=-1, conn=None):
+        if conn is None:
+            conn = self.get_connection()
         fp = StringIO.StringIO()
-        conn = self.get_connection()
         conn.retrieveFileFromOffset(
             self.share, self.relpath, fp, self._index, size
         )
@@ -499,14 +538,45 @@ class SMBPath(BasePath):
         fp.seek(0)
         return fp.read()
 
+    def read(self, size=-1, con=None):
+        if USE_SMBC:
+            return self._smbc_read(size=size, ctx=con)
+        return self._pysmb_read(size=size, con=con)
+
     def get_connection(self):
         if not self._conn:
             self._conn = get_smb_connection(
-                self.server_name, self.domain, self.user, self.password
+                self.server_name, self.domain, self.user, self.password,
+                timeout=self.timeout
             )
         return self._conn
 
-    def exists(self, relpath=None):
+    def _smbc_exists(self, relpath=None):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        relpath = relpath or self.relpath
+        dirpath = smb_dirname(relpath).lower()
+        basename = smb_basename(relpath).lower()
+        try:
+            self.relpath = dirpath
+            fd = ctx.opendir(self.uri)
+        except smbc.NoEntryError as e:
+            if e.args[0] != 2:
+                raise
+            return False
+        finally:
+            self.relpath = relpath
+        paths = fd.getdents()
+        exists = basename in [i.name.lower() for i in paths]
+        log.debug(
+            "exists: %s, %s",
+            basename,
+            exists
+        )
+        return exists
+
+    def _pysmb_exists(self, relpath=None):
         relpath = relpath or self.relpath
         conn = self.get_connection()
         rel_dirname = smb_dirname(relpath).lower()
@@ -515,7 +585,7 @@ class SMBPath(BasePath):
             rel_dirname = ''
         try:
             paths = conn.listPath(
-                self.share, rel_dirname,
+                self.share, rel_dirname, timeout=self.timeout,
             )
             exists = rel_basename in [i.filename.lower() for i in paths]
             log.debug(
@@ -527,7 +597,12 @@ class SMBPath(BasePath):
             exists = False
         return exists
 
-    def makedirs(self, relpath=None, is_dir=False):
+    def exists(self, relpath=None):
+        if USE_SMBC:
+            return self._smbc_exists(relpath)
+        return self._pysmb_exists(relpath)
+
+    def _pysmb_makedirs(self, relpath=None, is_dir=False):
         if not relpath:
             relpath = self.relpath
         c = self.get_connection()
@@ -541,7 +616,7 @@ class SMBPath(BasePath):
             for a in dirs:
                 path = '{0}\\{1}'.format(path, a)
                 try:
-                    c.listPath(self.share, path)
+                    c.listPath(self.share, path, timeout=self.timeout)
                 except smb.smb_structs.OperationFailure as e:
                     pass
                 else:
@@ -553,11 +628,64 @@ class SMBPath(BasePath):
                     pass
                 exists = True
                 try:
-                    c.listPath(self.share, path)
+                    c.listPath(self.share, path, timeout=self.timeout)
                 except smb.smb_structs.OperationFailure:
                     exists = False
                 if not exists:
                     raise e
+        finally:
+            self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+
+    def _smbc_makedirs(self, relpath=None, is_dir=False):
+        if not relpath:
+            relpath = self.relpath
+        if is_dir:
+            dirs = relpath.split('\\')
+        else:
+            dirs = relpath.split('\\')[:-1]
+        path = ''
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        #self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        try:
+            for a in dirs:
+                path = self.join(path, a)
+                path.lstrip('\\')
+                self.relpath = path
+                if self.exists():
+                    continue
+                ctx.mkdir(self.uri)
+        finally:
+            #self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+            pass
+
+    def makedirs(self, relpath=None, is_dir=False):
+        if USE_SMBC:
+            return self._smbc_makedirs(relpath, is_dir)
+        return self._pysmb_makedirs(relpath, is_dir)
+
+    def _smbc_write(self, fp):
+        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        try:
+            ctx = smbc.Context()
+            ctx.functionAuthData = self._smbc_authn
+            ctx.optionNoAutoAnonymousLogin = True
+            try:
+                fd = ctx.open(self.uri, os.O_WRONLY)
+            except smbc.NoEntryError:
+                ctx.creat(self.uri)
+                fd = ctx.open(self.uri, os.O_WRONLY)
+            fd.seek(self._index)
+            fd.write(fp.read())
+        finally:
+            self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+
+    def _pysmb_write(self, fp):
+        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        try:
+            conn = self.get_connection()
+            conn.storeFile(self.share, self.relpath, fp)
         finally:
             self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
@@ -571,12 +699,9 @@ class SMBPath(BasePath):
             self.makedirs()
         else:
             log.debug("Base dir exists: %s", self.rel_dirname)
-        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
-        try:
-            conn = self.get_connection()
-            conn.storeFile(self.share, self.relpath, fp)
-        finally:
-            self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+        if USE_SMBC:
+            return self._smbc_write(fp)
+        return self._pysmb_write(fp)
 
     def files(self, glob='*', limit=0):
         for i in self.filenames(glob=glob, limit=limit):
@@ -585,7 +710,7 @@ class SMBPath(BasePath):
     def filenames(self, glob='*', limit=0):
         for i in self.ls_names(
             glob=glob,
-            smb_attribs=smb.smb_constants.SMB_FILE_ATTRIBUTE_NORMAL,
+            smb_attribs=smb.smb2_constants.SMB2_FILE_ATTRIBUTE_NORMAL,
             limit=limit,
         ):
             yield i
@@ -597,7 +722,7 @@ class SMBPath(BasePath):
     def dirnames(self, glob='*', limit=0):
         for i in self.ls_names(
             glob=glob,
-            smb_attribs=smb.smb_contants.SMB_FILE_ATTRIBUTE_DIRECTORY,
+            smb_attribs=smb.smb2_contants.SMB2_FILE_ATTRIBUTE_DIRECTORY,
             limit=limit,
         ):
             yield i
@@ -613,7 +738,35 @@ class SMBPath(BasePath):
         for pathname in self.ls_names(glob=glob, limit=limit):
             yield Path(pathname)
 
-    def ls_names(self, glob='*', smb_attribs=55, limit=0):
+    def _smbc_ls_names(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
+        """
+        List a directory and return the names of the files and directories.
+        """
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.opendir(self.uri)
+        paths = fd.getdents()
+        for a in paths:
+            if a.name in ['.', '..']:
+                continue
+            if a.smbc_type == SMBC_TYPE_FILE:
+                if smb_attribs & SMB2_FILE_ATTRIBUTE_NORMAL != SMB2_FILE_ATTRIBUTE_NORMAL:
+                    continue
+            elif a.smbc_type == SMBC_TYPE_DIRECTORY:
+                if smb_attribs & SMB2_FILE_ATTRIBUTE_DIRECTORY != SMB2_FILE_ATTRIBUTE_DIRECTORY:
+                    continue
+            else:
+                log.warn("Unhandled smbc type: %s %s", a, a.smbc_type)
+                continue
+            if glob.fnmatch.fnmatch(a.name, glb):
+                _ = Path(self.path).join(
+                    self.path,
+                    a.name
+                )
+                yield _
+
+    def _pysmb_ls_names(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
         """
         List a directory and return the names of the files and directories.
         """
@@ -625,8 +778,9 @@ class SMBPath(BasePath):
                 self.share,
                 self.relpath,
                 search=smb_attribs,
-                pattern=glob,
+                pattern=glb,
                 limit=limit,
+                timeout=self.timeout,
             )
         except smb.smb_structs.OperationFailure as e:
             # Determine if this failure is due to an invalid path or just
@@ -645,7 +799,28 @@ class SMBPath(BasePath):
                 a.filename.encode('iso-8859-1')
             )
 
-    def remove(self):
+    def ls_names(self, glob='*', smb_attribs=DFLTSEARCH, limit=0):
+        """
+        List a directory and return the names of the files and directories.
+        """
+        if USE_SMBC:
+            return self._smbc_ls_names(
+                glb=glob, smb_attribs=smb_attribs, limit=limit,
+            )
+        return self._pysmb_ls_names(
+            glb=glob, smb_attribs=smb_attribs, limit=limit,
+        )
+
+    def _smbc_remove(self):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        if self.isdir():
+            ctx.rmdir(self.uri)
+        else:
+            ctx.unlink(self.uri)
+
+    def _pysmb_remove(self):
         conn = self.get_connection()
         self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
@@ -653,51 +828,84 @@ class SMBPath(BasePath):
         finally:
             self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
 
+    def remove(self):
+        if USE_SMBC:
+            return self._smbc_remove()
+        return self._pysmb_remove()
+
     @staticmethod
     def _dirname(inpath):
         return smb_dirname(inpath)
-        host = None
-        if inpath.startswith('\\\\'):
-            parts = inpath.strip('\\\\').split('\\', 1)
-            if len(parts) == 2:
-                host = parts[0]
-                path = parts[1]
-            else:
-                path = inpath[2:]
-        else:
-            path = inpath
-        if inpath.endswith('\\'):
-            path = inpath.rstrip('\\')
-        dirname = path.rsplit('\\', 1)[0]
-        if host:
-            return '\\\\' + host + '\\' + (dirname or '\\')
-        return dirname or '\\'
+
+    def _smbc_atime(self):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri)
+        ret = fd.fstat()[8]
+        return datetime.datetime.utcfromtimestamp(ret)
+
+    def _pysmb_atime(self):
+        conn = self.get_connection()
+        paths = conn.listPath(
+            self.share, self.rel_dirname, pattern=self.rel_basename,
+            timeout=self.timeout,
+        )
+        date = datetime.datetime.utcfromtimestamp(paths[0].last_access_time)
+        return date
 
     @property
     def atime(self):
+        if USE_SMBC:
+            return self._smbc_atime()
+        return self._pysmb_atime()
+
+    def _smbc_mtime(self):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri)
+        ret = fd.fstat()[9]
+        fd.close()
+        return datetime.datetime.utcfromtimestamp(ret)
+
+    def _pysmb_mtime(self):
         conn = self.get_connection()
         paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename
+            self.share, self.rel_dirname, pattern=self.rel_basename,
+            timeout=self.timeout,
         )
         date = datetime.datetime.utcfromtimestamp(paths[0].last_access_time)
         return date
 
     @property
     def mtime(self):
+        if USE_SMBC:
+            return self._smbc_mtime()
+        return self._pysmb_mtime()
+
+    def _smbc_size(self):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        fd = ctx.open(self.uri)
+        ret = fd.fstat()[7]
+        fd.close()
+        return ret
+
+    def _pysmb_size(self):
         conn = self.get_connection()
         paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename
+            self.share, self.rel_dirname, pattern=self.rel_basename,
+            timeout=self.timeout,
         )
-        date = datetime.datetime.utcfromtimestamp(paths[0].last_access_time)
-        return date
+        return paths[0].file_size
 
     @property
     def size(self):
-        conn = self.get_connection()
-        paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename
-        )
-        return paths[0].file_size
+        if USE_SMBC:
+            return self._smbc_size()
+        return self._pysmb_size()
 
     @property
     def dirname(self):
@@ -743,7 +951,23 @@ class SMBPath(BasePath):
             yield line
             line = self.readline()
 
-    def isdir(self):
+    def _smbc_isdir(self):
+        ctx = smbc.Context()
+        ctx.functionAuthData = self._smbc_authn
+        ctx.optionNoAutoAnonymousLogin = True
+        fd = None
+        try:
+            fd = ctx.open(self.uri)
+        except RuntimeError as e:
+            if e.args[0] != 21:
+                raise
+            return True
+        finally:
+            if fd:
+                fd.close()
+        return False
+
+    def _pysmb_isdir(self):
         relpath =  self.relpath
         conn = self.get_connection()
         rel_dirname = smb_dirname(relpath).lower()
@@ -754,7 +978,7 @@ class SMBPath(BasePath):
         isdir = False
         try:
             paths = conn.listPath(
-                self.share, rel_dirname,
+                self.share, rel_dirname, timeout=self.timeout
             )
             for i in paths:
                 if i.filename.lower() == rel_basename:
@@ -770,10 +994,17 @@ class SMBPath(BasePath):
             self.WRITELOCK.release(self.server_name, self.share, relpath)
         return isdir
 
+    def isdir(self):
+        if USE_SMBC:
+            return self._smbc_isdir()
+        return self._pysmb_isdir()
+
+    def _smbc_authn(self, server, share, workgroup, username, password):
+        return "FILEX", self.user, self.password
+
 class ArchivingError(Exception):
     pass
 
-import time
 def archive_file(
         path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15,
         aws_access_key=None, aws_secret_key=None, **meta_data

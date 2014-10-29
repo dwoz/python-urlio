@@ -7,6 +7,7 @@ if 'SMBUSER' in os.environ:
 if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
+
 def data_path(filename):
     return os.path.join(os.path.dirname(__file__), 'data', filename)
 
@@ -156,3 +157,79 @@ def test_local_path_files():
         os.rmdir('/tmp/test_local_path_files')
 
 
+def test_smb_remove():
+    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    p.write('this is a test file')
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
+        find_dfs_share=find_dfs_share
+    )
+    assert p.exists()
+    p.remove()
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
+        find_dfs_share=find_dfs_share
+    )
+    assert not p.exists()
+
+def test_smb_mkdirs():
+    """
+    SMBPath.makedirs
+    """
+    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    if p.exists():
+        p.remove()
+    assert not p.exists()
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    if p.exists():
+        p.remove()
+    assert not p.exists()
+    p.makedirs(is_dir=True)
+    assert p.exists()
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    if p.exists():
+        p.remove()
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    if p.exists():
+        p.remove()
+
+def test_ls_glob():
+    """
+    List directory contents and filter on glob
+    """
+    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    p = SMBPath(
+        "{0}\\{1}".format(BASE, 'test_ls_names'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    for i in p.ls_names('ab*'):
+        assert i in [
+            "{}\\test_ls_names\\{}".format(BASE, 'abcd'),
+            "{}\\test_ls_names\\{}".format(BASE, 'abef'),
+        ]
+        assert i not in [
+            "{}\\test_ls_names\\{}".format(BASE, 'defg'),
+        ]
