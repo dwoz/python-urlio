@@ -1,4 +1,5 @@
 import os
+import datetime
 from traxcommon import path
 from traxcommon.path import Path, SMBPath, LocalPath, smb_dirname
 
@@ -286,3 +287,66 @@ def test_smbc_read():
     index = p.tell()
     assert index == 9, index
     assert a == 'test', a
+
+def test_smbc_size():
+    path.USE_SMBC = True
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert p.size == 10, p.size
+
+def test_pysmb_size():
+    path.USE_SMBC = False
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert p.size == 10, p.size
+
+def test_smbc_mtime():
+    path.USE_SMBC = True
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert (
+        p.mtime == datetime.datetime(2014, 10, 29, 3, 17, 16)
+    ), p.mtime
+
+def test_pysmb_mtime():
+    path.USE_SMBC = False
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert (
+        p.mtime == datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
+    ), p.mtime
+
+
+def test_smbc_atime():
+    path.USE_SMBC = True
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert (
+        p.atime == datetime.datetime(2014, 10, 29, 3, 15, 21)
+    ), p.atime
+
+def test_pysmb_atime():
+    path.USE_SMBC = False
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    assert (
+        p.atime == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
+    ), p.atime
