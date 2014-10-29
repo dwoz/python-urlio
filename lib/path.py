@@ -753,7 +753,7 @@ class SMBPath(BasePath):
             if a.smbc_type == SMBC_TYPE_FILE:
                 if smb_attribs & SMB2_FILE_ATTRIBUTE_NORMAL != SMB2_FILE_ATTRIBUTE_NORMAL:
                     continue
-            elif a.smbc_type == SMBC_TYPE_DIRECTORY:
+            elif a.smbc_type == SMBC_TYPE_DIR:
                 if smb_attribs & SMB2_FILE_ATTRIBUTE_DIRECTORY != SMB2_FILE_ATTRIBUTE_DIRECTORY:
                     continue
             else:
