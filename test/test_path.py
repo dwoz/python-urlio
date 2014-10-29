@@ -2,6 +2,8 @@ import os
 from traxcommon import path
 from traxcommon.path import Path, SMBPath, LocalPath, smb_dirname
 
+BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+
 if 'SMBUSER' in os.environ:
     path.SMB_USER = os.environ['SMBUSER']
 if 'SMBPASS' in os.environ:
@@ -31,21 +33,35 @@ def test_smbpath1():
     """
     Call find_dfs method to lookup dfs information
     """
-    path = SMBPath(
+    path.USE_SMBC = True
+    p = SMBPath(
         '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
         find_dfs_share=find_dfs_share
     )
-    assert path.domain == 'filex.com'
-    assert path.server_name == 'fxb04fs0301'
-    assert path.share == 'Long Term Archive Backup'
-    assert path.relpath == 'staging\\meh', "{}".format(path.relpath)
+    assert p.domain == 'filex.com'
+    assert p.server_name == 'fxb04fs0301'
+    assert p.share == 'Long Term Archive Backup'
+    assert p.relpath == 'staging\\meh', "{}".format(p.relpath)
 
+
+def test_pysmb_smbpath1():
+    """
+    Call find_dfs method to lookup dfs information
+    """
+    path.USE_SMBC = False
+    p = SMBPath(
+        '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
+        find_dfs_share=find_dfs_share
+    )
+    assert p.domain == 'filex.com'
+    assert p.server_name == 'fxb04fs0301'
+    assert p.share == 'Long Term Archive Backup'
+    assert p.relpath == 'staging\\meh', "{}".format(p.relpath)
 
 def test_smbpath2():
     """
     List files in an smb directory
     """
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smbpath2'),
         find_dfs_share=find_dfs_share
@@ -59,7 +75,6 @@ def test_smbpath2():
 
 
 def test_path3():
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
     path = SMBPath(
         "{0}\\{1}".format(BASE, "test_smbpath3\\test_file"),
         find_dfs_share=find_dfs_share
@@ -158,7 +173,6 @@ def test_local_path_files():
 
 
 def test_smb_remove():
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
         mode='w',
@@ -181,7 +195,7 @@ def test_smb_mkdirs():
     """
     SMBPath.makedirs
     """
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    path.USE_SMBC = True
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
         mode='w',
@@ -219,7 +233,6 @@ def test_ls_glob():
     """
     List directory contents and filter on glob
     """
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_ls_names'),
         mode='r',
@@ -227,9 +240,49 @@ def test_ls_glob():
     )
     for i in p.ls_names('ab*'):
         assert i in [
-            "{}\\test_ls_names\\{}".format(BASE, 'abcd'),
-            "{}\\test_ls_names\\{}".format(BASE, 'abef'),
+            "{}\\{}\\{}".format(BASE, 'test_ls_names', 'abcd'),
+            "{}\\{}\\{}".format(BASE, 'test_ls_names', 'abef'),
         ]
         assert i not in [
-            "{}\\test_ls_names\\{}".format(BASE, 'defg'),
+            "{}\\{}\\{}".format(BASE, 'test_ls_names', 'defg'),
         ]
+
+def test_pysmb_read():
+    """
+    test pysmb read
+    """
+    path.USE_SMBC = False
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    p.tell() == 0
+    a = p.read(5)
+    index = p.tell()
+    assert index == 5, index
+    assert a == 'Nice ', a
+    a = p.read(4)
+    index = p.tell()
+    assert index == 9, index
+    assert a == 'test', a
+
+def test_smbc_read():
+    """
+    test smbc read
+    """
+    path.USE_SMBC = True
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    p.tell() == 0
+    a = p.read(5)
+    index = p.tell()
+    assert index == 5, index
+    assert a == 'Nice ', a
+    a = p.read(4)
+    index = p.tell()
+    assert index == 9, index
+    assert a == 'test', a
