@@ -1,3 +1,19 @@
+python-traxcommon (0.5.2) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #39. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.1 into develop
+  * Bump patch version
+  * Fix broken index on smbc read method
+
+  [ Mike Palmer ]
+  * Merge pull request #41 from TraxTechnologies/smbc_read
+  * Merge pull request #42 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 29 Oct 2014 04:08:43 +0000
+
 python-traxcommon (0.5.1) stable; urgency=low
 
   [ Jenkins ]
