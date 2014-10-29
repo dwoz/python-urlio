@@ -524,6 +524,7 @@ class SMBPath(BasePath):
             chunk = fd.read(size)
         else:
             chunk = fd.read()
+        self._index = self._index + len(chunk)
         fd.close()
         return chunk
 
@@ -541,7 +542,7 @@ class SMBPath(BasePath):
     def read(self, size=-1, con=None):
         if USE_SMBC:
             return self._smbc_read(size=size, ctx=con)
-        return self._pysmb_read(size=size, con=con)
+        return self._pysmb_read(size=size, conn=con)
 
     def get_connection(self):
         if not self._conn:
