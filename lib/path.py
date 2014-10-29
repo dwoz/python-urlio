@@ -843,7 +843,7 @@ class SMBPath(BasePath):
         ctx.functionAuthData = self._smbc_authn
         ctx.optionNoAutoAnonymousLogin = True
         fd = ctx.open(self.uri)
-        ret = fd.fstat()[8]
+        ret = fd.fstat()[7]
         return datetime.datetime.utcfromtimestamp(ret)
 
     def _pysmb_atime(self):
@@ -866,7 +866,7 @@ class SMBPath(BasePath):
         ctx.functionAuthData = self._smbc_authn
         ctx.optionNoAutoAnonymousLogin = True
         fd = ctx.open(self.uri)
-        ret = fd.fstat()[9]
+        ret = fd.fstat()[8]
         fd.close()
         return datetime.datetime.utcfromtimestamp(ret)
 
@@ -876,7 +876,7 @@ class SMBPath(BasePath):
             self.share, self.rel_dirname, pattern=self.rel_basename,
             timeout=self.timeout,
         )
-        date = datetime.datetime.utcfromtimestamp(paths[0].last_access_time)
+        date = datetime.datetime.utcfromtimestamp(paths[0].last_write_time)
         return date
 
     @property
@@ -890,7 +890,8 @@ class SMBPath(BasePath):
         ctx.functionAuthData = self._smbc_authn
         ctx.optionNoAutoAnonymousLogin = True
         fd = ctx.open(self.uri)
-        ret = fd.fstat()[7]
+        print self.path, fd.fstat()
+        ret = fd.fstat()[6]
         fd.close()
         return ret
 
