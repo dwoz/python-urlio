@@ -1,3 +1,17 @@
+python-traxcommon (0.5.1) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #38. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.0 into develop
+  * Fix typo
+
+  [ Mike Palmer ]
+  * Merge pull request #40 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 29 Oct 2014 00:09:53 +0000
+
 python-traxcommon (0.5.0) stable; urgency=low
 
   [ Jenkins ]
