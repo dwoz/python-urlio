@@ -473,6 +473,21 @@ def smb_basename(inpath):
     parts = inpath.strip('\\').split('\\')
     return parts[-1] or '\\'
 
+class SMBContext(object):
+    """SMB Context singelton"""
+
+    def __init__(self, user=None, password=None):
+        ctx = smb_context()
+        self.user = user
+        self.password = password
+
+    def _smbc_authn(self, server, share, workgroup, username, password):
+        return "FILEX", self.user or SMB_USER, self.password or SMB_PASS
+
+    def __call__(self):
+        return self.ctx
+
+smb_context = SMBContext()
 
 class SMBPath(BasePath):
 
@@ -515,9 +530,7 @@ class SMBPath(BasePath):
 
     def _smbc_read(self, size=-1, ctx=None):
         if ctx is None:
-            ctx = smbc.Context()
-            ctx.functionAuthData = self._smbc_authn
-            ctx.optionNoAutoAnonymousLogin = True
+            ctx = smb_context()
         fd = ctx.open(self.uri, os.O_RDONLY)
         fd.seek(self._index)
         if size > -1:
@@ -553,9 +566,7 @@ class SMBPath(BasePath):
         return self._conn
 
     def _smbc_exists(self, relpath=None):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         relpath = relpath or self.relpath
         dirpath = smb_dirname(relpath).lower()
         basename = smb_basename(relpath).lower()
@@ -645,9 +656,7 @@ class SMBPath(BasePath):
         else:
             dirs = relpath.split('\\')[:-1]
         path = ''
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         #self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             for a in dirs:
@@ -669,9 +678,7 @@ class SMBPath(BasePath):
     def _smbc_write(self, fp):
         self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
-            ctx = smbc.Context()
-            ctx.functionAuthData = self._smbc_authn
-            ctx.optionNoAutoAnonymousLogin = True
+            ctx = smb_context()
             try:
                 fd = ctx.open(self.uri, os.O_WRONLY)
             except smbc.NoEntryError:
@@ -743,9 +750,7 @@ class SMBPath(BasePath):
         """
         List a directory and return the names of the files and directories.
         """
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         fd = ctx.opendir(self.uri)
         paths = fd.getdents()
         for a in paths:
@@ -813,9 +818,7 @@ class SMBPath(BasePath):
         )
 
     def _smbc_remove(self):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         if self.isdir():
             ctx.rmdir(self.uri)
         else:
@@ -839,9 +842,7 @@ class SMBPath(BasePath):
         return smb_dirname(inpath)
 
     def _smbc_atime(self):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         fd = ctx.open(self.uri)
         ret = fd.fstat()[7]
         return datetime.datetime.utcfromtimestamp(ret)
@@ -862,9 +863,7 @@ class SMBPath(BasePath):
         return self._pysmb_atime()
 
     def _smbc_mtime(self):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         fd = ctx.open(self.uri)
         ret = fd.fstat()[8]
         fd.close()
@@ -886,9 +885,7 @@ class SMBPath(BasePath):
         return self._pysmb_mtime()
 
     def _smbc_size(self):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         fd = ctx.open(self.uri)
         print self.path, fd.fstat()
         ret = fd.fstat()[6]
@@ -954,9 +951,7 @@ class SMBPath(BasePath):
             line = self.readline()
 
     def _smbc_isdir(self):
-        ctx = smbc.Context()
-        ctx.functionAuthData = self._smbc_authn
-        ctx.optionNoAutoAnonymousLogin = True
+        ctx = smb_context()
         fd = None
         try:
             fd = ctx.open(self.uri)
