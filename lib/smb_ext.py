@@ -2,7 +2,9 @@
 Override pysmb's listPath method to be able to limit the number of
 results returned.
 """
-from smb.base import _PendingRequest, SharedFile
+from smb.base import (
+    _PendingRequest, SharedFile, NotConnectedError, NotReadyError
+)
 from smb.smb_constants import *
 from smb.smb_structs import *
 from smb.smb2_structs import *
@@ -50,6 +52,7 @@ def listPath(conn, service_name, path,
         conn.is_busy = False
 
     return results
+
 
 def _listPath_SMB2(
         conn, service_name, path, callback, errback, search, pattern,
@@ -181,6 +184,135 @@ def _listPath_SMB2(
         m = SMB2Message(SMB2TreeConnectRequest(r'\\%s\%s' % ( conn.remote_name.upper(), service_name )))
         conn._sendSMBMessage(m)
         conn.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, connectCB, errback, path = service_name)
+        messages_history.append(m)
+    else:
+        sendCreate(conn.connected_trees[service_name])
+
+def storeFileFromOffset(conn, service_name, path, file_obj, offset = 0L, timeout = 30, overwrite=False):
+        """
+        Store the contents of the *file_obj* at *path* on the *service_name*.
+        :param string/unicode service_name: the name of the shared folder for the *path*
+        :param string/unicode path: Path of the file on the remote server. If the file at *path* does not exist, it will be created. Otherwise, it will be overwritten.
+                                    If the *path* refers to a folder or the file cannot be opened for writing, an :doc:`OperationFailure<smb_exceptions>` will be raised.
+        :param file_obj: A file-like object that has a *read* method. Data will read continuously from *file_obj* until EOF.
+        :return: Number of bytes uploaded
+        """
+        if not conn.sock:
+            raise NotConnectedError('Not connected to server')
+
+        results = [ ]
+
+        def cb(r):
+            conn.is_busy = False
+            results.append(r[1])
+
+        def eb(failure):
+            conn.is_busy = False
+            raise failure
+
+        conn.is_busy = True
+        try:
+            _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, cb, eb, offset, timeout = timeout, overwrite = overwrite)
+            while conn.is_busy:
+                conn._pollForNetBIOSPacket(timeout * 1000)
+        finally:
+            conn.is_busy = False
+
+        return results[0]
+
+def _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, callback, errback, starting_offset, timeout = 30, overwrite = False):
+    if not conn.has_authenticated:
+        raise NotReadyError('SMB connection not authenticated')
+
+    path = path.replace('/', '\\')
+    if path.startswith('\\'):
+        path = path[1:]
+    if path.endswith('\\'):
+        path = path[:-1]
+    messages_history = [ ]
+
+    def sendCreate(tid):
+        if overwrite:
+            OVERWRITE = FILE_OVERWRITE_IF
+        else:
+            OVERWRITE = FILE_OPEN_IF
+        create_context_data = binascii.unhexlify(
+            "28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00"
+            "44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00"
+            "00 00 00 00 00 00 00 00 20 00 00 00 10 00 04 00"
+            "00 00 18 00 08 00 00 00 41 6c 53 69 00 00 00 00"
+            "85 62 00 00 00 00 00 00 18 00 00 00 10 00 04 00"
+            "00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00"
+            "00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00"
+            "51 46 69 64 00 00 00 00".replace(' ', '').replace('\n', '')
+        )
+        m = SMB2Message(SMB2CreateRequest(path,
+                                          file_attributes = ATTR_ARCHIVE,
+                                          access_mask = FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | FILE_READ_EA | FILE_WRITE_EA | WRITE_DAC | READ_CONTROL | SYNCHRONIZE,
+                                          share_access = 0,
+                                          oplock = SMB2_OPLOCK_LEVEL_NONE,
+                                          impersonation = SEC_IMPERSONATE,
+                                          create_options = FILE_SEQUENTIAL_ONLY | FILE_NON_DIRECTORY_FILE,
+                                          create_disp = OVERWRITE,
+                                          create_context_data = create_context_data))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, createCB, errback, tid = tid)
+        messages_history.append(m)
+
+    def createCB(create_message, **kwargs):
+        messages_history.append(create_message)
+        if create_message.status == 0:
+            sendWrite(create_message.tid, create_message.payload.fid, starting_offset)
+        else:
+            errback(OperationFailure('Failed to store %s on %s: Unable to open file' % ( path, service_name ), messages_history))
+
+    def sendWrite(tid, fid, offset):
+        write_count = conn.max_write_size
+        data = file_obj.read(write_count)
+        data_len = len(data)
+        if data_len > 0:
+            m = SMB2Message(SMB2WriteRequest(fid, data, offset))
+            m.tid = tid
+            conn._sendSMBMessage(m)
+            conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, writeCB, errback, fid = fid, offset = offset+data_len)
+        else:
+            closeFid(tid, fid, offset = offset)
+
+    def writeCB(write_message, **kwargs):
+        # To avoid crazy memory usage when saving large files, we do not save every write_message in messages_history.
+        if write_message.status == 0:
+            sendWrite(write_message.tid, kwargs['fid'], kwargs['offset'])
+        else:
+            messages_history.append(write_message)
+            closeFid(write_message.tid, kwargs['fid'])
+            errback(OperationFailure('Failed to store %s on %s: Write failed' % ( path, service_name ), messages_history))
+
+    def closeFid(tid, fid, error = None, offset = None):
+        m = SMB2Message(SMB2CloseRequest(fid))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, closeCB, errback, fid = fid, offset = offset, error = error)
+        messages_history.append(m)
+
+    def closeCB(close_message, **kwargs):
+        if kwargs['offset'] is not None:
+            callback(( file_obj, kwargs['offset'] ))  # Note that this is a tuple of 2-elements
+        elif kwargs['error'] is not None:
+            errback(OperationFailure('Failed to store %s on %s: Write failed' % ( path, service_name ), messages_history))
+
+    if not conn.connected_trees.has_key(service_name):
+        def connectCB(connect_message, **kwargs):
+            messages_history.append(connect_message)
+            if connect_message.status == 0:
+                conn.connected_trees[service_name] = connect_message.tid
+                sendCreate(connect_message.tid)
+            else:
+                errback(OperationFailure('Failed to store %s on %s: Unable to connect to shared device' % ( path, service_name ), messages_history))
+
+        m = SMB2Message(SMB2TreeConnectRequest(r'\\%s\%s' % ( conn.remote_name.upper(), service_name )))
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, connectCB, errback, path = service_name)
         messages_history.append(m)
     else:
         sendCreate(conn.connected_trees[service_name])
