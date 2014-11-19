@@ -16,6 +16,7 @@ import tempfile
 from boto.s3.key import Key
 import multiprocessing
 from smb.SMBConnection import SMBConnection
+from smb.SMBConnection import OperationFailure
 from smb.smb_constants import *
 from smb.smb2_constants import *
 import smbc
@@ -490,7 +491,7 @@ class CtxGen(object):
             self.local.ctx = smbc.Context()
             self.local.ctx.functionAuthData = self._smbc_authn
             self.local.ctx.optionNoAutoAnonymousLogin = True
-            self.local.ctx.debug = SMB_DEBUG
+            self.local.ctx.debug = SMBC_DEBUG
         return self.local.ctx
 
 CTX = CtxGen()
@@ -593,25 +594,12 @@ class SMBPath(BasePath):
         return True
 
     def _pysmb_exists(self, relpath=None):
-        relpath = relpath or self.relpath
         conn = self.get_connection()
-        rel_dirname = smb_dirname(relpath).lower()
-        rel_basename = smb_basename(relpath).lower()
-        if rel_dirname == '.':
-            rel_dirname = ''
         try:
-            paths = conn.listPath(
-                self.share, rel_dirname, timeout=self.timeout,
-            )
-            exists = rel_basename in [i.filename.lower() for i in paths]
-            log.debug(
-                "exists: %s, %s",
-                rel_basename,
-                exists
-            )
-        except smb.smb_structs.OperationFailure as e:
-            exists = False
-        return exists
+            stat = conn.getAttributes(self.share, self.relpath)
+        except OperationFailure:
+            return False
+        return stat != None
 
     def exists(self, relpath=None):
         if USE_SMBC:
@@ -826,6 +814,12 @@ class SMBPath(BasePath):
     def _pysmb_remove(self):
         conn = self.get_connection()
         self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        if self.isdir():
+            try:
+                conn.deleteDirectory(self.share, self.relpath)
+            finally:
+                self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
+            return
         try:
             conn.deleteFiles(self.share, self.relpath)
         finally:
@@ -984,31 +978,9 @@ class SMBPath(BasePath):
         return False
 
     def _pysmb_isdir(self):
-        relpath =  self.relpath
         conn = self.get_connection()
-        rel_dirname = smb_dirname(relpath).lower()
-        rel_basename = smb_basename(relpath).lower()
-        if rel_dirname == '.':
-            rel_dirname = ''
-        self.WRITELOCK.acquire(self.server_name, self.share, relpath)
-        isdir = False
-        try:
-            paths = conn.listPath(
-                self.share, rel_dirname, timeout=self.timeout
-            )
-            for i in paths:
-                if i.filename.lower() == rel_basename:
-                    return i.isDirectory
-            log.debug(
-                "exists: %s, %s %s",
-                rel_basename,
-                [i.filename for i in paths],
-            )
-        except smb.smb_structs.OperationFailure as e:
-            isdir = False
-        finally:
-            self.WRITELOCK.release(self.server_name, self.share, relpath)
-        return isdir
+        stat = conn.getAttributes(self.share, self.relpath)
+        return stat.isDirectory
 
     def isdir(self):
         if USE_SMBC:
