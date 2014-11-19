@@ -34,7 +34,7 @@ def test_smbpath1():
     """
     Call find_dfs method to lookup dfs information
     """
-    path.USE_SMBC = True
+    path.USE_SMBC = False
     p = SMBPath(
         '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
         find_dfs_share=find_dfs_share
@@ -196,7 +196,7 @@ def test_smb_mkdirs():
     """
     SMBPath.makedirs
     """
-    path.USE_SMBC = True
+    path.USE_SMBC = False
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
         mode='w',
