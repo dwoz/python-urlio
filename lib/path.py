@@ -795,10 +795,10 @@ class SMBPath(BasePath):
         """
         List a directory and return the names of the files and directories.
         """
-        #if USE_SMBC:
-        return self._smbc_ls_names(
-            glb=glob, smb_attribs=smb_attribs, limit=limit,
-        )
+        if USE_SMBC:
+            return self._smbc_ls_names(
+                glb=glob, smb_attribs=smb_attribs, limit=limit,
+            )
         return self._pysmb_ls_names(
             glb=glob, smb_attribs=smb_attribs, limit=limit,
         )
