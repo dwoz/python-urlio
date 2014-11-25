@@ -1,3 +1,30 @@
+python-traxcommon (0.5.4) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #41. Started by GitHub push by freecyasoy.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.3 into develop
+  * Patch version bump
+  * Use a single global samba context
+  * Use per thread smbc context
+  * Write chunk to specific offset
+
+  [ Will Button ]
+  * Merge pull request #45 from TraxTechnologies/smbcontextsingleton
+
+  [ Daniel Wozniak ]
+  * Better isdir and exists checks
+  * Test the lib we primarily use
+
+  [ dwoz ]
+  * Merge pull request #46 from TraxTechnologies/smbcontextsingleton
+
+  [ freecyasoy ]
+  * Merge pull request #47 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 19 Nov 2014 02:46:31 +0000
+
 python-traxcommon (0.5.3) stable; urgency=low
 
   [ Jenkins ]
