@@ -75,7 +75,7 @@ class FindDfsShare(Exception):
 
 def depth_first_resources(domain_cache):
     resources = []
-    for ns in domain_cache:
+    for ns in domain_cache.copy():
         for resource in domain_cache[ns]:
             path = "{0}\\{1}".format(
                 ns.rstrip('\\'), resource.lstrip('\\')
@@ -92,7 +92,9 @@ def depth_first_resources(domain_cache):
 
 def find_target_in_cache(uri, cache):
     uri = uri.lower()
-    for path, conf in depth_first_resources(cache):
+    if not 'depth_first_resources' in cache:
+        cache['depth_first_resources'] = depth_first_resources(cache)
+    for path, conf in cache['depth_first_resources']:
         path = path.lower().rstrip('\\')
         if uri.startswith(path + '\\') or path == uri:
             for tgt in conf['targets']:
