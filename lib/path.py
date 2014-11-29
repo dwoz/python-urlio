@@ -901,17 +901,14 @@ class SMBPath(BasePath):
 
     def _pysmb_stat(self):
         conn = self.get_connection()
-        paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename,
-            timeout=self.timeout,
-        )
+        attrs = conn.getAttributes(self.share, self.relpath)
         return {
-           'size': paths[0].file_size,
+           'size': attrs.file_size,
             'atime': datetime.datetime.utcfromtimestamp(
-                paths[0].last_access_time
+                attrs.last_access_time
             ),
             'mtime': datetime.datetime.utcfromtimestamp(
-                paths[0].last_write_time
+                attrs.last_write_time
             )
         }
 
