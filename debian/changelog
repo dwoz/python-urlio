@@ -1,3 +1,19 @@
+python-traxcommon (0.5.5) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #42. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.4 into develop
+  * Patch version bump
+  * Wean off smbc methods
+
+  [ Mike Palmer ]
+  * Merge pull request #48 from TraxTechnologies/nomoresmbc
+  * Merge pull request #49 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Tue, 25 Nov 2014 18:27:09 +0000
+
 python-traxcommon (0.5.4) stable; urgency=low
 
   [ Jenkins ]
