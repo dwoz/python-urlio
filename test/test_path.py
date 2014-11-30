@@ -350,3 +350,24 @@ def test_pysmb_atime():
     assert (
         p.atime == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
     ), p.atime
+
+
+def test_pysmb_stat_2008():
+    path.USE_SMBC = False
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    try:
+        s = p.read()
+    except:
+        pass
+    stat = p._pysmb_stat()
+    assert stat['atime'] == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
+
+def test_pysmb_stat_2003():
+    path.USE_SMBC = False
+    p = path.Path(r'\\filex.com\comm\FTP\SHUNFENG\upload\ToBeRouted\FAIL\PROCESSED\08106499.EDI')
+    stat = p._pysmb_stat()
+    assert stat['atime'] == datetime.datetime(2014, 11, 30, 19, 0, 2, 931486), stat['atime']
