@@ -1,3 +1,20 @@
+python-traxcommon (0.5.6) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #43. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.5 into develop
+  * Patch version bump
+  * Optimize stat method
+  * Cache long running method results
+
+  [ Mike Palmer ]
+  * Merge pull request #50 from TraxTechnologies/optimousprime
+  * Merge pull request #51 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sun, 30 Nov 2014 01:58:42 +0000
+
 python-traxcommon (0.5.5) stable; urgency=low
 
   [ Jenkins ]
