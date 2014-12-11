@@ -634,18 +634,36 @@ class SMBPath(BasePath):
         for pathname in self.ls_names(glob=glob, limit=limit):
             yield Path(pathname)
 
-    def ls_names(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
+    def recurse_files(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
+        return self.ls_names(
+            glb, smb_attribs, limit, recurse=True, return_dirs=False
+        )
+
+    def recurse(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
+        return self.ls_names(
+            glb, smb_attribs, limit, recurse=True, return_dirs=True
+        )
+
+    def ls_names(
+            self, glb='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
+            return_dirs=True
+        ):
         """
         List a directory and return the names of the files and directories.
         """
         conn = self.get_connection()
         paths = []
+        request_dirs = smb_attribs & SMB2_FILE_ATTRIBUTE_DIRECTORY == SMB2_FILE_ATTRIBUTE_DIRECTORY
+        if recurse and not request_dirs:
+            useattribs = smb_attribs | SMB2_FILE_ATTRIBUTE_DIRECTORY
+        else:
+            useattribs = smb_attribs
         try:
             paths = listPath(
                 conn,
                 self.share,
                 self.relpath,
-                search=smb_attribs,
+                search=useattribs,
                 pattern=glb,
                 limit=limit,
                 timeout=self.timeout,
@@ -662,10 +680,20 @@ class SMBPath(BasePath):
         for a in paths:
             if a.filename in ['.', '..']:
                 continue
-            yield Path(self.path).join(
-                self.path,
-                a.filename.encode('iso-8859-1')
-            )
+            if a.isDirectory:
+                p = Path(Path(self.path).join(
+                    self.path, a.filename.encode('iso-8859-1')
+                ))
+                if return_dirs:
+                    yield p.path
+                if recurse:
+                    for _ in p.ls_names(glb, smb_attribs, limit, recurse, return_dirs):
+                        yield _
+            else:
+                yield Path(self.path).join(
+                    self.path,
+                    a.filename.encode('iso-8859-1')
+                )
 
     def remove(self):
         conn = self.get_connection()
