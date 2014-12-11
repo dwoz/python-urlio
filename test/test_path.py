@@ -34,7 +34,6 @@ def test_smbpath1():
     """
     Call find_dfs method to lookup dfs information
     """
-    path.USE_SMBC = False
     p = SMBPath(
         '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
         find_dfs_share=find_dfs_share
@@ -49,7 +48,6 @@ def test_pysmb_smbpath1():
     """
     Call find_dfs method to lookup dfs information
     """
-    path.USE_SMBC = False
     p = SMBPath(
         '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
         find_dfs_share=find_dfs_share
@@ -196,7 +194,6 @@ def test_smb_mkdirs():
     """
     SMBPath.makedirs
     """
-    path.USE_SMBC = False
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
         mode='w',
@@ -248,11 +245,10 @@ def test_ls_glob():
             "{}\\{}\\{}".format(BASE, 'test_ls_names', 'defg'),
         ]
 
-def test_pysmb_read():
+def test_read():
     """
     test pysmb read
     """
-    path.USE_SMBC = False
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
@@ -268,28 +264,7 @@ def test_pysmb_read():
     assert index == 9, index
     assert a == 'test', a
 
-def test_smbc_read():
-    """
-    test smbc read
-    """
-    path.USE_SMBC = True
-    p = SMBPath(
-        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
-        mode='r',
-        find_dfs_share=find_dfs_share
-    )
-    p.tell() == 0
-    a = p.read(5)
-    index = p.tell()
-    assert index == 5, index
-    assert a == 'Nice ', a
-    a = p.read(4)
-    index = p.tell()
-    assert index == 9, index
-    assert a == 'test', a
-
-def test_smbc_size():
-    path.USE_SMBC = True
+def test_size():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
@@ -297,28 +272,7 @@ def test_smbc_size():
     )
     assert p.size == 10, p.size
 
-def test_pysmb_size():
-    path.USE_SMBC = False
-    p = SMBPath(
-        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
-        mode='r',
-        find_dfs_share=find_dfs_share
-    )
-    assert p.size == 10, p.size
-
-def test_smbc_mtime():
-    path.USE_SMBC = True
-    p = SMBPath(
-        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
-        mode='r',
-        find_dfs_share=find_dfs_share
-    )
-    assert (
-        p.mtime == datetime.datetime(2014, 10, 29, 3, 17, 16)
-    ), p.mtime
-
-def test_pysmb_mtime():
-    path.USE_SMBC = False
+def test_mtime():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
@@ -329,19 +283,7 @@ def test_pysmb_mtime():
     ), p.mtime
 
 
-def test_smbc_atime():
-    path.USE_SMBC = True
-    p = SMBPath(
-        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
-        mode='r',
-        find_dfs_share=find_dfs_share
-    )
-    assert (
-        p.atime == datetime.datetime(2014, 10, 29, 3, 15, 21)
-    ), p.atime
-
-def test_pysmb_atime():
-    path.USE_SMBC = False
+def test_atime():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
@@ -352,8 +294,7 @@ def test_pysmb_atime():
     ), p.atime
 
 
-def test_pysmb_stat_2008():
-    path.USE_SMBC = False
+def test_stat_2008():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
@@ -363,11 +304,10 @@ def test_pysmb_stat_2008():
         s = p.read()
     except:
         pass
-    stat = p._pysmb_stat()
+    stat = p.stat()
     assert stat['atime'] == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
 
-def test_pysmb_stat_2003():
-    path.USE_SMBC = False
+def test_stat_2003():
     p = path.Path(r'\\filex.com\comm\FTP\SHUNFENG\upload\ToBeRouted\FAIL\PROCESSED\08106499.EDI')
-    stat = p._pysmb_stat()
+    stat = p.stat()
     assert stat['atime'] == datetime.datetime(2014, 11, 30, 19, 0, 2, 931486), stat['atime']
