@@ -1,3 +1,19 @@
+python-traxcommon (0.5.7) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #44. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.6 into develop
+  * Patch version bump
+  * Fix file time bug in SMB1 protocol
+
+  [ Mike Palmer ]
+  * Merge pull request #52 from TraxTechnologies/statbug
+  * Merge pull request #53 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sun, 30 Nov 2014 19:38:34 +0000
+
 python-traxcommon (0.5.6) stable; urgency=low
 
   [ Jenkins ]

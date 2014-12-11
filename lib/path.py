@@ -496,6 +496,18 @@ class CtxGen(object):
             self.local.ctx.debug = SMBC_DEBUG
         return self.local.ctx
 
+
+def getFiletime(dt):
+    """
+    Convert an integer representing the number of 100-nanosecond
+    intervals since January 1, 1601 (UTC) to a datetime object.
+    """
+    microseconds = dt / 10.0
+    seconds, microseconds = divmod(microseconds, 1000000)
+    days, seconds = divmod(seconds, 86400)
+    return datetime.datetime(1601, 1, 1) + datetime.timedelta(days, seconds, microseconds)
+
+
 CTX = CtxGen()
 
 class SMBPath(BasePath):
@@ -904,14 +916,16 @@ class SMBPath(BasePath):
     def _pysmb_stat(self):
         conn = self.get_connection()
         attrs = conn.getAttributes(self.share, self.relpath)
+        if conn.is_using_smb2:
+            atime = datetime.datetime.utcfromtimestamp(attrs.last_access_time)
+            mtime = datetime.datetime.utcfromtimestamp(attrs.last_write_time)
+        else:
+            atime = getFiletime(attrs.last_access_time)
+            mtime = getFiletime(attrs.last_write_time)
         return {
            'size': attrs.file_size,
-            'atime': datetime.datetime.utcfromtimestamp(
-                attrs.last_access_time
-            ),
-            'mtime': datetime.datetime.utcfromtimestamp(
-                attrs.last_write_time
-            )
+            'atime': atime,
+            'mtime': mtime,
         }
 
     def stat(self):
