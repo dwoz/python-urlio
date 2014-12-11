@@ -311,3 +311,41 @@ def test_stat_2003():
     p = path.Path(r'\\filex.com\comm\FTP\SHUNFENG\upload\ToBeRouted\FAIL\PROCESSED\08106499.EDI')
     stat = p.stat()
     assert stat['atime'] == datetime.datetime(2014, 11, 30, 19, 0, 2, 931486), stat['atime']
+
+
+
+RECURSE_VALS = [
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc2.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc3.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub1',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub1\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub1\\doc2.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub2',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub2\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc2.txt',
+]
+def test_recurse():
+    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    result = list(p.recurse())
+    assert result == RECURSE_VALS, result
+
+RECURSE_FILES_VALS = [
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc2.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc3.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub1\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub1\\doc2.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub2\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc1.txt',
+    '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc2.txt',
+]
+def test_recurse_files():
+    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    result = list(p.recurse_files())
+    assert result == RECURSE_FILES_VALS, result
