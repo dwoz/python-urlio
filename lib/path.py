@@ -603,11 +603,13 @@ class SMBPath(BasePath):
         for i in self.filenames(glob=glob, limit=limit):
             yield Path(i)
 
-    def filenames(self, glob='*', limit=0):
+    def filenames(self, glob='*', limit=0, recurse=False):
         for i in self.ls_names(
             glb=glob,
             smb_attribs=smb.smb2_constants.SMB2_FILE_ATTRIBUTE_NORMAL,
             limit=limit,
+            recurse=recurse,
+            return_dirs=False
         ):
             yield i
 
