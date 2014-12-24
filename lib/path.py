@@ -592,10 +592,9 @@ class SMBPath(BasePath):
         self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             conn = self.get_connection()
-            conn.storeFile(self.share, self.relpath, fp)
-            #storeFileFromOffset(conn, self.share, self.relpath, fp, offset=self._index, timeout=self.timeout)
+            storeFileFromOffset(conn, self.share, self.relpath, fp, offset=self._index, timeout=self.timeout)
             fp.seek(0)
-            self._index = len(fp.read())
+            self._index = self._index + len(fp.read())
         finally:
             self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
