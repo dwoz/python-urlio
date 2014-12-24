@@ -592,10 +592,9 @@ class SMBPath(BasePath):
         self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             conn = self.get_connection()
-            conn.storeFile(self.share, self.relpath, fp)
-            #storeFileFromOffset(conn, self.share, self.relpath, fp, offset=self._index, timeout=self.timeout)
+            storeFileFromOffset(conn, self.share, self.relpath, fp, offset=self._index, timeout=self.timeout)
             fp.seek(0)
-            self._index = len(fp.read())
+            self._index = self._index + len(fp.read())
         finally:
             self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
@@ -603,11 +602,13 @@ class SMBPath(BasePath):
         for i in self.filenames(glob=glob, limit=limit):
             yield Path(i)
 
-    def filenames(self, glob='*', limit=0):
+    def filenames(self, glob='*', limit=0, recurse=False):
         for i in self.ls_names(
             glb=glob,
             smb_attribs=smb.smb2_constants.SMB2_FILE_ATTRIBUTE_NORMAL,
             limit=limit,
+            recurse=recurse,
+            return_dirs=False
         ):
             yield i
 

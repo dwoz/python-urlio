@@ -11,6 +11,15 @@ if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
 
+def teardown_module():
+    dirname = "{}\\{}".format(BASE, 'test_chunk_write')
+    for filename in path.Path(dirname).filenames():
+        path.Path(filename).remove()
+    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
+    if p.exists():
+        p.remove()
+
+
 def data_path(filename):
     return os.path.join(os.path.dirname(__file__), 'data', filename)
 
@@ -308,11 +317,34 @@ def test_stat_2008():
     assert stat['atime'] == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
 
 def test_stat_2003():
-    p = path.Path(r'\\filex.com\comm\FTP\SHUNFENG\upload\ToBeRouted\FAIL\PROCESSED\08106499.EDI')
+    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\stat_test\test.txt')
     stat = p.stat()
-    assert stat['atime'] == datetime.datetime(2014, 11, 30, 19, 0, 2, 931486), stat['atime']
+    assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
 
+def test_chunk_write_2003():
+    fpath = r'\\fxb01fs0300.filex.com\FileRouterTest\chunk_write\test.txt'
+    p = path.Path(fpath, 'w')
+    p.write('foo')
+    p.write('bar')
+    p = path.Path(fpath)
+    rslt = p.read()
+    assert rslt == 'foobar', rslt
 
+def test_chunk_write_2008():
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_chunk_write', 'test.txt'),
+        mode='w',
+        find_dfs_share=find_dfs_share
+    )
+    p.write('foo')
+    p.write('bar')
+    p = SMBPath(
+        "{}\\{}\\{}".format(BASE, 'test_chunk_write', 'test.txt'),
+        mode='r',
+        find_dfs_share=find_dfs_share
+    )
+    rslt = p.read()
+    assert rslt == 'foobar', rslt
 
 RECURSE_VALS = [
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',
