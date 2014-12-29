@@ -405,7 +405,10 @@ def storeFileFromOffset(conn, service_name, path, file_obj, offset = 0L, timeout
 
     conn.is_busy = True
     try:
-        _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, cb, eb, offset, timeout = timeout, overwrite = overwrite)
+        if conn.is_using_smb2:
+            _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, cb, eb, offset, timeout = timeout, overwrite = overwrite)
+        else:
+            _storeFileFromOffset_SMB1(conn, service_name, path, file_obj, cb, eb, offset, timeout = timeout, overwrite = overwrite)
         while conn.is_busy:
             conn._pollForNetBIOSPacket(timeout * 1000)
     finally:
@@ -509,4 +512,76 @@ def _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, callback, errb
         messages_history.append(m)
     else:
         sendCreate(conn.connected_trees[service_name])
+
+def _storeFileFromOffset_SMB1(conn, service_name, path, file_obj, callback,
+errback, starting_offset, timeout = 30, **kwargs):
+    if not conn.has_authenticated:
+        raise NotReadyError('SMB connection not authenticated')
+
+    path = path.replace('/', '\\')
+    messages_history = [ ]
+
+    def sendOpen(tid):
+        m = SMBMessage(ComOpenAndxRequest(filename = path,
+                                          access_mode = 0x0041,  # Sharing mode: Deny nothing to others + Open for writing
+                                          open_mode = 0x0011,    # Create file if file does not exist. Overwrite if exists.
+                                          search_attributes = SMB_FILE_ATTRIBUTE_HIDDEN | SMB_FILE_ATTRIBUTE_SYSTEM,
+                                          timeout = timeout * 1000))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, openCB, errback)
+        messages_history.append(m)
+
+    def openCB(open_message, **kwargs):
+        messages_history.append(open_message)
+        if not open_message.status.hasError:
+            sendWrite(open_message.tid, open_message.payload.fid, starting_offset)
+        else:
+            errback(OperationFailure('Failed to store %s on %s: Unable to open file' % ( path, service_name ), messages_history))
+
+    def sendWrite(tid, fid, offset):
+        # For message signing, the total SMB message size must be not exceed the max_buffer_size. Non-message signing does not have this limitation
+        write_count = min((conn.is_signing_active and
+        (conn.max_buffer_size-64)) or conn.max_raw_size, 0xFFFF-1)  # Need to minus 1 byte from 0xFFFF because of the first NULL byte in the ComWriteAndxRequest message data
+        data_bytes = file_obj.read(write_count)
+        data_len = len(data_bytes)
+        if data_len > 0:
+            m = SMBMessage(ComWriteAndxRequest(fid = fid, offset = offset, data_bytes = data_bytes))
+            m.tid = tid
+            conn._sendSMBMessage(m)
+            conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, writeCB, errback, fid = fid, offset = offset+data_len)
+        else:
+            closeFid(tid, fid)
+            callback(( file_obj, offset ))  # Note that this is a tuple of 2-elements
+
+    def writeCB(write_message, **kwargs):
+        # To avoid crazy memory usage when saving large files, we do not save every write_message in messages_history.
+        if not write_message.status.hasError:
+            sendWrite(write_message.tid, kwargs['fid'], kwargs['offset'])
+        else:
+            messages_history.append(write_message)
+            closeFid(write_message.tid, kwargs['fid'])
+            errback(OperationFailure('Failed to store %s on %s: Write failed' % ( path, service_name ), messages_history))
+
+    def closeFid(tid, fid):
+        m = SMBMessage(ComCloseRequest(fid))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        messages_history.append(m)
+
+    if not conn.connected_trees.has_key(service_name):
+        def connectCB(connect_message, **kwargs):
+            messages_history.append(connect_message)
+            if not connect_message.status.hasError:
+                conn.connected_trees[service_name] = connect_message.tid
+                sendOpen(connect_message.tid)
+            else:
+                errback(OperationFailure('Failed to store %s on %s: Unable to connect to shared device' % ( path, service_name ), messages_history))
+
+        m = SMBMessage(ComTreeConnectAndxRequest(r'\\%s\%s' % ( conn.remote_name.upper(), service_name ), SERVICE_ANY, ''))
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, connectCB, errback, path = service_name)
+        messages_history.append(m)
+    else:
+        sendOpen(conn.connected_trees[service_name])
 
