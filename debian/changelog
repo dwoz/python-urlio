@@ -1,3 +1,19 @@
+python-traxcommon (0.5.9) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #47. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * load_cache was replaced with load_dfs_cache
+  * Enforce new session and engine object per process
+
+  [ Mike Palmer ]
+  * Merge pull request #58 from TraxTechnologies/mpsession
+  * Merge pull request #59 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 25 Feb 2015 20:08:41 +0000
+
 python-traxcommon (0.5.7) stable; urgency=low
 
   [ Jenkins ]
