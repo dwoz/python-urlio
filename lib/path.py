@@ -334,11 +334,13 @@ class LocalPath(BasePath):
         for a in self.ls_names(glb, limit=limit):
             yield Path(a)
 
-    def ls_names(self, glb='*', limit=0):
+    def ls_names(self, glb='*', limit=0, recurse=False):
         """
         Iterate over the names of files and directories within this
         path.
         """
+        if recurse:
+            raise Exception("Recursion not implimented")
         n = 0
         for a in glob.glob(os.path.join(self.path, glb)):
             yield a
@@ -349,12 +351,12 @@ class LocalPath(BasePath):
     def isdir(self):
         return os.path.isdir(self.path)
 
-    def filenames(self, glob='*', limit=0):
+    def filenames(self, glob='*', limit=0, recurse=False):
         """
         Iterate over the names of files (not directories) within this
         path.
         """
-        for a in self.ls_names(glob, limit=limit):
+        for a in self.ls_names(glob, limit=limit, recurse=recurse):
             if os.path.isfile(a):
                 yield a
 
@@ -420,6 +422,21 @@ class LocalPath(BasePath):
     @property
     def atime(self):
         return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_atime)
+
+    def makedirs(self, is_dir=False):
+        if is_dir:
+            os.makedirs(self.path)
+        else:
+            os.makedirs(self.basename)
+
+    def stat(self):
+        return {
+            'size': self.size,
+            'atime': self.atime,
+            'mtime': self.mtime,
+        }
+
+
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
