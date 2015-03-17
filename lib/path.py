@@ -421,6 +421,21 @@ class LocalPath(BasePath):
     def atime(self):
         return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_atime)
 
+    def makedirs(self, is_dir=False):
+        if is_dir:
+            os.makedirs(self.path)
+        else:
+            os.makedirs(self.basename)
+
+    def stat(self):
+        return {
+            'size': self.size,
+            'atime': self.atime,
+            'mtime': self.mtime,
+        }
+
+
+
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
         is_direct_tcp=True,
