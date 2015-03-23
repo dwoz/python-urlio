@@ -1,3 +1,25 @@
+python-traxcommon (0.5.10) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #49. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.9
+  * Patch version bump
+  * Add some missing methods to LocalPath class
+
+  [ Mike Palmer ]
+  * Merge pull request #60 from TraxTechnologies/localpathfixup
+
+  [ Daniel Wozniak ]
+  * Raise exception for local path recursion for now
+
+  [ Mike Palmer ]
+  * Merge pull request #61 from TraxTechnologies/localpathfixup
+  * Merge pull request #62 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Tue, 17 Mar 2015 21:00:59 +0000
+
 python-traxcommon (0.5.9) stable; urgency=low
 
   [ Jenkins ]
