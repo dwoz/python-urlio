@@ -47,6 +47,7 @@ class SessionScope(object):
         """
         Session = self._get_session()
         engine = sqlalchemy.create_engine(url, **opts)
+        Session.remove()
         Session.configure(bind=engine, autocommit=autocommit)
         sqlalchemy.orm.configure_mappers()
         return engine
