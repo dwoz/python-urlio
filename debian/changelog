@@ -1,3 +1,40 @@
+python-traxcommon (0.5.11) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #50. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.10
+  * Bump patch version
+  * Remove old sessions when making new ones
+
+  [ rbaduel ]
+  * Merge pull request #63 from TraxTechnologies/session_dup
+
+  [ Daniel Wozniak ]
+  * Use prod dfs locator by default
+
+  [ dwoz ]
+  * Merge pull request #64 from TraxTechnologies/dfsloc
+
+  [ Daniel Wozniak ]
+  * Remove duplicate test
+  * Fix up tests after changing share locations
+
+  [ dwoz ]
+  * Merge pull request #65 from TraxTechnologies/dfsloc
+
+  [ Daniel Wozniak ]
+  * Update cache so things dont get stale
+
+  [ dwoz ]
+  * Merge pull request #67 from TraxTechnologies/dfsloc
+
+  [ Mike Palmer ]
+  * Merge pull request #68 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Sat, 04 Apr 2015 06:17:34 +0000
+
 python-traxcommon (0.5.10) stable; urgency=low
 
   [ Jenkins ]
