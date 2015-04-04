@@ -299,22 +299,8 @@ def test_atime():
         find_dfs_share=find_dfs_share
     )
     assert (
-        p.atime == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
+        p.atime == datetime.datetime(2015, 3, 29, 10, 20, 44, 209107)
     ), p.atime
-
-
-def test_stat_2008():
-    p = SMBPath(
-        "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
-        mode='r',
-        find_dfs_share=find_dfs_share
-    )
-    try:
-        s = p.read()
-    except:
-        pass
-    stat = p.stat()
-    assert stat['atime'] == datetime.datetime(2014, 10, 29, 3, 15, 21, 322432)
 
 def test_stat_2003():
     p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\stat_test\test.txt')
