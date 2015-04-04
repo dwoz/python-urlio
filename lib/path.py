@@ -35,6 +35,7 @@ SMB_PASS = os.environ.get('SMBPASS', None)
 AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY', None)
 AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
+AUTO_UPDATE_DFSCACHE = True
 EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
 EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 DFSCACHE = {}
@@ -152,6 +153,13 @@ def default_find_dfs_share(uri, **opts):
     if not DFSCACHE:
         load_dfs_cache()
         log.warn("No dfs cache present")
+    elif AUTO_UPDATE_DFSCACHE:
+        cache_time = datetime.datetime.utcfromtimestamp(
+            int(str(DFSCACHE['timestamp'])[:-3])
+        )
+        dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+        if cache_time < dlt:
+            load_dfs_cache()
     slashed_domain = '\\\\{0}'.format(domain)
     if slashed_domain in DFSCACHE:
         domain_cache = DFSCACHE[slashed_domain]
