@@ -27,7 +27,7 @@ from smb_ext import listPath, storeFileFromOffset
 log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
-DFS_REF_API = "http://dfs-reference-dev.s03.filex.com/cache"
+DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
 ES_API = 'http://elasticsearch.s03.filex.com/newfiles/file/'
 S3_BUCKET = 'traxtech-files'
 SMB_USER = os.environ.get('SMBUSER', None)
