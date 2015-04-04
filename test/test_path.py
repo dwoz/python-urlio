@@ -3,7 +3,7 @@ import datetime
 from traxcommon import path
 from traxcommon.path import Path, SMBPath, LocalPath, smb_dirname
 
-BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
 if 'SMBUSER' in os.environ:
     path.SMB_USER = os.environ['SMBUSER']
@@ -30,10 +30,10 @@ def test_path():
 
 
 def find_dfs_share(path, api=None):
-    path = path.replace('\\\\filex.com\\it\\longtermarchivebackup\\', '')
+    path = path.replace('\\\\filex.com\\it\\stg\\', '')
     return (
         'fxb04fs0301',
-        'Long Term Archive Backup',
+        'filerouter_stage',
         'filex.com',
         path,
     )
@@ -44,13 +44,13 @@ def test_smbpath1():
     Call find_dfs method to lookup dfs information
     """
     p = SMBPath(
-        '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
+        '\\\\filex.com\\it\\stg\\meh',
         find_dfs_share=find_dfs_share
     )
     assert p.domain == 'filex.com'
     assert p.server_name == 'fxb04fs0301'
-    assert p.share == 'Long Term Archive Backup'
-    assert p.relpath == 'staging\\meh', "{}".format(p.relpath)
+    assert p.share == 'filerouter_stage'
+    assert p.relpath == 'meh', "{}".format(p.relpath)
 
 
 def test_pysmb_smbpath1():
@@ -58,13 +58,13 @@ def test_pysmb_smbpath1():
     Call find_dfs method to lookup dfs information
     """
     p = SMBPath(
-        '\\\\filex.com\\it\\longtermarchivebackup\\staging\\meh',
+        '\\\\filex.com\\it\\stg\\foo\\bar',
         find_dfs_share=find_dfs_share
     )
     assert p.domain == 'filex.com'
     assert p.server_name == 'fxb04fs0301'
-    assert p.share == 'Long Term Archive Backup'
-    assert p.relpath == 'staging\\meh', "{}".format(p.relpath)
+    assert p.share == 'filerouter_stage'
+    assert p.relpath == 'foo\\bar', "{}".format(p.relpath)
 
 def test_smbpath2():
     """
@@ -147,7 +147,7 @@ def test_smbpath_basename1():
 
 
 def test_smbpath_exists():
-    BASE = '\\\\filex.com\\it\\longtermarchivebackup\\staging\\static_tests'
+    BASE = '\\\\filex.com\\it\\stg\\static_tests'
     path = SMBPath(
         "{0}\\{1}".format(BASE, "test_smbexists1\\test_file"),
         find_dfs_share=find_dfs_share
