@@ -704,7 +704,7 @@ class SMBPath(BasePath):
         finally:
             pass
         for a in paths:
-            if _done >= limit:
+            if limit > 0 and _done >= limit:
                 raise StopIteration
             if a.filename in ['.', '..']:
                 continue
