@@ -672,7 +672,7 @@ class SMBPath(BasePath):
 
     def ls_names(
             self, glb='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
-            return_dirs=True
+            return_dirs=True, _done=0
         ):
         """
         List a directory and return the names of the files and directories.
@@ -704,6 +704,8 @@ class SMBPath(BasePath):
         finally:
             pass
         for a in paths:
+            if _done >= limit:
+                raise StopIteration
             if a.filename in ['.', '..']:
                 continue
             if a.isDirectory:
@@ -712,14 +714,19 @@ class SMBPath(BasePath):
                 ))
                 if return_dirs:
                     yield p.path
+                    _done += 1
                 if recurse:
-                    for _ in p.ls_names(glb, smb_attribs, limit, recurse, return_dirs):
+                    for _ in p.ls_names(
+                            glb, smb_attribs, limit, recurse, return_dirs, _done
+                        ):
                         yield _
+                        _done += 1
             else:
                 yield Path(self.path).join(
                     self.path,
                     a.filename.encode('iso-8859-1')
                 )
+                _done += 1
 
     def remove(self):
         conn = self.get_connection()
