@@ -13,7 +13,7 @@
 
 ### Development Setup (OSX Virtualenv)
 
-* Before you begin development on python-common you should set up your [osx development environment for python](https://ci.traxtech.com/job/python-common-prod/).
+* Before you begin development on python-common you should set up your [osx development environment for python](http://hackercodex.com/guide/python-development-environment-on-mac-osx/).
 
 * Clone the repository & create a virtual environment.
 
