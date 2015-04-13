@@ -11,4 +11,11 @@ setup(
     author_email='devops@traxtech.com',
     url='https://github.com/TraxTechnologies/python-common',
     packages=['traxcommon'],
+    install_requires=[
+        'pysmb==1.1.13',
+        'requests>=2.0.0',
+        'python-magic>=0.4.6',
+        'boto==2.3.0',
+        'repoze.lru',
+    ],
 )
