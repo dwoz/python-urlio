@@ -3,6 +3,8 @@
 from distutils.core import setup
 from traxcommon import VERSION
 
+with open('requirements.txt') as fp:
+    install_requires = [s.strip() for s in fp.readlines()]
 setup(
     name='traxcommon',
     version='.'.join([str(i) for i in VERSION]),
@@ -11,11 +13,5 @@ setup(
     author_email='devops@traxtech.com',
     url='https://github.com/TraxTechnologies/python-common',
     packages=['traxcommon'],
-    install_requires=[
-        'pysmb==1.1.13',
-        'requests>=2.0.0',
-        'python-magic>=0.4.6',
-        'boto==2.3.0',
-        'repoze.lru',
-    ],
+    install_requires=install_requires
 )
