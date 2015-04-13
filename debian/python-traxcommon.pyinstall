@@ -1,7 +1,7 @@
-lib/__init__.py traxcommon
-lib/config.py traxcommon
-lib/path.py traxcommon
-lib/symbols.py traxcommon
-lib/daemon.py traxcommon
-lib/sql_session.py traxcommon
-lib/smb_ext.py traxcommon
+traxcommon/__init__.py traxcommon
+traxcommon/config.py traxcommon
+traxcommon/path.py traxcommon
+traxcommon/symbols.py traxcommon
+traxcommon/daemon.py traxcommon
+traxcommon/sql_session.py traxcommon
+traxcommon/smb_ext.py traxcommon

@@ -1,7 +1,7 @@
 import os
 import datetime
-from traxcommon import path
-from traxcommon.path import Path, SMBPath, LocalPath, smb_dirname
+from .. import path
+from ..path import Path, SMBPath, LocalPath, smb_dirname
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
