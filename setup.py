@@ -5,7 +5,7 @@ from traxcommon import VERSION
 
 setup(
     name='traxcommon',
-    version='.'.join(VERSION),
+    version='.'.join([str(i) for i in VERSION]),
     description='Trax common python functionality',
     author='Trax Technologies, Inc',
     author_email='devops@traxtech.com',
