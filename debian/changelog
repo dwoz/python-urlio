@@ -1,3 +1,27 @@
+python-traxcommon (0.5.12) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #51. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.11
+  * Patch version bump
+  * Fix limiting while using recursing directories
+
+  [ Will Button ]
+  * Merge pull request #69 from TraxTechnologies/recurse_limit
+
+  [ Daniel Wozniak ]
+  * Dont stop when limit is 0
+
+  [ dwoz ]
+  * Merge pull request #70 from TraxTechnologies/recurse_limit
+
+  [ Will Button ]
+  * Merge pull request #71 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 08 Apr 2015 15:01:14 +0000
+
 python-traxcommon (0.5.11) stable; urgency=low
 
   [ Jenkins ]
