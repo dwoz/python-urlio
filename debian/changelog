@@ -1,6 +1,18 @@
 python-traxcommon (0.5.13) stable; urgency=low
 
   [ Jenkins ]
+  * Build #59. Started by user Daneil Wozniak.
+
+  [ traxtech-devops ]
+  * Version Update
+  * index on (no branch): 93b61ce Automatic commit
+  * WIP on (no branch): 93b61ce Automatic commit
+
+ -- Jenkins <devops@traxtech.com>  Fri, 17 Apr 2015 05:57:26 +0000
+
+python-traxcommon (0.5.13) stable; urgency=low
+
+  [ Jenkins ]
   * Build #52. Started by user Daneil Wozniak.
 
   [ Daniel Wozniak ]
