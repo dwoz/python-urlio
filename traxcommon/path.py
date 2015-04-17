@@ -222,9 +222,6 @@ class WriteLock(object):
         self.locks.pop(key)
 
 
-WRITELOCK = WriteLock()
-
-
 def denormalize_path(path):
     "Convert a posix style path to nt style"
     return path.replace('/', '\\')
@@ -512,8 +509,6 @@ def getFiletime(dt):
 
 class SMBPath(BasePath):
 
-    WRITELOCK = WRITELOCK
-
     def __init__(
             self, path, mode='r', user=None, password=None, api=None,
             clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
@@ -533,8 +528,7 @@ class SMBPath(BasePath):
         self._index = 0
         self.mode = mode
         self._conn = None
-        if write_lock:
-            self.WRITELOCK = write_lock
+        self.WRITELOCK = write_lock
 
     @property
     def uri(self):
@@ -585,7 +579,8 @@ class SMBPath(BasePath):
         else:
             dirs = relpath.split('\\')[:-1]
         path = ''
-        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        if self.WRITELOCK:
+            self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             for a in dirs:
                 path = '{0}\\{1}'.format(path, a)
@@ -607,21 +602,24 @@ class SMBPath(BasePath):
                 if not exists:
                     raise e
         finally:
-            self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+            if self.WRITELOCK:
+                self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
     def write(self, fp):
         if not hasattr(fp, 'read'):
             fp = StringIO.StringIO(fp)
         if self.mode == 'r':
             raise Exception("File not open for writing")
-        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        if self.WRITELOCK:
+            self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             conn = self.get_connection()
             storeFileFromOffset(conn, self.share, self.relpath, fp, offset=self._index, timeout=self.timeout)
             fp.seek(0)
             self._index = self._index + len(fp.read())
         finally:
-            self.WRITELOCK.release(self.server_name, self.share, self.relpath)
+            if self.WRITELOCK:
+                self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
     def files(self, glob='*', limit=0):
         for i in self.filenames(glob=glob, limit=limit):
@@ -730,17 +728,20 @@ class SMBPath(BasePath):
 
     def remove(self):
         conn = self.get_connection()
-        self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
+        if self.WRITELOCK:
+            self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         if self.isdir():
             try:
                 conn.deleteDirectory(self.share, self.relpath)
             finally:
-                self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
+                if self.WRITELOCK:
+                    self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
             return
         try:
             conn.deleteFiles(self.share, self.relpath)
         finally:
-            self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
+            if self.WRITELOCK:
+                self.WRITELOCK.release(self.server_name,  self.share, self.relpath)
 
     @staticmethod
     def _dirname(inpath):
