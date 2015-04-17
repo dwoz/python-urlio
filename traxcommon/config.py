@@ -30,6 +30,13 @@ def load_config(config_file):
                 config.update(parse_config(fp, 'credentials'))
         else:
             log.warn("Credentials file does not exists: %s", config['credentials_file'])
+    else:
+        creds = "{}/credentials".format(config_file.rsplit('/', 1)[0])
+        if os.path.exists(creds):
+            with open(creds) as fp:
+                config.update(parse_config(fp, 'credentials'))
+        else:
+            log.warn("Credentials file does not exists: %s", creds)
     return config
 
 def parse_config(fp, default_section='general'):
