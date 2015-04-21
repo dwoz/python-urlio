@@ -1,3 +1,117 @@
+python-traxcommon (0.5.13) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #59. Started by user Daneil Wozniak.
+
+  [ traxtech-devops ]
+  * Version Update
+  * index on (no branch): 93b61ce Automatic commit
+  * WIP on (no branch): 93b61ce Automatic commit
+
+ -- Jenkins <devops@traxtech.com>  Fri, 17 Apr 2015 05:57:26 +0000
+
+python-traxcommon (0.5.13) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #52. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Move module to traxcommon dir.
+  * Use relative import for tests
+  * Adding mulitple unwanted files/dirs to gitignore
+  * Add requirements.txt file
+  * Update debian package with new locations
+  * Add setup.py so pip can install from git repo
+  * Convert int to str for join call
+  * Adding dependencies to setup.py
+
+  [ Mike Palmer ]
+  * Merge pull request #72 from TraxTechnologies/virtualenv
+
+  [ Daniel Wozniak ]
+  * One less place to track depends
+  * Add basic README.md
+
+  [ traxtech-devops ]
+  * Version Update
+  * Version Update
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Add nose as a dependency
+  * Update readme for developers
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Bump patch version
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Update bad link location
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Look in a standard location for credentials
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.12
+  * Merge branch master into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Daniel Wozniak ]
+  * Dont use WriteLock class by default
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ Mike Palmer ]
+  * Merge pull request #73 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Fri, 17 Apr 2015 04:59:17 +0000
+
+python-traxcommon (0.5.12) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #51. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.11
+  * Patch version bump
+  * Fix limiting while using recursing directories
+
+  [ Will Button ]
+  * Merge pull request #69 from TraxTechnologies/recurse_limit
+
+  [ Daniel Wozniak ]
+  * Dont stop when limit is 0
+
+  [ dwoz ]
+  * Merge pull request #70 from TraxTechnologies/recurse_limit
+
+  [ Will Button ]
+  * Merge pull request #71 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Wed, 08 Apr 2015 15:01:14 +0000
+
 python-traxcommon (0.5.11) stable; urgency=low
 
   [ Jenkins ]
