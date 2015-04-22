@@ -16,6 +16,7 @@ bin/easy_install*
 lib
 include
 pip-selfcheck.json
+src
 
 # OSX Metadata
 .DS_Store
