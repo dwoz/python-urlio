@@ -1,5 +1,52 @@
 import binascii
+import datetime
 import StringIO
+
+class LegacyToken(object):
+
+    def __init__(self, user_id, user_name, email, first_name, last_name,
+            full_name, impersonator, org_id, org_name, login_at, preferences=None):
+        self.user_id = user_id
+        self.user_name = user_name
+        self.email = email
+        self.first_name = first_name
+        self.last_name = last_name
+        self.full_name = full_name
+        self.impersonator = impersonator
+        self.org_id = org_id
+        self.org_name = org_name
+        if login_at:
+            self.login_at = int(login_at)
+        else:
+            self.login_at = None
+        self.preferences = preferences or []
+
+    def to_string(self):
+        return '|-|'.join(
+            [
+                self.user_id, self.user_name, self.email, self.first_name,
+                self.last_name, self.full_name, impersonator, org_id, org_name,
+                login_at
+            ] + self.preferences
+        )
+
+    @property
+    def login_datetime(self):
+        if self.login_at:
+            return datetime.datetime.fromtimestamp(self.login_at)
+
+    @classmethod
+    def from_crypt_string(cls, crypt, key, decoder=decode_fs_cookie):
+        return cls.from_token_string(decoder(crypt, key))
+
+    @classmethod
+    def from_token_string(cls, token):
+        return cls(*cls.split_token_string(token))
+
+    @staticmethod
+    def split_token_string(token):
+        return [_ for _ in token.split('|') if _ != '-']
+
 
 class PKCS7Encoder(object):
     '''
