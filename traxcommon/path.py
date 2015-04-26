@@ -28,12 +28,8 @@ log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
 DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
-ES_API = 'http://elasticsearch.s03.filex.com/newfiles/file/'
-S3_BUCKET = 'traxtech-files'
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
-AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY', None)
-AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 AUTO_UPDATE_DFSCACHE = True
 EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
@@ -840,87 +836,6 @@ class SMBPath(BasePath):
         stat = conn.getAttributes(self.share, self.relpath)
         return stat.isDirectory
 
-
-class ArchivingError(Exception):
-    pass
-
-
-def archive_file(
-        path, s3_bucket='traxtech-files', es_url=ES_API, es_retry=15,
-        aws_access_key=None, aws_secret_key=None, **meta_data
-    ):
-    orig_p = Path(path)
-    if isinstance(orig_p, SMBPath):
-        temp = tempfile.mktemp()
-        tmp_p = Path(temp, 'w')
-        tmp_p.write(orig_p.read())
-        tmp_p = Path(temp)
-    else:
-        temp = path
-        tmp_p = orig_p
-    if 'location' not in meta_data:
-        meta_data['location'] = orig_p.path
-    if 'file_name' not in meta_data:
-        meta_data['file_name'] = orig_p.basename
-    if 'file_extension' not in meta_data:
-        if '.' in orig_p.basename:
-            ext = orig_p.basename.rsplit('.', 1)[1]
-        else:
-            ext = ''
-        meta_data['file_extension'] = ext
-    if 'size' not in meta_data:
-        meta_data['size'] = orig_p.size
-    if 'date' not in meta_data:
-        meta_data['date'] = orig_p.mtime.isoformat()
-    if 'date_loaded' not in meta_data:
-        meta_data['date_loaded'] = datetime.datetime.utcnow().isoformat()
-    if 'mime_type' not in meta_data:
-        meta_data['mime_type'] = mimetype(temp)
-        sha1 = Column(String(256))
-        sha1 = Column(String(256))
-    if 'mime_encoding' not in meta_data:
-        meta_data['mime_encoding'] = mimeencoding(temp)
-    if 'hash' not in meta_data:
-        hsh = hashlib.sha1(tmp_p.read()).hexdigest()
-        tmp_p.seek(0)
-        meta_data['hash'] = hsh
-    if 's3' not in meta_data:
-        meta_data['s3'] = 'https://s3.amazonaws.com/{}/{}'.format(bucket, hsh)
-    s3 = boto.connect_s3(
-        aws_access_key or AWS_ACCESS_KEY,
-        aws_secret_key or AWS_SECRET_KEY
-    )
-    bucket = s3.get_bucket(s3_bucket)
-    key = Key(bucket)
-    key.key = meta_data['hash']
-    key.set_contents_from_filename(temp)
-    for k in meta_data:
-        key.set_metadata(k, meta_data[k])
-    if temp != path:
-        tmp_p.remove()
-    url = '{0}/{1}'.format(
-        es_url.rstrip('/'), meta_data['hash']
-    )
-    resp = requests.put(url, data=json.dumps(meta_data))
-    if resp.status_code == 200:
-        return meta_data['hash']
-    elif resp.status_code == 201:
-        return meta_data['hash']
-    elif resp.status_code == 504:
-        log.error(
-            "Elastic search returned non 2xx status %s retry in %s seconds",
-            resp.status_code, es_retry
-        )
-        time.sleep(es_retry)
-        resp = requests.put(url, data=json.dumps(meta_data))
-        if resp.status_code == 200:
-            return meta_data['hash']
-        elif resp.status_code == 201:
-            return meta_data['hash']
-        elif resp.status_code == 504:
-            msg = "Elastic search returned non 2xx status: {}".format(resp.status_code)
-            raise ArchivingError(msg)
-    return True
 
 def mimeencoding_from_buffer(buffer):
     m = magic.open(magic.MAGIC_MIME_ENCODING)
