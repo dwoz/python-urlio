@@ -26,7 +26,7 @@ class LegacyToken(object):
             [
                 self.user_id, self.user_name, self.email, self.first_name,
                 self.last_name, self.full_name, impersonator, org_id, org_name,
-                login_at
+                str(login_at)
             ] + self.preferences
         )
 
@@ -34,10 +34,6 @@ class LegacyToken(object):
     def login_datetime(self):
         if self.login_at:
             return datetime.datetime.fromtimestamp(self.login_at)
-
-    @classmethod
-    def from_crypt_string(cls, crypt, key, decoder=decode_fs_cookie):
-        return cls.from_token_string(decoder(crypt, key))
 
     @classmethod
     def from_token_string(cls, token):
