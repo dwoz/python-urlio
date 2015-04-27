@@ -43,6 +43,16 @@ class LegacyToken(object):
     def split_token_string(token):
         return [_ for _ in token.split('|') if _ != '-']
 
+    @classmethod
+    def from_fxs_user(cls, user, org, impname=''):
+        utcnow = datetime.datetime.utcnow()
+        epoch = int(time.mktime(utcnow.timetuple()))
+        return cls(
+            user.name, user.fxsEntityName, user.fxsEmail, user.fxsFirstName,
+            user.fxsLastName, user.fxsFullName, impname, org.name,
+            org.fxsEntityName, epoch
+        )
+
 
 class PKCS7Encoder(object):
     '''
