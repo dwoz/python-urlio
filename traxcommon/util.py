@@ -26,7 +26,7 @@ class LegacyToken(object):
         return '|-|'.join(
             [
                 self.user_id, self.user_name, self.email, self.first_name,
-                self.last_name, self.full_name, impersonator, org_id, org_name,
+                self.last_name, self.full_name, self.impersonator, org_id, org_name,
                 str(login_at)
             ] + self.preferences
         )
