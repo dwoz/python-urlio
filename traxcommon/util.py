@@ -1,6 +1,7 @@
 import binascii
 import datetime
 import StringIO
+import time
 
 class LegacyToken(object):
 
