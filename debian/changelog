@@ -1,3 +1,13 @@
+python-traxcommon (0.5.15) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #63. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Bump version to rectify failed build
+
+ -- Jenkins <devops@traxtech.com>  Wed, 20 May 2015 04:46:23 +0000
+
 python-traxcommon (0.5.13) stable; urgency=low
 
   [ Jenkins ]
