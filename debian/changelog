@@ -1,3 +1,27 @@
+python-traxcommon (0.5.16) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #64. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge branch develop of github.com:TraxTechnologies/python-common
+    into develop
+  * Merge branch master into develop
+
+  [ traxtech-devops ]
+  * Version Update
+
+  [ dwoz ]
+  * Merge pull request #78 from TraxTechnologies/develop
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+
+  [ dwoz ]
+  * Merge pull request #79 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Tue, 02 Jun 2015 20:18:16 +0000
+
 python-traxcommon (0.5.15) stable; urgency=low
 
   [ Jenkins ]
