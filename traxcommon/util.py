@@ -1,6 +1,7 @@
 import binascii
 import datetime
 import StringIO
+import time
 
 class LegacyToken(object):
 
@@ -25,8 +26,8 @@ class LegacyToken(object):
         return '|-|'.join(
             [
                 self.user_id, self.user_name, self.email, self.first_name,
-                self.last_name, self.full_name, impersonator, org_id, org_name,
-                str(login_at)
+                self.last_name, self.full_name, self.impersonator, self.org_id,
+                self.org_name, str(self.login_at)
             ] + self.preferences
         )
 
