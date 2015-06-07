@@ -10,7 +10,6 @@ if 'SMBUSER' in os.environ:
 if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
-
 def teardown_module():
     dirname = "{}\\{}".format(BASE, 'test_chunk_write')
     for filename in path.Path(dirname).filenames():
@@ -24,12 +23,7 @@ def data_path(filename):
     return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 
-def test_path():
-    path = Path(data_path('empty_file'))
-    assert path.tell() == 0
-
-
-def find_dfs_share(path, api=None):
+def mock_find_dfs_share(path, api=None):
     path = path.replace('\\\\filex.com\\it\\stg\\', '')
     return (
         'fxb04fs0301',
@@ -39,13 +33,18 @@ def find_dfs_share(path, api=None):
     )
 
 
+def test_path():
+    path = Path(data_path('empty_file'))
+    assert path.tell() == 0
+
+
 def test_smbpath1():
     """
     Call find_dfs method to lookup dfs information
     """
     p = SMBPath(
         '\\\\filex.com\\it\\stg\\meh',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert p.domain == 'filex.com'
     assert p.server_name == 'fxb04fs0301'
@@ -59,7 +58,7 @@ def test_pysmb_smbpath1():
     """
     p = SMBPath(
         '\\\\filex.com\\it\\stg\\foo\\bar',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert p.domain == 'filex.com'
     assert p.server_name == 'fxb04fs0301'
@@ -72,7 +71,7 @@ def test_smbpath2():
     """
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smbpath2'),
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     expect = [
         "{0}\\{1}".format(BASE, 'test_smbpath2\\one'),
@@ -85,7 +84,7 @@ def test_smbpath2():
 def test_path3():
     path = SMBPath(
         "{0}\\{1}".format(BASE, "test_smbpath3\\test_file"),
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     s = path.read()
     assert s == 'This is a small test file', s
@@ -126,23 +125,23 @@ def test_smbpath_dirname1():
 def test_smbpath_basename1():
     assert SMBPath(
         '\\foo\\bar\\',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     ).basename == 'bar'
     assert SMBPath(
         '\\foo\\bar',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     ).basename == 'bar'
     assert SMBPath(
         '\\foo\\',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     ).basename == 'foo'
     assert SMBPath(
         '\\foo',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     ).basename == 'foo'
     assert SMBPath(
         '\\',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     ).basename == '\\'
 
 
@@ -150,7 +149,7 @@ def test_smbpath_exists():
     BASE = '\\\\filex.com\\it\\stg\\static_tests'
     path = SMBPath(
         "{0}\\{1}".format(BASE, "test_smbexists1\\test_file"),
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert path.exists()
 
@@ -184,18 +183,18 @@ def test_smb_remove():
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     p.write('this is a test file')
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert p.exists()
     p.remove()
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert not p.exists()
 
@@ -206,7 +205,7 @@ def test_smb_mkdirs():
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     if p.exists():
         p.remove()
@@ -214,7 +213,7 @@ def test_smb_mkdirs():
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     if p.exists():
         p.remove()
@@ -224,14 +223,14 @@ def test_smb_mkdirs():
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo\\bar'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     if p.exists():
         p.remove()
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_mkdirs\\foo'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     if p.exists():
         p.remove()
@@ -243,7 +242,7 @@ def test_ls_glob():
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_ls_names'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     for i in p.ls_names('ab*'):
         assert i in [
@@ -261,7 +260,7 @@ def test_read():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     p.tell() == 0
     a = p.read(5)
@@ -277,7 +276,7 @@ def test_size():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert p.size == 10, p.size
 
@@ -285,7 +284,7 @@ def test_mtime():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert (
         p.mtime == datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
@@ -296,7 +295,7 @@ def test_atime():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_smbc_read', 'test.txt'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     assert (
         p.atime == datetime.datetime(2015, 3, 29, 10, 20, 44, 209107)
@@ -320,14 +319,14 @@ def test_chunk_write_2008():
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_chunk_write', 'test.txt'),
         mode='w',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     p.write('foo')
     p.write('bar')
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_chunk_write', 'test.txt'),
         mode='r',
-        find_dfs_share=find_dfs_share
+        find_dfs_share=mock_find_dfs_share
     )
     rslt = p.read()
     assert rslt == 'foobar', rslt
@@ -363,6 +362,7 @@ RECURSE_FILES_VALS = [
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc1.txt',
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\sub3\\dubsub1\\doc2.txt',
 ]
+
 def test_recurse_files():
     p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
     result = list(p.recurse_files())
