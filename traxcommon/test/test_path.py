@@ -103,6 +103,9 @@ def test_smbpath1():
     assert p.share == 'filerouter_stage'
     assert p.relpath == 'meh', "{}".format(p.relpath)
 
+def test_path_case_preservation():
+    spath = '\\\\filex.com\\Comm\\Bar\\BanG.txt'
+    assert SMBPath(spath).path == spath
 
 def test_pysmb_smbpath1():
     """

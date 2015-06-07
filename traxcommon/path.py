@@ -139,7 +139,6 @@ def by_depth(x, y):
     else:
         return 1
 
-
 def find_dfs_share(uri, **opts):
     case_sensative = opts.get('case_sensative', False)
     log.debug("find dfs share: %s", uri)
@@ -273,12 +272,19 @@ def Path(path, mode='r'):
 def lower(s):
     return s.lower()
 
+def normalize_domain(path):
+    if path.startswith('\\\\'):
+        parts = path.split('\\')
+        parts[2] = parts[2].lower()
+        path = '\\'.join(parts)
+    return path
+
 class BasePath(object):
     """
     Base class for path types to inherit from
     """
     _path_delim = '/'
-    _normalize_path = staticmethod(lower)
+    _normalize_path = staticmethod(normalize_domain)
 
     def _set_path(self, path):
         self._original_path = path
