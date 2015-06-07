@@ -13,39 +13,6 @@ if 'SMBUSER' in os.environ:
 if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
-#path.AUTO_UPDATE_DFSCACHE = False
-#path.DFSCACHE = {
-#    "\\\\filex.com" : {
-#      "\\\\filex.com\\Comm":{
-#        "":{
-#            "link":"",
-#            "state":"OK",
-#            "targets":[
-#                {
-#                    "site":"CoreLink",
-#                    "state":"ONLINE",
-#                    "target":"\\\\FXB01FS0300\\Comm"
-#                },
-#            ],
-#            "timeout":"300"
-#        },
-#        "AS2\\Cust":{
-#            "comment": None,
-#            "link":"AS2\\Cust",
-#            "state":"OK",
-#            "targets":[
-#                {
-#                    "site":"CoreLink",
-#                    "state":"ONLINE",
-#                    "target":"\\\\fxb05fs0300\\AS2\\Cust"
-#                }
-#            ],
-#            "timeout":"1800"
-#        },
-#      }
-#    },
-#    'timestamp': '000010000'
-#}
 
 def teardown_module():
     dirname = "{}\\{}".format(BASE, 'test_chunk_write')
