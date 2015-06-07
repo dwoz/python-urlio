@@ -82,12 +82,16 @@ def depth_first_resources(domain_cache):
     return resources
 
 
-def find_target_in_cache(uri, cache):
-    uri = uri.lower()
+def find_target_in_cache(uri, cache, case_sensative=False):
+    if not case_sensative:
+        uri = uri.lower()
     if not 'depth_first_resources' in cache:
         cache['depth_first_resources'] = depth_first_resources(cache)
     for path, conf in cache['depth_first_resources']:
-        path = path.lower().rstrip('\\')
+        if not case_sensative:
+            path = path.lower().rstrip('\\')
+        else:
+            path = path.rstrip('\\')
         if uri.startswith(path + '\\') or path == uri:
             for tgt in conf['targets']:
                 if tgt['state'] == ONLINE:
@@ -136,10 +140,15 @@ def by_depth(x, y):
         return 1
 
 
-@repoze.lru.lru_cache(100)
-def default_find_dfs_share(uri, **opts):
+def find_dfs_share(uri, **opts):
+    case_sensative = opts.get('case_sensative', False)
     log.debug("find dfs share: %s", uri)
-    uri = uri.lower()
+    if case_sensative:
+        parts = uri.split('\\')
+        parts[2] = parts[2].lower()
+        uri = '\\'.join(parts)
+    else:
+        uri = uri.lower()
     parts = uri.split('\\')
     if len(parts[2].split('.')) > 2:
         hostname = parts[2].split('.', 1)[0]
@@ -149,7 +158,7 @@ def default_find_dfs_share(uri, **opts):
         log.debug("Using parts from uri %s %s %s %s",
             hostname, service, domain, dfspath
         )
-        return hostname, service, domain, '\\' + dfspath
+        return hostname, service, domain, dfspath.lstrip('\\')
     domain, _ = split_host_path(uri)
     if not DFSCACHE:
         load_dfs_cache()
@@ -161,15 +170,15 @@ def default_find_dfs_share(uri, **opts):
         dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
         if cache_time < dlt:
             load_dfs_cache()
-    slashed_domain = '\\\\{0}'.format(domain)
+    slashed_domain = '\\\\{0}'.format(domain).lower()
     if slashed_domain in DFSCACHE:
         domain_cache = DFSCACHE[slashed_domain]
     else:
         errmsg = "Domain not in cache: {}".format(domain)
         raise FindDfsShare(errmsg)
-    result = find_target_in_cache(uri, domain_cache)
+    result = find_target_in_cache(uri, domain_cache, case_sensative)
     if not result:
-        log.error("No domain cache found")
+        raise FindDfsShare("No dfs cache result found")
     path, tgt = result
     server, service = split_host_path(tgt['target'])
     sharedir = ''
@@ -178,8 +187,8 @@ def default_find_dfs_share(uri, **opts):
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
     path = "{0}\\{1}".format(
-        sharedir, uri.lower().split(path.lower(), 1)[1]
-    ).lstrip('\\')
+        sharedir, uri.split(path, 1)[1].lstrip('\\')
+    ).strip('\\')
     data = {
         'host': server,
         'service': service,
@@ -191,6 +200,11 @@ def default_find_dfs_share(uri, **opts):
     path = path.encode('cp1251')
     domain = domain.encode('cp1251')
     return server, service, domain, path
+
+
+@repoze.lru.lru_cache(100, timeout=500)
+def default_find_dfs_share(uri, **opts):
+    return find_dfs_share(uri, **opts)
 
 
 def normalize_path(path):

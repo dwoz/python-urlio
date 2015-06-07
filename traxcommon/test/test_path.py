@@ -1,7 +1,10 @@
 import os
 import datetime
 from .. import path
-from ..path import Path, SMBPath, LocalPath, smb_dirname
+from ..path import (
+    Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
+    FindDfsShare
+)
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
@@ -10,10 +13,45 @@ if 'SMBUSER' in os.environ:
 if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
+#path.AUTO_UPDATE_DFSCACHE = False
+#path.DFSCACHE = {
+#    "\\\\filex.com" : {
+#      "\\\\filex.com\\Comm":{
+#        "":{
+#            "link":"",
+#            "state":"OK",
+#            "targets":[
+#                {
+#                    "site":"CoreLink",
+#                    "state":"ONLINE",
+#                    "target":"\\\\FXB01FS0300\\Comm"
+#                },
+#            ],
+#            "timeout":"300"
+#        },
+#        "AS2\\Cust":{
+#            "comment": None,
+#            "link":"AS2\\Cust",
+#            "state":"OK",
+#            "targets":[
+#                {
+#                    "site":"CoreLink",
+#                    "state":"ONLINE",
+#                    "target":"\\\\fxb05fs0300\\AS2\\Cust"
+#                }
+#            ],
+#            "timeout":"1800"
+#        },
+#      }
+#    },
+#    'timestamp': '000010000'
+#}
+
 def teardown_module():
     dirname = "{}\\{}".format(BASE, 'test_chunk_write')
     for filename in path.Path(dirname).filenames():
-        path.Path(filename).remove()
+        if path.Path(filename).exists():
+            path.Path(filename).remove()
     p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
     if p.exists():
         p.remove()
@@ -32,8 +70,55 @@ def mock_find_dfs_share(path, api=None):
         path,
     )
 
+def test_find_dfs_share_a():
+    rslt = find_dfs_share('\\\\filex.com\\Comm')
+    assert rslt == ('FXB01FS0300', 'Comm', 'filex.com', '')
 
-def test_path():
+def test_find_dfs_share_b():
+    try:
+        rslt = find_dfs_share('\\\\filex.com\\comm', case_sensative=True)
+    except FindDfsShare as e:
+        assert e.message == "No dfs cache result found"
+        return
+    assert False, "no excption raised"
+
+def test_find_dfs_share_c():
+    rslt = find_dfs_share('\\\\Filex.com\\Comm')
+    assert rslt == ('FXB01FS0300', 'Comm', 'filex.com', '')
+
+def test_find_dfs_share_d():
+    rslt = find_dfs_share('\\\\Filex.com\\Comm', case_sensative=True)
+    assert rslt == ('FXB01FS0300', 'Comm', 'filex.com', '')
+
+def test_find_dfs_share_d():
+    try:
+        rslt = find_dfs_share('\\\\Filex.com\\comm', case_sensative=True)
+    except FindDfsShare as e:
+        assert e.message == "No dfs cache result found"
+        return
+    assert False, "no excption raised"
+
+def test_find_dfs_share_e():
+    rslt = find_dfs_share('\\\\Filex.com\\Comm\\Foo', case_sensative=True)
+    assert rslt == ('FXB01FS0300', 'Comm', 'filex.com', 'Foo'), rslt
+
+def test_find_dfs_share_f():
+    rslt = find_dfs_share('\\\\FXESB01.Filex.com\\Comm\\Foo', case_sensative=True)
+    assert rslt == ('fxesb01', 'Comm', 'filex.com', 'Foo'), rslt
+
+def test_find_dfs_share_g():
+    rslt = find_dfs_share('\\\\filex.com\\Comm\\AS2\\Other', case_sensative=True)
+    assert rslt == ('fxb05fs0300', 'AS2', 'filex.com', 'Other'), rslt
+
+def test_find_dfs_share_h():
+    rslt = find_dfs_share('\\\\filex.com\\Comm\\AS2\\Other\\Foo\\bar.txt', case_sensative=True)
+    assert rslt == ('fxb05fs0300', 'AS2', 'filex.com', 'Other\\Foo\\bar.txt'), rslt
+
+def test_find_dfs_share_i():
+    rslt = find_dfs_share('\\\\filex.com\\Comm\\DDS Bad Packs\\bar.jpeg', case_sensative=True)
+    assert rslt == ('fxs01cs0093', 'ddsftp', 'filex.com', 'BadPacks\\bar.jpeg'), rslt
+
+def test_patha():
     path = Path(data_path('empty_file'))
     assert path.tell() == 0
 
