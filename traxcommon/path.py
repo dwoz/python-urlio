@@ -102,11 +102,16 @@ def fetch_dfs_cache(path=DFSCACHE_PATH, uri=DFS_REF_API):
         raise TraxCommonException(
             "Non 200 response: {}".format(response.status_code)
         )
+    data = response.json()
     with open(path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk: # filter out keep-alive new chunks
-                f.write(chunk)
-                f.flush()
+        f.write(
+            json.dumps(
+                data,
+                sort_keys=True,
+                indent=4,
+                separators=(',', ':')
+            )
+        )
     return path
 
 
