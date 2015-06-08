@@ -1,7 +1,12 @@
 import binascii
 import datetime
+import os
 import StringIO
 import time
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.backends import default_backend
 
 class LegacyToken(object):
 
@@ -111,3 +116,61 @@ class PKCS7Encoder(object):
         for _ in xrange(val):
             output.write('%02x' % val)
         return text + binascii.unhexlify(output.getvalue())
+
+
+def Xencode_aes_pkcs7(raw_data, key, iv_size=16):
+    from Crypto.Cipher import AES
+    iv = generate_iv(iv_size)
+    encoder = PKCS7Encoder()
+    pad_text = encoder.encode(raw_data)
+    aes = AES.new(key, AES.MODE_CBC, iv)
+    return binascii.hexlify(iv + aes.encrypt(pad_text))
+
+
+def encode_aes_pkcs7(raw_data, key, iv_size=16):
+    backend = default_backend()
+    iv = generate_iv(iv_size)
+    padder = padding.PKCS7(128).padder()
+    pad_text = padder.update(raw_data)
+    pad_text += padder.finalize()
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+    encryptor = cipher.encryptor()
+    ct = binascii.hexlify(iv + encryptor.update(pad_text) + encryptor.finalize())
+    return ct
+
+
+def Xdecode_aes_pkcs7(crypdata, key, iv_size=16):
+    from Crypto.Cipher import AES
+    bindata = binascii.unhexlify(crypdata)
+    iv = bindata[:iv_size]
+    cipher = bindata[iv_size:]
+    aes = AES.new(key, AES.MODE_CBC, iv)
+    pkdecoder = PKCS7Encoder()
+    return pkdecoder.decode(aes.decrypt(cipher))
+
+
+def decode_aes_pkcs7(crypdata, key, iv_size=16):
+    backend = default_backend()
+    bindata = binascii.unhexlify(crypdata)
+    iv = bindata[:iv_size]
+    ct = bindata[iv_size:]
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+    decryptor = cipher.decryptor()
+    pad_text = decryptor.update(ct) + decryptor.finalize()
+    unpadder = padding.PKCS7(128).unpadder()
+    data = unpadder.update(pad_text)
+    return data + unpadder.finalize()
+
+
+def generate_iv(size):
+    """
+    Get random bytes of a certian length making sure no null bytes are
+    included.
+    """
+    iv_size = 0
+    iv = ''
+    while iv_size < size:
+        randbytes = os.urandom(size).replace('\x00', '')
+        iv += randbytes
+        iv_size = len(iv)
+    return iv[:size]
