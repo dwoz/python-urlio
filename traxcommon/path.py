@@ -44,22 +44,53 @@ DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_NORMAL
 )
 
+class DfsCache(dict):
+    def __init__(self, *args, **opts):
+        super(DfsCache, self).__init__(*args, **opts)
+        self.fetch_event = multiprocessing.Event()
+
+    def load(self, path=DFSCACHE_PATH):
+        if not os.path.exists(path):
+            self.fetch(path)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                self.update(json.loads(f.read()))
+
+    def fetch(self, path=DFSCACHE_PATH, uri=DFS_REF_API):
+        if self.fetch_event.is_set():
+            return False
+        self.fetch_event.set()
+        try:
+            response = requests.get(uri, stream=True)
+            if response.status_code != 200:
+                raise TraxCommonException(
+                    "Non 200 response: {}".format(response.status_code)
+                )
+            data = response.json()
+            with open(path, 'wb') as f:
+                f.write(
+                    json.dumps(
+                        data,
+                        sort_keys=True,
+                        indent=4,
+                        separators=(',', ':')
+                    )
+                )
+            return path
+        except Exception as e:
+            log.exception("Exception fetching cache")
+            return False
+        finally:
+            self.fetch_event.clear()
+
 class TraxCommonException(Exception):
     """
     Base class for traxcommon exceptions
     """
 
-def load_cache(path=DFSCACHE_PATH, fetch=True):
-    log.warn("load_cache is depricated... user load_dfs_cache instead")
-    load_dfs_cache(path, fetch)
-
-def load_dfs_cache(path=DFSCACHE_PATH, fetch=True):
-    if not os.path.exists(path):
-        if fetch:
-            fetch_dfs_cache(path)
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            DFSCACHE.update(json.loads(f.read()))
+DFSCACHE = DfsCache()
+load_dfs_cache = DFSCACHE.load
+fetch_dfs_caceh = DFSCACHE.fetch
 
 class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
@@ -98,25 +129,6 @@ def find_target_in_cache(uri, cache, case_sensative=False):
                     if path.rstrip('\\') == uri:
                         return path.rstrip('\\'), tgt
                     return path, tgt
-
-
-def fetch_dfs_cache(path=DFSCACHE_PATH, uri=DFS_REF_API):
-    response = requests.get(uri, stream=True)
-    if response.status_code != 200:
-        raise TraxCommonException(
-            "Non 200 response: {}".format(response.status_code)
-        )
-    data = response.json()
-    with open(path, 'wb') as f:
-        f.write(
-            json.dumps(
-                data,
-                sort_keys=True,
-                indent=4,
-                separators=(',', ':')
-            )
-        )
-    return path
 
 
 def split_host_path(s):
@@ -168,7 +180,8 @@ def find_dfs_share(uri, **opts):
         )
         dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
         if cache_time < dlt:
-            load_dfs_cache()
+            if DFSCACHE.fetch():
+                load_dfs_cache()
     slashed_domain = '\\\\{0}'.format(domain).lower()
     if slashed_domain in DFSCACHE:
         domain_cache = DFSCACHE[slashed_domain]
