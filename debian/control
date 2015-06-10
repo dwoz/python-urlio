@@ -19,6 +19,7 @@ Depends: ${misc:Depends},
  python-kerberos,
  krb5-user,
  python-winrm,
+ python-cryptography,
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars
