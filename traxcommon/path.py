@@ -115,18 +115,20 @@ def depth_first_resources(domain_cache):
 
 def find_target_in_cache(uri, cache, case_sensative=False):
     if not case_sensative:
-        uri = uri.lower()
+        test_uri = uri.lower()
+    else:
+        test_uri = uri
     if not 'depth_first_resources' in cache:
         cache['depth_first_resources'] = depth_first_resources(cache)
     for path, conf in cache['depth_first_resources']:
         if not case_sensative:
-            path = path.lower().rstrip('\\')
+            test_path = path.lower().rstrip('\\')
         else:
-            path = path.rstrip('\\')
-        if uri.startswith(path + '\\') or path == uri:
+            test_path = path.rstrip('\\')
+        if test_uri.startswith(test_path + '\\') or test_path == test_uri:
             for tgt in conf['targets']:
                 if tgt['state'] == ONLINE:
-                    if path.rstrip('\\') == uri:
+                    if test_path.rstrip('\\') == test_uri:
                         return path.rstrip('\\'), tgt
                     return path, tgt
 
@@ -157,9 +159,9 @@ def find_dfs_share(uri, **opts):
     if case_sensative:
         parts = uri.split('\\')
         parts[2] = parts[2].lower()
-        uri = '\\'.join(parts)
+        test_uri = '\\'.join(parts)
     else:
-        uri = uri.lower()
+        test_uri = uri.lower()
     parts = uri.split('\\')
     if len(parts[2].split('.')) > 2:
         hostname = parts[2].split('.', 1)[0]
@@ -188,7 +190,7 @@ def find_dfs_share(uri, **opts):
     else:
         errmsg = "Domain not in cache: {}".format(domain)
         raise FindDfsShare(errmsg)
-    result = find_target_in_cache(uri, domain_cache, case_sensative)
+    result = find_target_in_cache(test_uri, domain_cache, case_sensative)
     if not result:
         raise FindDfsShare("No dfs cache result found")
     path, tgt = result
@@ -198,8 +200,9 @@ def find_dfs_share(uri, **opts):
         service, sharedir = service.split('\\', 1)
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
+    part = uri.lower().split(path.lower(), 1)[1]
     path = "{0}\\{1}".format(
-        sharedir, uri.split(path, 1)[1].lstrip('\\')
+        sharedir, uri[-len(part):].lstrip('\\')
     ).strip('\\')
     data = {
         'host': server,
