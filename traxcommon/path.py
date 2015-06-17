@@ -156,10 +156,9 @@ def by_depth(x, y):
 def find_dfs_share(uri, **opts):
     case_sensative = opts.get('case_sensative', False)
     log.debug("find dfs share: %s", uri)
+    uri = normalize_domain(uri)
     if case_sensative:
-        parts = uri.split('\\')
-        parts[2] = parts[2].lower()
-        test_uri = '\\'.join(parts)
+        test_uri = uri
     else:
         test_uri = uri.lower()
     parts = uri.split('\\')
@@ -201,9 +200,13 @@ def find_dfs_share(uri, **opts):
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
     part = uri.lower().split(path.lower(), 1)[1]
-    path = "{0}\\{1}".format(
-        sharedir, uri[-len(part):].lstrip('\\')
-    ).strip('\\')
+    print uri, path, part, uri[-len(part):]
+    if len(part):
+        path = "{0}\\{1}".format(
+            sharedir, uri[-len(part):].lstrip('\\')
+        ).strip('\\')
+    else:
+        path = sharedir
     data = {
         'host': server,
         'service': service,
