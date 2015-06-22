@@ -8,6 +8,8 @@ import signal
 import sys
 import time
 import traceback
+import threading
+import multiprocessing
 
 log = logging.getLogger(__name__)
 NULL = os.devnull
@@ -187,11 +189,12 @@ def restart_daemon(daemon, pidfile, starter=start_daemon, stopper=stop_daemon):
 class ProcessWorker(object):
 
     def __init__(
-            self, target, args=None, kwargs=None, num_threads=1):
+            self, target, args=None, kwargs=None, num_threads=1, join_wait=1):
         self.args = args or []
         self.kwargs = kwargs or {}
         self.target = target
         self.num_threads = num_threads
+        self.join_wait = join_wait
         self.process = multiprocessing.Process(
             target=self.run,
             args=(args, kwargs),
@@ -215,18 +218,19 @@ class ProcessWorker(object):
     def terminate(self):
         self.process.terminate()
 
-    @staticmethod
-    def run(args, kwargs):
+    def run(self, args, kwargs):
+        print 'process start'
         threadpool = []
-        while len(threadpool) < num_threads:
-            a = ThreadWorker(tgt, args, kwargs)
+        while len(threadpool) < self.num_threads:
+            a = ThreadWorker(self.target, args, kwargs)
             a.start()
             threadpool.append(a)
         while threadpool:
             for a in list(threadpool):
-                a.join(WAIT)
+                a.join(self.join_wait)
                 if not a.is_alive():
                     threadpool.remove(a)
+        print 'process end'
         log.info("Process end")
 
 
@@ -257,19 +261,20 @@ class ThreadWorker(object):
         return self.thread.is_alive()
 
     def run(self, tgt, args, kwargs):
+        log.debug('Start thread worker: %s', self.thread)
         keep_going = True
         while keep_going:
             try:
-                keep_going = self.tgt(self, *args, **kwargs)
+                keep_going = self.tgt(*args, **kwargs)
             except Exception as e:
-                log.exception("Unhandled exception")
+                log.exception('Unhandled exception')
                 keep_going = False
-        log.info("Thread end tgt=%s keep_going=%s", tgt, keep_going)
+        log.debug('Thread end: %s', self.thread)
 
 class Daemon(object):
 
     def __init__(
-            self, work, args=None, kwargs=None, context=None,
+            self, target, args=None, kwargs=None, context=None,
             num_processes=1, num_threads=1
         ):
         self.target = target
@@ -278,6 +283,7 @@ class Daemon(object):
         self.context = context or {}
         self.num_processes = num_processes
         self.num_threads = num_threads
+        self.process_pool = []
 
     def run(self):
         while len(self.process_pool) < self.num_processes:
@@ -294,7 +300,7 @@ class Daemon(object):
                 self.purge_dead_processes(join_wait=1)
             except:
                 log.exception("Exception during process wait")
-        log.info("Daemon done")
+        log.debug("Daemon done")
 
     def purge_dead_processes(self, join_wait=10):
         """
