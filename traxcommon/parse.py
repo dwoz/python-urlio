@@ -1,5 +1,15 @@
+import collections
 import string
 import array
+
+import xmltodict
+
+class REGEX:
+    number = re.compile('^\d+$')
+    float_number = re.compile('^\d+\.\d+$')
+
+is_strval = lambda x : isinstance(x, str) or isinstance(x, unicode)
+is_dict = lambda x : isinstance(x, collections.OrderedDict)
 
 class BadFile(Exception):
     """Raised when file corruption is detected."""
@@ -150,3 +160,27 @@ def parse_isa(data, max_tries=10):
             raise Exception("Valid ISA not found")
         break
     return data[:a+b+c]
+
+
+def value_transform(d):
+    for k in d:
+        if isinstance(d[k], list) and d[k] and is_dict(d[k][0]):
+            l = []
+            for i in d[k]:
+                l.append(value_transform(i))
+            d[k] = l
+        if is_dict(d[k]):
+            d[k] = value_transform(d[k])
+        if is_strval(d[k]) and REGEX.number.match(d[k]):
+            d[k] = int(d[k])
+        if is_strval(d[k]) and REGEX.float_number.match(d[k]):
+            d[k] = float(d[k])
+    return d
+
+
+def xml_to_dict(fp):
+    return value_transform(xmltodict.parse(fp))
+
+
+def xml_to_json(fp):
+    return json.dumps(xml_to_dict(fp))
