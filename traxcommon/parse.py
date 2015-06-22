@@ -1,6 +1,7 @@
 import collections
 import string
 import array
+import re
 
 import xmltodict
 
