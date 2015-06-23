@@ -1,3 +1,84 @@
+python-traxcommon (0.5.17) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #65. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * Make cache file human readable
+  * Rename mock method to make way for method tests
+  * Multiple dfs cache lookup improvements
+  * Remove un-wanted cruft
+  * Dont change case on smb paths
+  * Url parsing and normalization
+
+  [ dwoz ]
+  * Merge pull request #80 from TraxTechnologies/url
+
+  [ Daniel Wozniak ]
+  * Use cryptography for AES instead of pycrypto
+
+  [ dwoz ]
+  * Merge pull request #81 from TraxTechnologies/aesredux
+
+  [ Daniel Wozniak ]
+  * Fix cache updating
+
+  [ dwoz ]
+  * Merge pull request #82 from TraxTechnologies/cacher
+
+  [ Mike Palmer ]
+  * Adding missing reference to python-cryptopgrahy
+
+  [ dwoz ]
+  * Merge pull request #83 from TraxTechnologies/python-crpytography
+
+  [ Daniel Wozniak ]
+  * Remove trailing forward and back slashes
+  * Move X12 parser to traxcommon from filerouter
+
+  [ dwoz ]
+  * Merge pull request #84 from TraxTechnologies/parse
+
+  [ Daniel Wozniak ]
+  * Add parse module to package
+
+  [ dwoz ]
+  * Merge pull request #85 from TraxTechnologies/parse
+
+  [ Daniel Wozniak ]
+  * Fix case preservation bug in insasative dsf check
+
+  [ dwoz ]
+  * Merge pull request #86 from TraxTechnologies/preservewart
+
+  [ Daniel Wozniak ]
+  * lower domains, fix zero length path part wart
+
+  [ dwoz ]
+  * Merge pull request #87 from TraxTechnologies/preservewart
+
+  [ Daniel Wozniak ]
+  * Abstract worker and daemon classes
+
+  [ dwoz ]
+  * Merge pull request #88 from TraxTechnologies/daemon
+
+  [ Daniel Wozniak ]
+  * Common daemon class fixup
+  * Add xml to dict/json methods to parse module
+
+  [ dwoz ]
+  * Merge pull request #89 from TraxTechnologies/parse
+
+  [ Daniel Wozniak ]
+  * Add missing module import
+
+  [ dwoz ]
+  * Merge pull request #90 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Tue, 23 Jun 2015 14:50:06 +0000
+
 python-traxcommon (0.5.16) stable; urgency=low
 
   [ Jenkins ]
