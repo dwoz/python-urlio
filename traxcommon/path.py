@@ -44,22 +44,53 @@ DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_NORMAL
 )
 
+class DfsCache(dict):
+    def __init__(self, *args, **opts):
+        super(DfsCache, self).__init__(*args, **opts)
+        self.fetch_event = multiprocessing.Event()
+
+    def load(self, path=DFSCACHE_PATH):
+        if not os.path.exists(path):
+            self.fetch(path)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                self.update(json.loads(f.read()))
+
+    def fetch(self, path=DFSCACHE_PATH, uri=DFS_REF_API):
+        if self.fetch_event.is_set():
+            return False
+        self.fetch_event.set()
+        try:
+            response = requests.get(uri, stream=True)
+            if response.status_code != 200:
+                raise TraxCommonException(
+                    "Non 200 response: {}".format(response.status_code)
+                )
+            data = response.json()
+            with open(path, 'wb') as f:
+                f.write(
+                    json.dumps(
+                        data,
+                        sort_keys=True,
+                        indent=4,
+                        separators=(',', ':')
+                    )
+                )
+            return path
+        except Exception as e:
+            log.exception("Exception fetching cache")
+            return False
+        finally:
+            self.fetch_event.clear()
+
 class TraxCommonException(Exception):
     """
     Base class for traxcommon exceptions
     """
 
-def load_cache(path=DFSCACHE_PATH, fetch=True):
-    log.warn("load_cache is depricated... user load_dfs_cache instead")
-    load_dfs_cache(path, fetch)
-
-def load_dfs_cache(path=DFSCACHE_PATH, fetch=True):
-    if not os.path.exists(path):
-        if fetch:
-            fetch_dfs_cache(path)
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            DFSCACHE.update(json.loads(f.read()))
+DFSCACHE = DfsCache()
+load_dfs_cache = DFSCACHE.load
+fetch_dfs_caceh = DFSCACHE.fetch
 
 class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
@@ -82,32 +113,24 @@ def depth_first_resources(domain_cache):
     return resources
 
 
-def find_target_in_cache(uri, cache):
-    uri = uri.lower()
+def find_target_in_cache(uri, cache, case_sensative=False):
+    if not case_sensative:
+        test_uri = uri.lower()
+    else:
+        test_uri = uri
     if not 'depth_first_resources' in cache:
         cache['depth_first_resources'] = depth_first_resources(cache)
     for path, conf in cache['depth_first_resources']:
-        path = path.lower().rstrip('\\')
-        if uri.startswith(path + '\\') or path == uri:
+        if not case_sensative:
+            test_path = path.lower().rstrip('\\')
+        else:
+            test_path = path.rstrip('\\')
+        if test_uri.startswith(test_path + '\\') or test_path == test_uri:
             for tgt in conf['targets']:
                 if tgt['state'] == ONLINE:
-                    if path.rstrip('\\') == uri:
+                    if test_path.rstrip('\\') == test_uri:
                         return path.rstrip('\\'), tgt
                     return path, tgt
-
-
-def fetch_dfs_cache(path=DFSCACHE_PATH, uri=DFS_REF_API):
-    response = requests.get(uri, stream=True)
-    if response.status_code != 200:
-        raise TraxCommonException(
-            "Non 200 response: {}".format(response.status_code)
-        )
-    with open(path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk: # filter out keep-alive new chunks
-                f.write(chunk)
-                f.flush()
-    return path
 
 
 def split_host_path(s):
@@ -130,11 +153,14 @@ def by_depth(x, y):
     else:
         return 1
 
-
-@repoze.lru.lru_cache(100)
-def default_find_dfs_share(uri, **opts):
+def find_dfs_share(uri, **opts):
+    case_sensative = opts.get('case_sensative', False)
     log.debug("find dfs share: %s", uri)
-    uri = uri.lower()
+    uri = normalize_domain(uri)
+    if case_sensative:
+        test_uri = uri
+    else:
+        test_uri = uri.lower()
     parts = uri.split('\\')
     if len(parts[2].split('.')) > 2:
         hostname = parts[2].split('.', 1)[0]
@@ -144,7 +170,7 @@ def default_find_dfs_share(uri, **opts):
         log.debug("Using parts from uri %s %s %s %s",
             hostname, service, domain, dfspath
         )
-        return hostname, service, domain, '\\' + dfspath
+        return hostname, service, domain, dfspath.lstrip('\\')
     domain, _ = split_host_path(uri)
     if not DFSCACHE:
         load_dfs_cache()
@@ -155,16 +181,17 @@ def default_find_dfs_share(uri, **opts):
         )
         dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
         if cache_time < dlt:
-            load_dfs_cache()
-    slashed_domain = '\\\\{0}'.format(domain)
+            if DFSCACHE.fetch():
+                load_dfs_cache()
+    slashed_domain = '\\\\{0}'.format(domain).lower()
     if slashed_domain in DFSCACHE:
         domain_cache = DFSCACHE[slashed_domain]
     else:
         errmsg = "Domain not in cache: {}".format(domain)
         raise FindDfsShare(errmsg)
-    result = find_target_in_cache(uri, domain_cache)
+    result = find_target_in_cache(test_uri, domain_cache, case_sensative)
     if not result:
-        log.error("No domain cache found")
+        raise FindDfsShare("No dfs cache result found")
     path, tgt = result
     server, service = split_host_path(tgt['target'])
     sharedir = ''
@@ -172,9 +199,14 @@ def default_find_dfs_share(uri, **opts):
         service, sharedir = service.split('\\', 1)
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
-    path = "{0}\\{1}".format(
-        sharedir, uri.lower().split(path.lower(), 1)[1]
-    ).lstrip('\\')
+    part = uri.lower().split(path.lower(), 1)[1]
+    print uri, path, part, uri[-len(part):]
+    if len(part):
+        path = "{0}\\{1}".format(
+            sharedir, uri[-len(part):].lstrip('\\')
+        ).strip('\\')
+    else:
+        path = sharedir
     data = {
         'host': server,
         'service': service,
@@ -186,6 +218,11 @@ def default_find_dfs_share(uri, **opts):
     path = path.encode('cp1251')
     domain = domain.encode('cp1251')
     return server, service, domain, path
+
+
+@repoze.lru.lru_cache(100, timeout=500)
+def default_find_dfs_share(uri, **opts):
+    return find_dfs_share(uri, **opts)
 
 
 def normalize_path(path):
@@ -254,12 +291,19 @@ def Path(path, mode='r'):
 def lower(s):
     return s.lower()
 
+def normalize_domain(path):
+    if path.startswith('\\\\'):
+        parts = path.split('\\')
+        parts[2] = parts[2].lower()
+        path = '\\'.join(parts)
+    return path
+
 class BasePath(object):
     """
     Base class for path types to inherit from
     """
     _path_delim = '/'
-    _normalize_path = staticmethod(lower)
+    _normalize_path = staticmethod(normalize_domain)
 
     def _set_path(self, path):
         self._original_path = path
