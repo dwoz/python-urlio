@@ -200,7 +200,6 @@ def find_dfs_share(uri, **opts):
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
     part = uri.lower().split(path.lower(), 1)[1]
-    print uri, path, part, uri[-len(part):]
     if len(part):
         path = "{0}\\{1}".format(
             sharedir, uri[-len(part):].lstrip('\\')
