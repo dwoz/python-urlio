@@ -8,6 +8,21 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 
+
+def legacy_auth_url(login_url, request):
+    params = {'referrerUrl': request.url.split('/', 2)[2]}
+    if request.scheme == 'https':
+        params['secure'] = 'true'
+    else:
+        params['secure'] = 'false'
+    redirurl = "{}?{}".format(
+        login_url, urllib.urlencode(params)
+    )
+    return "{}?{}".format(
+        login_url, urllib.urlencode(params)
+    )
+
+
 class LegacyToken(object):
 
     def __init__(self, user_id, user_name, email, first_name, last_name,
