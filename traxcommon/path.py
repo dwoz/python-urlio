@@ -691,7 +691,7 @@ class SMBPath(BasePath):
             return_files=False
         )
 
-    def dirnames(self, glob='*', limit=0):
+    def dirnames(self, glob='*', limit=0, recurse=False):
         return self.ls_names(
             glob=glob,
             limit=limit,
@@ -769,12 +769,12 @@ class SMBPath(BasePath):
 
     def ls_names(
             self, glob='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
-            return_dirs=True, _done=0
+            return_files=True
         ):
         """
         List a directory and return the names of the files and directories.
         """
-        for a in self.ls(glob, smb_attribs, limit, recurse, return_dirs):
+        for a in self.ls(glob, smb_attribs, limit, recurse, return_files):
             yield a.path
 
     def remove(self):
