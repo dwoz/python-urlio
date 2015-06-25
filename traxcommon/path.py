@@ -445,8 +445,11 @@ class LocalPath(BasePath):
         parts = self.path.rstrip('/').split('/')
         return parts[-1] or '/'
 
+    def join(self, joinname, **kwargs):
+        return LocalPath(self.static_join(self.path, joinname), **kwargs)
+
     @staticmethod
-    def join(dirname, basename):
+    def static_join(dirname, basename):
         return "{0}/{1}".format(dirname, basename)
 
     def readline(self):
