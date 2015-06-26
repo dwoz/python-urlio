@@ -764,7 +764,7 @@ class SMBPath(BasePath):
 
     def recurse(self, glob='*', smb_attribs=DFLTSEARCH, limit=0):
         return self.ls_names(
-            glob, smb_attribs, limit, recurse=True, return_dirs=True
+            glob, smb_attribs, limit, recurse=True
         )
 
     def ls_names(
