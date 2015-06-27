@@ -716,7 +716,6 @@ class SMBPath(BasePath):
             useattribs = smb_attribs | SMB2_FILE_ATTRIBUTE_DIRECTORY
         else:
             useattribs = smb_attribs
-        print 'request_dirs', request_dirs, useattribs
         try:
             paths = listPath(
                 conn,
