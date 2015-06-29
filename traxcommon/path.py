@@ -2,7 +2,7 @@ import StringIO
 import json
 import ConfigParser
 import socket
-import glob
+import glob as libglob
 import os
 import datetime
 import requests
@@ -200,7 +200,6 @@ def find_dfs_share(uri, **opts):
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
     part = uri.lower().split(path.lower(), 1)[1]
-    print uri, path, part, uri[-len(part):]
     if len(part):
         path = "{0}\\{1}".format(
             sharedir, uri[-len(part):].lstrip('\\')
@@ -387,7 +386,7 @@ class LocalPath(BasePath):
         if recurse:
             raise Exception("Recursion not implimented")
         n = 0
-        for a in glob.glob(os.path.join(self.path, glb)):
+        for a in libglob.glob(os.path.join(self.path, glb)):
             yield a
             n += 1
             if limit > 0 and n >= limit:
@@ -446,8 +445,11 @@ class LocalPath(BasePath):
         parts = self.path.rstrip('/').split('/')
         return parts[-1] or '/'
 
+    def join(self, joinname, **kwargs):
+        return LocalPath(self.static_join(self.path, joinname), **kwargs)
+
     @staticmethod
-    def join(dirname, basename):
+    def static_join(dirname, basename):
         return "{0}/{1}".format(dirname, basename)
 
     def readline(self):
@@ -538,13 +540,20 @@ def smb_basename(inpath):
 
 def getFiletime(dt):
     """
-    Convert an integer representing the number of 100-nanosecond
+    Return a datetime object of the utc time for a smb timestamp
+    SMB1: Convert an integer representing the number of 100-nanosecond
     intervals since January 1, 1601 (UTC) to a datetime object.
+    SMB2: Convert a float representing the epoc timestamp
     """
-    microseconds = dt / 10.0
-    seconds, microseconds = divmod(microseconds, 1000000)
-    days, seconds = divmod(seconds, 86400)
-    return datetime.datetime(1601, 1, 1) + datetime.timedelta(days, seconds, microseconds)
+    if isinstance(dt, int):
+        # Timestamps returned from SMB1
+        microseconds = dt / 10.0
+        seconds, microseconds = divmod(microseconds, 1000000)
+        days, seconds = divmod(seconds, 86400)
+        return datetime.datetime(1601, 1, 1) + datetime.timedelta(days, seconds, microseconds)
+    else:
+        # Timestamps returned from SMB2
+        return datetime.datetime.utcfromtimestamp(dt)
 
 
 class SMBPath(BasePath):
@@ -552,7 +561,7 @@ class SMBPath(BasePath):
     def __init__(
             self, path, mode='r', user=None, password=None, api=None,
             clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
-            timeout=120,
+            timeout=120, _attrs=None,
             ):
         self._set_path(path)
         self.find_dfs_share = find_dfs_share or default_find_dfs_share
@@ -569,6 +578,7 @@ class SMBPath(BasePath):
         self.mode = mode
         self._conn = None
         self.WRITELOCK = write_lock
+        self._attrs = _attrs
 
     @property
     def uri(self):
@@ -661,56 +671,40 @@ class SMBPath(BasePath):
             if self.WRITELOCK:
                 self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
-    def files(self, glob='*', limit=0):
-        for i in self.filenames(glob=glob, limit=limit):
-            yield Path(i)
+    def files(self, glob='*', limit=0, recurse=False):
+        return self.ls(
+            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL, limit=limit,
+            recurse=recurse
+        )
 
     def filenames(self, glob='*', limit=0, recurse=False):
-        for i in self.ls_names(
-            glb=glob,
-            smb_attribs=smb.smb2_constants.SMB2_FILE_ATTRIBUTE_NORMAL,
+        return self.ls_names(
+            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL, limit=limit,
+            recurse=recurse
+        )
+
+    def dirs(self, glob='*', limit=0, recurse=False):
+        return self.ls(
+            glob=glob,
             limit=limit,
             recurse=recurse,
-            return_dirs=False
-        ):
-            yield i
+            return_files=False
+        )
 
-    def dirs(self, glob='*', limit=0):
-        for i in self.dirnames(glob=glob, limit=limit):
-            yield Path(i)
-
-    def dirnames(self, glob='*', limit=0):
-        for i in self.ls_names(
-            glb=glob,
-            smb_attribs=smb.smb2_contants.SMB2_FILE_ATTRIBUTE_DIRECTORY,
+    def dirnames(self, glob='*', limit=0, recurse=False):
+        return self.ls_names(
+            glob=glob,
             limit=limit,
-        ):
-            yield i
+            recurse=recurse,
+            return_files=False
+        )
 
     def close(self):
         self.get_connection().close()
 
-    def ls(self, glob='*', limit=0):
-        """
-        List a directory and return SMBPath objects for the files and
-        directories.
-        """
-        for pathname in self.ls_names(glob=glob, limit=limit):
-            yield Path(pathname)
-
-    def recurse_files(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
-        return self.ls_names(
-            glb, smb_attribs, limit, recurse=True, return_dirs=False
-        )
-
-    def recurse(self, glb='*', smb_attribs=DFLTSEARCH, limit=0):
-        return self.ls_names(
-            glb, smb_attribs, limit, recurse=True, return_dirs=True
-        )
-
-    def ls_names(
-            self, glb='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
-            return_dirs=True, _done=0
+    def ls(
+            self, glob='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
+            return_files=True, _done=0
         ):
         """
         List a directory and return the names of the files and directories.
@@ -728,13 +722,14 @@ class SMBPath(BasePath):
                 self.share,
                 self.relpath,
                 search=useattribs,
-                pattern=glb,
+                pattern=glob,
                 limit=limit,
                 timeout=self.timeout,
             )
         except smb.smb_structs.OperationFailure as e:
             # Determine if this failure is due to an invalid path or just
             # because the glob didn't return any results.
+            # TODO: This seesms strange and possible buggy
             if glob != '*':
                 self.ls('*')
             else:
@@ -747,24 +742,39 @@ class SMBPath(BasePath):
             if a.filename in ['.', '..']:
                 continue
             if a.isDirectory:
-                p = Path(Path(self.path).join(
-                    self.path, a.filename.encode('iso-8859-1')
-                ))
-                if return_dirs:
-                    yield p.path
+                p = self.join(a.filename.encode('iso-8859-1'), _attrs=a)
+                if request_dirs:
+                    yield p
                     _done += 1
                 if recurse:
-                    for _ in p.ls_names(
-                            glb, smb_attribs, limit, recurse, return_dirs, _done
+                    for _ in p.ls(
+                            glob, smb_attribs, limit, recurse, return_files, _done
                         ):
                         yield _
                         _done += 1
-            else:
+            elif return_files:
                 yield Path(self.path).join(
-                    self.path,
-                    a.filename.encode('iso-8859-1')
+                    a.filename.encode('iso-8859-1'), _attrs=a
                 )
                 _done += 1
+
+    def recurse_files(self, glob='*', limit=0):
+        return self.filenames(glob=glob, recurse=True, limit=limit)
+
+    def recurse(self, glob='*', smb_attribs=DFLTSEARCH, limit=0):
+        return self.ls_names(
+            glob, smb_attribs, limit, recurse=True
+        )
+
+    def ls_names(
+            self, glob='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
+            return_files=True
+        ):
+        """
+        List a directory and return the names of the files and directories.
+        """
+        for a in self.ls(glob, smb_attribs, limit, recurse, return_files):
+            yield a.path
 
     def remove(self):
         conn = self.get_connection()
@@ -789,46 +799,33 @@ class SMBPath(BasePath):
 
     @property
     def atime(self):
-        conn = self.get_connection()
-        paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename,
-            timeout=self.timeout,
-        )
-        date = datetime.datetime.utcfromtimestamp(paths[0].last_access_time)
-        return date
+        if not self._attrs:
+            conn = self.get_connection()
+            self._attrs = conn.getAttributes(self.share, self.relpath)
+        return getFiletime(self._attrs.last_access_time)
 
     @property
     def mtime(self):
-        conn = self.get_connection()
-        paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename,
-            timeout=self.timeout,
-        )
-        date = datetime.datetime.utcfromtimestamp(paths[0].last_write_time)
-        return date
+        if not self._attrs:
+            conn = self.get_connection()
+            self._attrs = conn.getAttributes(self.share, self.relpath)
+        return getFiletime(self._attrs.last_write_time)
 
     @property
     def size(self):
-        conn = self.get_connection()
-        paths = conn.listPath(
-            self.share, self.rel_dirname, pattern=self.rel_basename,
-            timeout=self.timeout,
-        )
-        return paths[0].file_size
+        if not self._attrs:
+            conn = self.get_connection()
+            self._attrs = conn.getAttributes(self.share, self.relpath)
+        return self._attrs.file_size
 
     def stat(self):
-        conn = self.get_connection()
-        attrs = conn.getAttributes(self.share, self.relpath)
-        if conn.is_using_smb2:
-            atime = datetime.datetime.utcfromtimestamp(attrs.last_access_time)
-            mtime = datetime.datetime.utcfromtimestamp(attrs.last_write_time)
-        else:
-            atime = getFiletime(attrs.last_access_time)
-            mtime = getFiletime(attrs.last_write_time)
+        if not self._attrs:
+            conn = self.get_connection()
+            self._attrs = conn.getAttributes(self.share, self.relpath)
         return {
-           'size': attrs.file_size,
-            'atime': atime,
-            'mtime': mtime,
+           'size': self._attrs.file_size,
+           'atime': getFiletime(self._attrs.last_access_time),
+           'mtime': getFiletime(self._attrs.last_write_time)
         }
 
     @property
@@ -847,8 +844,11 @@ class SMBPath(BasePath):
     def rel_basename(self):
         return smb_basename(self.relpath)
 
+    def join(self, joinpath, **kwargs):
+        return SMBPath(self.static_join(self.path, joinpath), **kwargs)
+
     @staticmethod
-    def join(dirname, basename):
+    def static_join(dirname, basename):
         return "{0}\\{1}".format(
             dirname.rstrip('\\'),
             basename.lstrip('\\')
