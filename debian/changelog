@@ -1,3 +1,35 @@
+python-traxcommon (0.5.18) stable; urgency=low
+
+  [ Jenkins ]
+  * Build #66. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * Remove rougue print statment
+  * Multiple improvements to SMBPath class
+
+  [ Mike Palmer ]
+  * Merge pull request #91 from TraxTechnologies/smbdetails
+
+  [ Daniel Wozniak ]
+  * Common method for legacy auth redirects
+
+  [ dwoz ]
+  * Merge pull request #92 from TraxTechnologies/legacyredir
+
+  [ Daniel Wozniak ]
+  * Make local path join work like smbpath join
+  * Add missing urllib import
+  * Fix some warts in recent changes
+  * Fix broken test
+  * Remove unwanted print statement
+  * Remove versions from README.md (for now)
+
+  [ dwoz ]
+  * Merge pull request #93 from TraxTechnologies/develop
+
+ -- Jenkins <devops@traxtech.com>  Mon, 29 Jun 2015 13:10:02 +0000
+
 python-traxcommon (0.5.17) stable; urgency=low
 
   [ Jenkins ]
