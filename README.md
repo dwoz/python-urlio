@@ -3,11 +3,11 @@
 
 ### Build Status
 
-####Stable (version 0.5.14)
+####Stable
 
 [![Build Status](https://ci.traxtech.com/buildStatus/icon?job=python-common-prod)](https://ci.traxtech.com/job/python-common-prod/) 
 
-####Development (version 0.5.15~1432377454)
+####Development
 
 [![Build Status](https://ci.traxtech.com/buildStatus/icon?job=python-common-dev)](https://ci.traxtech.com/job/python-common-dev/)
 
