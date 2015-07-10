@@ -212,10 +212,10 @@ def find_dfs_share(uri, **opts):
         'domain': domain,
         'path': path,
     }
-    server = server.encode('cp1251')
-    service = service.encode('cp1251')
-    path = path.encode('cp1251')
-    domain = domain.encode('cp1251')
+    server = server
+    service = service
+    path = path
+    domain = domain
     return server, service, domain, path
 
 
