@@ -742,7 +742,7 @@ class SMBPath(BasePath):
             if a.filename in ['.', '..']:
                 continue
             if a.isDirectory:
-                p = self.join(a.filename.encode('iso-8859-1'), _attrs=a)
+                p = self.join(a.filename, _attrs=a)
                 if request_dirs:
                     yield p
                     _done += 1
@@ -754,7 +754,7 @@ class SMBPath(BasePath):
                         _done += 1
             elif return_files:
                 yield Path(self.path).join(
-                    a.filename.encode('iso-8859-1'), _attrs=a
+                    a.filename, _attrs=a
                 )
                 _done += 1
 
