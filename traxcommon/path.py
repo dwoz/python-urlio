@@ -67,7 +67,8 @@ class DfsCache(dict):
                     "Non 200 response: {}".format(response.status_code)
                 )
             data = response.json()
-            with open(path, 'wb') as f:
+            tmp = tempfile.mktemp()
+            with open(tmp, 'wb') as f:
                 f.write(
                     json.dumps(
                         data,
@@ -76,6 +77,7 @@ class DfsCache(dict):
                         separators=(',', ':')
                     )
                 )
+            os.rename(tmp, path)
             return path
         except Exception as e:
             log.exception("Exception fetching cache")
