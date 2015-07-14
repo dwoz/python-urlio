@@ -675,14 +675,12 @@ class SMBPath(BasePath):
 
     def files(self, glob='*', limit=0, recurse=False):
         return self.ls(
-            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL, limit=limit,
-            recurse=recurse
+            glob=glob, limit=limit, recurse=recurse
         )
 
     def filenames(self, glob='*', limit=0, recurse=False):
         return self.ls_names(
-            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL, limit=limit,
-            recurse=recurse
+            glob=glob, limit=limit, recurse=recurse
         )
 
     def dirs(self, glob='*', limit=0, recurse=False):
