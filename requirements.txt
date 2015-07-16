@@ -5,3 +5,4 @@ repoze.lru
 nose
 -e git+git@github.com:threatstack/libmagic.git@5.18#egg=python-magic&subdirectory=python
 cryptography
+xmltodict
