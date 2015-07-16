@@ -25,7 +25,8 @@ class X12Parser(object):
 
     alphanums = string.letters + string.digits
 
-    def __init__(self, filename=None, fp=None):
+    def __init__(self, filename=None, fp=None, split_elements=False):
+        self.split_elements = split_elements
         self.version = None
         self.fp = fp
         if self.fp:
@@ -125,6 +126,8 @@ class X12Parser(object):
                     segment = seg.tostring()
                     if segment.startswith('IEA'):
                         self.in_isa = False
+                    if self.split_elements:
+                        return segmant.split(self.element_sep)
                     return segment
                 elif i != '\n':
                     try:
