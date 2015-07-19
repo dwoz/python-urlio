@@ -335,7 +335,7 @@ class BasePath(object):
             pass
 
     def __str__(self):
-        return self.path
+        return self.path.encode('utf-8')
 
 
 class LocalPath(BasePath):
@@ -677,12 +677,14 @@ class SMBPath(BasePath):
 
     def files(self, glob='*', limit=0, recurse=False):
         return self.ls(
-            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL, limit=limit, recurse=recurse
+            glob=glob, return_dirs=False, limit=limit,
+            recurse=recurse
         )
 
     def filenames(self, glob='*', limit=0, recurse=False):
         return self.ls_names(
-            glob=glob, smb_attribs=SMB2_FILE_ATTRIBUTE_NORMAL,limit=limit, recurse=recurse
+            glob=glob, return_dirs=False, limit=limit,
+            recurse=recurse
         )
 
     def dirs(self, glob='*', limit=0, recurse=False):
@@ -705,52 +707,38 @@ class SMBPath(BasePath):
         self.get_connection().close()
 
     def ls(
-            self, glob='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
-            return_files=True, _done=0
+            self, glob='*', limit=0, recurse=False,
+            return_files=True, return_dirs=True, _done=0
         ):
         """
         List a directory and return the names of the files and directories.
         """
         conn = self.get_connection()
         paths = []
-        request_dirs = smb_attribs & SMB2_FILE_ATTRIBUTE_DIRECTORY == SMB2_FILE_ATTRIBUTE_DIRECTORY
-        if recurse and not request_dirs:
-            useattribs = smb_attribs | SMB2_FILE_ATTRIBUTE_DIRECTORY
-        else:
-            useattribs = smb_attribs
-        try:
-            paths = listPath(
-                conn,
-                self.share,
-                self.relpath,
-                search=useattribs,
-                pattern=glob,
-                limit=limit,
-                timeout=self.timeout,
-            )
-        except smb.smb_structs.OperationFailure as e:
-            # Determine if this failure is due to an invalid path or just
-            # because the glob didn't return any results.
-            # TODO: This seesms strange and possible buggy
-            if glob != '*':
-                self.ls('*')
-            else:
-                log.error("Directory does not exist: %s", self.orig_path)
-        finally:
-            pass
+        if not return_files and not return_dirs:
+            raise Exception("At lest one return_files or return_dirs must be true")
+        paths = listPath(
+            conn,
+            self.share,
+            self.relpath,
+            pattern=glob,
+            limit=limit,
+            timeout=self.timeout,
+        )
         for a in paths:
             if limit > 0 and _done >= limit:
                 raise StopIteration
-            if a.filename in ['.', '..']:
+            if a.filename in ['.', '..', '$RECYCLE.BIN']:
                 continue
             if a.isDirectory:
                 p = self.join(a.filename, _attrs=a)
-                if request_dirs:
+                if return_dirs:
                     yield p
                     _done += 1
                 if recurse:
                     for _ in p.ls(
-                            glob, smb_attribs, limit, recurse, return_files, _done
+                            glob, limit, recurse, return_files, return_dirs,
+                            _done
                         ):
                         yield _
                         _done += 1
@@ -763,19 +751,20 @@ class SMBPath(BasePath):
     def recurse_files(self, glob='*', limit=0):
         return self.filenames(glob=glob, recurse=True, limit=limit)
 
-    def recurse(self, glob='*', smb_attribs=DFLTSEARCH, limit=0):
+    def recurse(self, glob='*', limit=0):
         return self.ls_names(
-            glob, smb_attribs, limit, recurse=True
+            glob, limit, recurse=True
         )
 
     def ls_names(
-            self, glob='*', smb_attribs=DFLTSEARCH, limit=0, recurse=False,
-            return_files=True
+            self, glob='*', limit=0, recurse=False, return_files=True,
+            return_dirs=True
         ):
         """
         List a directory and return the names of the files and directories.
         """
-        for a in self.ls(glob, smb_attribs, limit, recurse, return_files):
+        for a in self.ls(glob, limit, recurse, return_files=return_files,
+            return_dirs=return_dirs):
             yield a.path
 
     def remove(self):
@@ -878,9 +867,10 @@ class SMBPath(BasePath):
             line = self.readline()
 
     def isdir(self):
-        conn = self.get_connection()
-        stat = conn.getAttributes(self.share, self.relpath)
-        return stat.isDirectory
+        if not self._attrs:
+            conn = self.get_connection()
+            self._attrs = conn.getAttributes(self.share, self.relpath)
+        return self._attrs.isDirectory
 
 
 def mimeencoding_from_buffer(buffer):
