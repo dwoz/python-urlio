@@ -168,7 +168,7 @@ def find_dfs_share(uri, **opts):
         hostname = parts[2].split('.', 1)[0]
         domain = parts[2].split('.', 1)[1]
         service = parts[3]
-        dfspath = '\\'.join(parts[4:])
+        dfspath = u'\\'.join(parts[4:])
         log.debug("Using parts from uri %s %s %s %s",
             hostname, service, domain, dfspath
         )
@@ -185,7 +185,7 @@ def find_dfs_share(uri, **opts):
         if cache_time < dlt:
             if DFSCACHE.fetch():
                 load_dfs_cache()
-    slashed_domain = '\\\\{0}'.format(domain).lower()
+    slashed_domain = u'\\\\{0}'.format(domain).lower()
     if slashed_domain in DFSCACHE:
         domain_cache = DFSCACHE[slashed_domain]
     else:
@@ -203,7 +203,7 @@ def find_dfs_share(uri, **opts):
         domain = '.'.join(domain.split('.')[-2:])
     part = uri.lower().split(path.lower(), 1)[1]
     if len(part):
-        path = "{0}\\{1}".format(
+        path = u"{0}\\{1}".format(
             sharedir, uri[-len(part):].lstrip('\\')
         ).strip('\\')
     else:
@@ -565,6 +565,8 @@ class SMBPath(BasePath):
             clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
             timeout=120, _attrs=None,
             ):
+        if type(path) == str:
+            path = path.decode('utf-8')
         self._set_path(path)
         self.find_dfs_share = find_dfs_share or default_find_dfs_share
         server_name, share, domain, relpath = self.find_dfs_share(self.path)
@@ -849,7 +851,7 @@ class SMBPath(BasePath):
 
     @staticmethod
     def static_join(dirname, basename):
-        return "{0}\\{1}".format(
+        return u"{0}\\{1}".format(
             dirname.rstrip('\\'),
             basename.lstrip('\\')
         )
