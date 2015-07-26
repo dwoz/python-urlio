@@ -40,7 +40,7 @@ class SessionScope(object):
     def configure(self, *args, **kwargs):
         return self._get_session().configure(*args, **kwargs)
 
-    def connect_session(self, url, autocommit=False, **opts):
+    def connect_session(self, url, autoflush=True, autocommit=False, **opts):
         """
         Create a new database engine and bind it to the global session object,
         returning the engine when done.
@@ -48,7 +48,7 @@ class SessionScope(object):
         Session = self._get_session()
         engine = sqlalchemy.create_engine(url, **opts)
         Session.remove()
-        Session.configure(bind=engine, autocommit=autocommit)
+        Session.configure(bind=engine, autocommit=autocommit, autoflush=autoflush)
         sqlalchemy.orm.configure_mappers()
         return engine
 
