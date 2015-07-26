@@ -183,8 +183,8 @@ def value_transform(d):
 
 
 def xml_to_dict(fp, force_cdata=True):
-    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata)))
+    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata))
 
 
-def xml_to_json(fp):
-    return json.dumps(xml_to_dict(fp))
+def xml_to_json(fp, force_cdata=True):
+    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata))
