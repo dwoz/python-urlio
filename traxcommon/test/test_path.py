@@ -422,3 +422,14 @@ def test_recurse_files():
     p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
     result = list(p.recurse_files())
     assert result == RECURSE_FILES_VALS, result
+
+def test_list_empty():
+    p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+    l = list(p.ls())
+    assert not l
+
+def test_list_files_empty():
+    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\static_test\empty')
+    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+    l = list(p.filenames())
+    assert not l
