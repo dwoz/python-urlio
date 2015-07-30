@@ -1,3 +1,28 @@
+python-traxcommon (0.5.20) testing; urgency=low
+
+  [ Jenkins ]
+  * Build #68. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * Do not encode paths while listing them
+  * Use atomic operation to replace cache
+  * SMB search attributes are handled in the ls method
+  * Reverting last commit until there are test cases
+  * Add missing xmltodict dependency
+  * Optionaly split elements while parsing edi
+  * Do not create byte strings when joining
+  * Handle smb1 vs smb2 differences
+  * Use xmltodicts force_cdata option by default
+  * Add autoflush option to connect_session method
+  * Fix syntax
+  * Not sure why jenkins didnt see this
+
+  [ dwoz ]
+  * Merge pull request #95 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 30 Jul 2015 09:45:59 +0000
+
 python-traxcommon (0.5.19) testing; urgency=low
 
   [ Jenkins ]
