@@ -2,8 +2,11 @@ import collections
 import string
 import array
 import re
+import logging
 
 import xmltodict
+
+log = logging.getLogger(__name__)
 
 class REGEX:
     number = re.compile('^\d+$')
