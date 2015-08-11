@@ -2,8 +2,12 @@ import collections
 import string
 import array
 import re
+import logging
+import json
 
 import xmltodict
+
+log = logging.getLogger(__name__)
 
 class REGEX:
     number = re.compile('^\d+$')
@@ -102,7 +106,10 @@ class X12Parser(object):
             self.segmant_suffix = ISA_SEGMANTS[-1][2:]
             self.version = ISA_SEGMANTS[12]
             self.in_isa = True
-            return ISA
+            if self.split_elements:
+                return ISA.split(self.element_sep)
+            else:
+                return ISA
         else:
             #We're somewhere in the body of the X12 message.  We just
             #read until we find the segment terminator and return the
@@ -116,7 +123,7 @@ class X12Parser(object):
                     if suffix_len > 0:
                         suffix = self.fp.read(suffix_len)
                         if suffix != self.segmant_suffix:
-                            log.warn(
+                            log.debug(
                                 "Invalid suffix in edi document: header=%s parsed=%s",
                                 suffix, self.segmant_suffix
                             )
@@ -127,7 +134,7 @@ class X12Parser(object):
                     if segment.startswith('IEA'):
                         self.in_isa = False
                     if self.split_elements:
-                        return segmant.split(self.element_sep)
+                        return segment.split(self.element_sep)
                     return segment
                 elif i != '\n':
                     try:
@@ -182,10 +189,16 @@ def value_transform(d):
     return d
 
 
+def lower_postprocessor(path, key, value):
+    try:
+        return key.lower(), value
+    except (ValueError, TypeError):
+        return key, value
 
-def xml_to_dict(fp, force_cdata=True):
-    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata))
+
+def xml_to_dict(fp, force_cdata=True, postprocessor=lower_postprocessor):
+    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata, postprocessor=postprocessor))
 
 
-def xml_to_json(fp, force_cdata=True):
-    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata))
+def xml_to_json(fp, force_cdata=True, postprocessor=lower_postprocessor):
+    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, postprocessor=postprocessor))
