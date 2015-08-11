@@ -3,6 +3,7 @@ import string
 import array
 import re
 import logging
+import json
 
 import xmltodict
 
@@ -185,10 +186,16 @@ def value_transform(d):
     return d
 
 
+def lower_postprocessor(path, key, value):
+    try:
+        return key.lower(), value
+    except (ValueError, TypeError):
+        return key, value
 
-def xml_to_dict(fp, force_cdata=True):
-    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata))
+
+def xml_to_dict(fp, force_cdata=True, postprocessor=lower_postprocessor):
+    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata, postprocessor=postprocessor))
 
 
-def xml_to_json(fp, force_cdata=True):
-    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata))
+def xml_to_json(fp, force_cdata=True, postprocessor=lower_postprocessor):
+    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, postprocessor=postprocessor))
