@@ -1,3 +1,20 @@
+python-traxcommon (0.5.21) testing; urgency=low
+
+  [ Jenkins ]
+  * Build #69. Started by GitHub push by lancespeelmon.
+
+  [ Daniel Wozniak ]
+  * Adding missing logger object
+  * Bump patch version
+  * Change warn to debug since its pretty noisy
+  * Normalize field names in json/dict output
+  * Fix warts in element splitting
+
+  [ Lance Speelmon ]
+  * Merge pull request #96 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 11 Aug 2015 20:36:05 +0000
+
 python-traxcommon (0.5.20) testing; urgency=low
 
   [ Jenkins ]
