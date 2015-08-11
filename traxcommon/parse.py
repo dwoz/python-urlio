@@ -106,7 +106,10 @@ class X12Parser(object):
             self.segmant_suffix = ISA_SEGMANTS[-1][2:]
             self.version = ISA_SEGMANTS[12]
             self.in_isa = True
-            return ISA
+            if self.split_elements:
+                return ISA.split(self.element_sep)
+            else:
+                return ISA
         else:
             #We're somewhere in the body of the X12 message.  We just
             #read until we find the segment terminator and return the
@@ -131,7 +134,7 @@ class X12Parser(object):
                     if segment.startswith('IEA'):
                         self.in_isa = False
                     if self.split_elements:
-                        return segmant.split(self.element_sep)
+                        return segment.split(self.element_sep)
                     return segment
                 elif i != '\n':
                     try:
