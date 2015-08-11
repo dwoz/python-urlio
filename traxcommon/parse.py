@@ -119,7 +119,7 @@ class X12Parser(object):
                     if suffix_len > 0:
                         suffix = self.fp.read(suffix_len)
                         if suffix != self.segmant_suffix:
-                            log.warn(
+                            log.debug(
                                 "Invalid suffix in edi document: header=%s parsed=%s",
                                 suffix, self.segmant_suffix
                             )
