@@ -1,3 +1,17 @@
+python-traxcommon (0.5.22) testing; urgency=low
+
+  [ Jenkins ]
+  * Build #70. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * Lower attribute names
+
+  [ Mike Palmer ]
+  * Merge pull request #97 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Wed, 12 Aug 2015 22:04:09 +0000
+
 python-traxcommon (0.5.21) testing; urgency=low
 
   [ Jenkins ]
