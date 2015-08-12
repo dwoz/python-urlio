@@ -173,32 +173,31 @@ def parse_isa(data, max_tries=10):
     return data[:a+b+c]
 
 
-def value_transform(d):
-    for k in d:
-        if isinstance(d[k], list) and d[k] and is_dict(d[k][0]):
+def value_transform(data_in):
+    data_out = collections.OrderedDict()
+    for k in data_in:
+        if isinstance(data_in[k], list) and data_in[k] and is_dict(data_in[k][0]):
             l = []
-            for i in d[k]:
+            for i in data_in[k]:
                 l.append(value_transform(i))
-            d[k] = l
-        if is_dict(d[k]):
-            d[k] = value_transform(d[k])
-        if is_strval(d[k]) and REGEX.number.match(d[k]):
-            d[k] = int(d[k])
-        if is_strval(d[k]) and REGEX.float_number.match(d[k]):
-            d[k] = float(d[k])
-    return d
+            data_out[k.lower()] = l
+            continue
+        if is_dict(data_in[k]):
+            data_out[k.lower()] = value_transform(data_in[k])
+            continue
+        if is_strval(data_in[k]) and REGEX.number.match(data_in[k]):
+            data_out[k.lower()] = int(data_in[k])
+            continue
+        if is_strval(data_in[k]) and REGEX.float_number.match(data_in[k]):
+            data_out[k.lower()] = float(data_in[k])
+            continue
+        data_out[k.lower()] = data_in[k]
+    return data_out
 
 
-def lower_postprocessor(path, key, value):
-    try:
-        return key.lower(), value
-    except (ValueError, TypeError):
-        return key, value
+def xml_to_dict(fp, force_cdata=True, **kwargs):
+    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata, **kwargs))
 
 
-def xml_to_dict(fp, force_cdata=True, postprocessor=lower_postprocessor):
-    return value_transform(xmltodict.parse(fp, force_cdata=force_cdata, postprocessor=postprocessor))
-
-
-def xml_to_json(fp, force_cdata=True, postprocessor=lower_postprocessor):
-    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, postprocessor=postprocessor))
+def xml_to_json(fp, force_cdata=True, **kwargs):
+    return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, **kwargs))
