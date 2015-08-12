@@ -174,6 +174,8 @@ def parse_isa(data, max_tries=10):
 
 
 def value_transform(data_in):
+    if not data_in:
+        return data_in
     data_out = collections.OrderedDict()
     for k in data_in:
         if isinstance(data_in[k], list) and data_in[k] and is_dict(data_in[k][0]):
