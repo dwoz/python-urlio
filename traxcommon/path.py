@@ -288,7 +288,6 @@ def Path(path, mode='r'):
         return SMBPath(path, mode)
     return LocalPath(path, mode)
 
-
 def lower(s):
     return s.lower()
 
@@ -343,6 +342,10 @@ class LocalPath(BasePath):
     def __init__(self, path, mode='r'):
         self._set_path(path)
         self.mode = mode
+
+    @property
+    def uri(self):
+        return 'file://{}'.format(path)
 
     @property
     def fp(self):
@@ -590,6 +593,10 @@ class SMBPath(BasePath):
             self.server_name, self.domain, self.share.replace('\\', '/'),
             self.relpath.replace('\\', '/')
         )
+
+    @classmethod
+    def from_uri(cls, uri):
+        url.Url(uri)
 
     def tell(self):
         return self._index
