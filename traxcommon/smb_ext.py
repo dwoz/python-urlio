@@ -585,3 +585,51 @@ errback, starting_offset, timeout = 30, **kwargs):
     else:
         sendOpen(conn.connected_trees[service_name])
 
+
+def iter_listPath(conn, service_name, path,
+             search = DFLTSEARCH,
+             pattern = '*', timeout = 30, limit=0):
+    """
+    Retrieve an iterator of directory listing of files/folders at *path*
+
+    :param string/unicode service_name: the name of the shared folder for the *path*
+    :param string/unicode path: path relative to the *service_name* where we are interested to learn about its files/sub-folders.
+    :param integer search: integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py).
+                           The default *search* value will query for all read-only, hidden, system, archive files and directories.
+    :param string/unicode pattern: the filter to apply to the results before returning to the client.
+    :return: A list of :doc:`smb.base.SharedFile<smb_SharedFile>` instances.
+    """
+    if not conn.sock:
+        raise NotConnectedError('Not connected to server')
+
+    results = [ ]
+
+    def cb(entries):
+        conn.is_busy = False
+        results.extend(entries)
+
+    def eb(failure):
+        conn.is_busy = False
+        raise failure
+
+    conn.is_busy = True
+    try:
+        if conn.is_using_smb2:
+            _listPath_SMB2(
+                conn, service_name, path, cb, eb, search = search,
+                pattern = pattern, timeout = timeout, limit=limit,
+            )
+        else:
+            _listPath_SMB1(
+                conn, service_name, path, cb, eb, search = search,
+                pattern = pattern, timeout = timeout, limit=limit,
+            )
+        while conn.is_busy:
+            conn._pollForNetBIOSPacket(timeout)
+            while True:
+                try:
+                    yield results.pop()
+                except IndexError:
+                    break
+    finally:
+        conn.is_busy = False
