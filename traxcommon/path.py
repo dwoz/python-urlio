@@ -28,6 +28,9 @@ log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
 DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
+SMB_IGNORE_FILENAMES = (
+    '.', '..', '$RECYCLE.BIN', '.DS_Store',
+)
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
@@ -586,6 +589,7 @@ class SMBPath(BasePath):
         self._conn = None
         self.WRITELOCK = write_lock
         self._attrs = _attrs
+        self.ignore_filenames = SMB_IGNORE_FILENAMES
 
     @property
     def uri(self):
@@ -731,6 +735,7 @@ class SMBPath(BasePath):
             pattern=glob,
             limit=limit,
             timeout=self.timeout,
+            ignore=self.ignore_filenames,
         )
         for a in paths:
             if limit > 0 and _done >= limit:

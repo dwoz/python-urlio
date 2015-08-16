@@ -16,14 +16,14 @@ DFLTSEARCH = (
     SMB_FILE_ATTRIBUTE_ARCHIVE
 )
 
-class Results(list):
+class Results(deque):
     def __init__(self, *args, **kwargs):
         super(Results, self).__init__(*args, **kwargs)
         self.at = 0
 
 def listPath(conn, service_name, path,
              search = DFLTSEARCH,
-             pattern = '*', timeout = 30, limit=0, offset=0):
+             pattern = '*', timeout = 30, limit=0, begin_at=0, ignore=None):
     """
     Retrieve a directory listing of files/folders at *path*
 
@@ -53,13 +53,13 @@ def listPath(conn, service_name, path,
             _listPath_SMB2(
                 conn, service_name, path, cb, eb, search = search,
                 pattern = pattern, timeout = timeout, limit=limit,
-                begin_at=offset,
+                begin_at=begin_at, ignore=ignore
             )
         else:
             _listPath_SMB1(
                 conn, service_name, path, cb, eb, search = search,
                 pattern = pattern, timeout = timeout, limit=limit,
-                begin_at=offset,
+                begin_at=begin_at, ignore=ignore
             )
         while conn.is_busy:
             conn._pollForNetBIOSPacket(timeout)
@@ -71,7 +71,7 @@ def listPath(conn, service_name, path,
 
 def _listPath_SMB2(
         conn, service_name, path, callback, errback, search, pattern,
-        timeout=30, limit=0, begin_at=0
+        timeout=30, limit=0, begin_at=0, ignore=None
     ):
     if not conn.has_authenticated:
         raise NotReadyError('SMB connection not authenticated')
@@ -84,7 +84,8 @@ def _listPath_SMB2(
         path = path[:-1]
     messages_history = [ ]
     results = Results()
-
+    if not ignore:
+        ignore = []
     def sendCreate(tid):
         create_context_data = binascii.unhexlify(
             "28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00 "
@@ -161,6 +162,12 @@ def _listPath_SMB2(
                 return data_bytes[offset:]
 
             filename = data_bytes[offset2:offset2+filename_length].decode('UTF-16LE')
+            if filename in ignore:
+                if next_offset:
+                    offset += next_offset
+                    continue
+                else:
+                    break
             short_name = short_name.decode('UTF-16LE')
             if results.at >= begin_at:
                 results.append(SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
@@ -207,7 +214,7 @@ def _listPath_SMB2(
 
 def _listPath_SMB1(
         self, service_name, path, callback, errback, search,
-        pattern, timeout = 30, limit=0, begin_at=0
+        pattern, timeout = 30, limit=0, begin_at=0, ignore=None
     ):
     if not self.has_authenticated:
         raise NotReadyError('SMB connection not authenticated')
@@ -218,6 +225,8 @@ def _listPath_SMB1(
         path += '\\'
     messages_history = [ ]
     results = Results()
+    if not ignore:
+        ignore = []
 
     def sendFindFirst(tid):
         setup_bytes = struct.pack('<H', 0x0001)  # TRANS2_FIND_FIRST2 sub-command. See [MS-CIFS]: 2.2.6.2.1
@@ -261,6 +270,12 @@ def _listPath_SMB1(
                 return data_bytes[offset:]
 
             filename = data_bytes[offset2:offset2+filename_length].decode('UTF-16LE')
+            if filename in ignore:
+                if next_offset:
+                    offset += next_offset
+                    continue
+                else:
+                    break
             short_name = short_name.decode('UTF-16LE')
             shared_file = SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
                                       convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
@@ -599,7 +614,7 @@ errback, starting_offset, timeout = 30, **kwargs):
 
 def iter_listPath(conn, service_name, path,
              search = DFLTSEARCH,
-             pattern = '*', timeout = 30, limit=0, offset=0):
+             pattern = '*', timeout = 30, limit=0, begin_at=0, ignore=None):
     """
     Retrieve an iterator of directory listing of files/folders at *path*
 
@@ -629,13 +644,13 @@ def iter_listPath(conn, service_name, path,
             _listPath_SMB2(
                 conn, service_name, path, cb, eb, search = search,
                 pattern = pattern, timeout = timeout, limit=limit,
-                begin_at=offset,
+                begin_at=begin_at, ignore=ignore,
             )
         else:
             _listPath_SMB1(
                 conn, service_name, path, cb, eb, search = search,
                 pattern = pattern, timeout = timeout, limit=limit,
-                begin_at=offset,
+                begin_at=begin_at, ignore=ignore,
             )
         while conn.is_busy:
             conn._pollForNetBIOSPacket(timeout)
