@@ -22,10 +22,10 @@ from smb.smb2_constants import *
 import threading
 import logging
 import repoze.lru
-from traxcommon.symbols import ONLINE
 from smb_ext import iter_listPath, listPath, storeFileFromOffset
 log = logging.getLogger(__name__)
 
+ONLINE = u'ONLINE'
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
 DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
 SMB_IGNORE_FILENAMES = (

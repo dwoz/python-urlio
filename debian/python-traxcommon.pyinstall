@@ -5,4 +5,3 @@ traxcommon/parse.py traxcommon
 traxcommon/path.py traxcommon
 traxcommon/smb_ext.py traxcommon
 traxcommon/sql_session.py traxcommon
-traxcommon/symbols.py traxcommon
