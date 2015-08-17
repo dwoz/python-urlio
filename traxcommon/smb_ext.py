@@ -6,6 +6,7 @@ from smb.base import (
     _PendingRequest, SharedFile, NotConnectedError, NotReadyError
 )
 from smb.smb_constants import *
+from collections import deque
 from smb.smb_structs import *
 from smb.smb2_structs import *
 DFLTSEARCH = (
@@ -629,6 +630,7 @@ def iter_listPath(conn, service_name, path,
         raise NotConnectedError('Not connected to server')
 
     results = [ ]
+    results = Results()
 
     def cb(entries):
         conn.is_busy = False
@@ -656,7 +658,7 @@ def iter_listPath(conn, service_name, path,
             conn._pollForNetBIOSPacket(timeout)
             while True:
                 try:
-                    yield results.pop()
+                    yield results.popleft()
                 except IndexError:
                     break
     finally:

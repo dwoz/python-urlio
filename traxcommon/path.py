@@ -23,7 +23,7 @@ import threading
 import logging
 import repoze.lru
 from traxcommon.symbols import ONLINE
-from smb_ext import listPath, storeFileFromOffset
+from smb_ext import iter_listPath, listPath, storeFileFromOffset
 log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
@@ -728,7 +728,7 @@ class SMBPath(BasePath):
         paths = []
         if not return_files and not return_dirs:
             raise Exception("At lest one return_files or return_dirs must be true")
-        paths = listPath(
+        paths = iter_listPath(
             conn,
             self.share,
             self.relpath,
