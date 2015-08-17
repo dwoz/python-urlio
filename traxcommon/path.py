@@ -695,7 +695,7 @@ class SMBPath(BasePath):
     def filenames(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls_names(
             glob=glob, return_dirs=False, limit=limit, offset=offset,
-            recurse=recurse
+            recurse=recurse,
         )
 
     def dirs(self, glob='*', limit=0, offset=0, recurse=False):
@@ -735,7 +735,7 @@ class SMBPath(BasePath):
             self.share,
             self.relpath,
             pattern=glob,
-            limit=limit,
+            limit=0,
             timeout=self.timeout,
             begin_at=0,
             ignore=self.ignore_filenames,
