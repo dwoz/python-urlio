@@ -807,34 +807,43 @@ class SMBPath(BasePath):
         return smb_dirname(inpath)
 
     @property
-    def atime(self):
-        if not self._attrs:
+    def _attrs(self):
+        if not self.__attrs:
             conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
+            self.__attrs = conn.getAttributes(self.share, self.relpath)
+        return self.__attrs
+
+    @_attrs.setter
+    def _attrs(self, attrs):
+        self.__attrs = attrs
+
+    @property
+    def atime(self):
         return getFiletime(self._attrs.last_access_time)
 
     @property
     def mtime(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return getFiletime(self._attrs.last_write_time)
 
     @property
+    def ctime(self):
+        return getFiletime(self._attrs.create_time)
+
+    @property
     def size(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return self._attrs.file_size
 
     def stat(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
+        # dir(self._attrs) == ['__doc__', '__init__', '__module__',
+        # '__unicode__', 'alloc_size', 'create_time', 'file_attributes',
+        # 'file_size', 'filename', 'isDirectory', 'isReadOnly',
+        # 'last_access_time', 'last_attr_change_time',
+        # 'last_write_time', 'short_name']
         return {
            'size': self._attrs.file_size,
            'atime': getFiletime(self._attrs.last_access_time),
-           'mtime': getFiletime(self._attrs.last_write_time)
+           'mtime': getFiletime(self._attrs.last_write_time),
+           'ctime': getFiletime(self._attrs.create_time),
         }
 
     @property
@@ -885,9 +894,6 @@ class SMBPath(BasePath):
             line = self.readline()
 
     def isdir(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return self._attrs.isDirectory
 
 
