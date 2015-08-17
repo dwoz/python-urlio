@@ -406,6 +406,12 @@ def test_recurse():
     result = list(p.recurse())
     assert result == RECURSE_VALS, result
 
+def test_recurse_offset():
+    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    result = list(p.recurse(offset=2))
+    assert result == RECURSE_VALS[2:], result
+
+
 RECURSE_FILES_VALS = [
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc2.txt',

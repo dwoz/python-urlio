@@ -686,30 +686,32 @@ class SMBPath(BasePath):
             if self.WRITELOCK:
                 self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
-    def files(self, glob='*', limit=0, recurse=False):
+    def files(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls(
-            glob=glob, return_dirs=False, limit=limit,
+            glob=glob, return_dirs=False, limit=limit, offset=offset,
             recurse=recurse
         )
 
-    def filenames(self, glob='*', limit=0, recurse=False):
+    def filenames(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls_names(
-            glob=glob, return_dirs=False, limit=limit,
+            glob=glob, return_dirs=False, limit=limit, offset=offset,
             recurse=recurse
         )
 
-    def dirs(self, glob='*', limit=0, recurse=False):
+    def dirs(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls(
             glob=glob,
             limit=limit,
+            offset=offset,
             recurse=recurse,
             return_files=False
         )
 
-    def dirnames(self, glob='*', limit=0, recurse=False):
+    def dirnames(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls_names(
             glob=glob,
             limit=limit,
+            offset=offset,
             recurse=recurse,
             return_files=False
         )
@@ -718,8 +720,8 @@ class SMBPath(BasePath):
         self.get_connection().close()
 
     def ls(
-            self, glob='*', limit=0, recurse=False,
-            return_files=True, return_dirs=True, _done=0
+            self, glob='*', limit=0, offset=0, recurse=False,
+            return_files=True, return_dirs=True, _done=0, _at=-1
         ):
         """
         List a directory and return the names of the files and directories.
@@ -735,23 +737,23 @@ class SMBPath(BasePath):
             pattern=glob,
             limit=limit,
             timeout=self.timeout,
+            begin_at=0,
             ignore=self.ignore_filenames,
         )
         for a in paths:
+            _at += 1
+            if _at < offset:
+                continue
             if limit > 0 and _done >= limit:
                 raise StopIteration
-            if a.filename in ['.', '..', '$RECYCLE.BIN']:
-                continue
             if a.isDirectory:
                 p = self.join(a.filename, _attrs=a)
                 if return_dirs:
                     yield p
                     _done += 1
                 if recurse:
-                    for _ in p.ls(
-                            glob, limit, recurse, return_files, return_dirs,
-                            _done
-                        ):
+                    for _ in p.ls(glob, limit, offset, recurse, return_files,
+                        return_dirs, _done, _at):
                         yield _
                         _done += 1
             elif return_files:
@@ -760,23 +762,27 @@ class SMBPath(BasePath):
                 )
                 _done += 1
 
-    def recurse_files(self, glob='*', limit=0):
-        return self.filenames(glob=glob, recurse=True, limit=limit)
+    def recurse_files(self, glob='*', limit=0, offset=0):
+        return self.filenames(
+            glob=glob, recurse=True, limit=limit, offset=offset,
+        )
 
-    def recurse(self, glob='*', limit=0):
+    def recurse(self, glob='*', limit=0, offset=0):
         return self.ls_names(
-            glob, limit, recurse=True
+            glob=glob, limit=limit, offset=offset, recurse=True
         )
 
     def ls_names(
-            self, glob='*', limit=0, recurse=False, return_files=True,
+            self, glob='*', limit=0, offset=0, recurse=False, return_files=True,
             return_dirs=True
         ):
         """
         List a directory and return the names of the files and directories.
         """
-        for a in self.ls(glob, limit, recurse, return_files=return_files,
-            return_dirs=return_dirs):
+        for a in self.ls(
+                glob=glob, limit=limit, offset=offset, recurse=recurse,
+                return_files=return_files, return_dirs=return_dirs,
+            ):
             yield a.path
 
     def remove(self):
