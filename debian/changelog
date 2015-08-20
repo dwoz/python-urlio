@@ -1,3 +1,28 @@
+python-traxcommon (0.5.23) testing; urgency=low
+
+  [ Jenkins ]
+  * Build #71. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Patch version bump
+  * Just return falsish values
+  * Initial thoughs on Url class based on Path
+  * Return an iterator instead of list
+  * Pseudo paging of results
+  * Move ignore files to smb_ext
+  * Use iterator version of listPath
+  * Add offset for memory efficient paging of results
+  * Add create time attribute
+  * Remove un-needed module
+  * Add new modules to package
+  * Page the iterator in the Path instaed of smb_ext
+  * Add ctime to localpath to fix downstream tests
+
+  [ Mike Palmer ]
+  * Merge pull request #98 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 20 Aug 2015 20:47:56 +0000
+
 python-traxcommon (0.5.22) testing; urgency=low
 
   [ Jenkins ]
