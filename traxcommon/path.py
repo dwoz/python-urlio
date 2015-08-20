@@ -471,6 +471,10 @@ class LocalPath(BasePath):
         return os.stat(self.path).st_size
 
     @property
+    def ctime(self):
+        return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_ctime)
+
+    @property
     def mtime(self):
         return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_mtime)
 
@@ -489,6 +493,7 @@ class LocalPath(BasePath):
             'size': self.size,
             'atime': self.atime,
             'mtime': self.mtime,
+            'ctime': self.ctime,
         }
 
 
