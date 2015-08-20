@@ -22,12 +22,15 @@ from smb.smb2_constants import *
 import threading
 import logging
 import repoze.lru
-from traxcommon.symbols import ONLINE
-from smb_ext import listPath, storeFileFromOffset
+from smb_ext import iter_listPath, listPath, storeFileFromOffset
 log = logging.getLogger(__name__)
 
+ONLINE = u'ONLINE'
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
 DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
+SMB_IGNORE_FILENAMES = (
+    '.', '..', '$RECYCLE.BIN', '.DS_Store',
+)
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
@@ -288,7 +291,6 @@ def Path(path, mode='r'):
         return SMBPath(path, mode)
     return LocalPath(path, mode)
 
-
 def lower(s):
     return s.lower()
 
@@ -343,6 +345,10 @@ class LocalPath(BasePath):
     def __init__(self, path, mode='r'):
         self._set_path(path)
         self.mode = mode
+
+    @property
+    def uri(self):
+        return 'file://{}'.format(path)
 
     @property
     def fp(self):
@@ -465,6 +471,10 @@ class LocalPath(BasePath):
         return os.stat(self.path).st_size
 
     @property
+    def ctime(self):
+        return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_ctime)
+
+    @property
     def mtime(self):
         return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_mtime)
 
@@ -483,6 +493,7 @@ class LocalPath(BasePath):
             'size': self.size,
             'atime': self.atime,
             'mtime': self.mtime,
+            'ctime': self.ctime,
         }
 
 
@@ -583,6 +594,7 @@ class SMBPath(BasePath):
         self._conn = None
         self.WRITELOCK = write_lock
         self._attrs = _attrs
+        self.ignore_filenames = SMB_IGNORE_FILENAMES
 
     @property
     def uri(self):
@@ -590,6 +602,10 @@ class SMBPath(BasePath):
             self.server_name, self.domain, self.share.replace('\\', '/'),
             self.relpath.replace('\\', '/')
         )
+
+    @classmethod
+    def from_uri(cls, uri):
+        url.Url(uri)
 
     def tell(self):
         return self._index
@@ -675,30 +691,32 @@ class SMBPath(BasePath):
             if self.WRITELOCK:
                 self.WRITELOCK.release(self.server_name, self.share, self.relpath)
 
-    def files(self, glob='*', limit=0, recurse=False):
+    def files(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls(
-            glob=glob, return_dirs=False, limit=limit,
+            glob=glob, return_dirs=False, limit=limit, offset=offset,
             recurse=recurse
         )
 
-    def filenames(self, glob='*', limit=0, recurse=False):
+    def filenames(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls_names(
-            glob=glob, return_dirs=False, limit=limit,
-            recurse=recurse
+            glob=glob, return_dirs=False, limit=limit, offset=offset,
+            recurse=recurse,
         )
 
-    def dirs(self, glob='*', limit=0, recurse=False):
+    def dirs(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls(
             glob=glob,
             limit=limit,
+            offset=offset,
             recurse=recurse,
             return_files=False
         )
 
-    def dirnames(self, glob='*', limit=0, recurse=False):
+    def dirnames(self, glob='*', limit=0, offset=0, recurse=False):
         return self.ls_names(
             glob=glob,
             limit=limit,
+            offset=offset,
             recurse=recurse,
             return_files=False
         )
@@ -707,8 +725,8 @@ class SMBPath(BasePath):
         self.get_connection().close()
 
     def ls(
-            self, glob='*', limit=0, recurse=False,
-            return_files=True, return_dirs=True, _done=0
+            self, glob='*', limit=0, offset=0, recurse=False,
+            return_files=True, return_dirs=True, _done=0, _at=-1
         ):
         """
         List a directory and return the names of the files and directories.
@@ -717,29 +735,30 @@ class SMBPath(BasePath):
         paths = []
         if not return_files and not return_dirs:
             raise Exception("At lest one return_files or return_dirs must be true")
-        paths = listPath(
+        paths = iter_listPath(
             conn,
             self.share,
             self.relpath,
             pattern=glob,
-            limit=limit,
+            limit=0,
             timeout=self.timeout,
+            begin_at=0,
+            ignore=self.ignore_filenames,
         )
         for a in paths:
+            _at += 1
+            if _at < offset:
+                continue
             if limit > 0 and _done >= limit:
                 raise StopIteration
-            if a.filename in ['.', '..', '$RECYCLE.BIN']:
-                continue
             if a.isDirectory:
                 p = self.join(a.filename, _attrs=a)
                 if return_dirs:
                     yield p
                     _done += 1
                 if recurse:
-                    for _ in p.ls(
-                            glob, limit, recurse, return_files, return_dirs,
-                            _done
-                        ):
+                    for _ in p.ls(glob, limit, offset, recurse, return_files,
+                        return_dirs, _done, _at):
                         yield _
                         _done += 1
             elif return_files:
@@ -748,23 +767,27 @@ class SMBPath(BasePath):
                 )
                 _done += 1
 
-    def recurse_files(self, glob='*', limit=0):
-        return self.filenames(glob=glob, recurse=True, limit=limit)
+    def recurse_files(self, glob='*', limit=0, offset=0):
+        return self.filenames(
+            glob=glob, recurse=True, limit=limit, offset=offset,
+        )
 
-    def recurse(self, glob='*', limit=0):
+    def recurse(self, glob='*', limit=0, offset=0):
         return self.ls_names(
-            glob, limit, recurse=True
+            glob=glob, limit=limit, offset=offset, recurse=True
         )
 
     def ls_names(
-            self, glob='*', limit=0, recurse=False, return_files=True,
+            self, glob='*', limit=0, offset=0, recurse=False, return_files=True,
             return_dirs=True
         ):
         """
         List a directory and return the names of the files and directories.
         """
-        for a in self.ls(glob, limit, recurse, return_files=return_files,
-            return_dirs=return_dirs):
+        for a in self.ls(
+                glob=glob, limit=limit, offset=offset, recurse=recurse,
+                return_files=return_files, return_dirs=return_dirs,
+            ):
             yield a.path
 
     def remove(self):
@@ -789,34 +812,43 @@ class SMBPath(BasePath):
         return smb_dirname(inpath)
 
     @property
-    def atime(self):
-        if not self._attrs:
+    def _attrs(self):
+        if not self.__attrs:
             conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
+            self.__attrs = conn.getAttributes(self.share, self.relpath)
+        return self.__attrs
+
+    @_attrs.setter
+    def _attrs(self, attrs):
+        self.__attrs = attrs
+
+    @property
+    def atime(self):
         return getFiletime(self._attrs.last_access_time)
 
     @property
     def mtime(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return getFiletime(self._attrs.last_write_time)
 
     @property
+    def ctime(self):
+        return getFiletime(self._attrs.create_time)
+
+    @property
     def size(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return self._attrs.file_size
 
     def stat(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
+        # dir(self._attrs) == ['__doc__', '__init__', '__module__',
+        # '__unicode__', 'alloc_size', 'create_time', 'file_attributes',
+        # 'file_size', 'filename', 'isDirectory', 'isReadOnly',
+        # 'last_access_time', 'last_attr_change_time',
+        # 'last_write_time', 'short_name']
         return {
            'size': self._attrs.file_size,
            'atime': getFiletime(self._attrs.last_access_time),
-           'mtime': getFiletime(self._attrs.last_write_time)
+           'mtime': getFiletime(self._attrs.last_write_time),
+           'ctime': getFiletime(self._attrs.create_time),
         }
 
     @property
@@ -867,9 +899,6 @@ class SMBPath(BasePath):
             line = self.readline()
 
     def isdir(self):
-        if not self._attrs:
-            conn = self.get_connection()
-            self._attrs = conn.getAttributes(self.share, self.relpath)
         return self._attrs.isDirectory
 
 

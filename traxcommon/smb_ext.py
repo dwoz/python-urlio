@@ -6,6 +6,7 @@ from smb.base import (
     _PendingRequest, SharedFile, NotConnectedError, NotReadyError
 )
 from smb.smb_constants import *
+from collections import deque
 from smb.smb_structs import *
 from smb.smb2_structs import *
 DFLTSEARCH = (
@@ -16,9 +17,14 @@ DFLTSEARCH = (
     SMB_FILE_ATTRIBUTE_ARCHIVE
 )
 
+class Results(deque):
+    def __init__(self, *args, **kwargs):
+        super(Results, self).__init__(*args, **kwargs)
+        self.at = 0
+
 def listPath(conn, service_name, path,
              search = DFLTSEARCH,
-             pattern = '*', timeout = 30, limit=0):
+             pattern = '*', timeout = 30, limit=0, begin_at=0, ignore=None):
     """
     Retrieve a directory listing of files/folders at *path*
 
@@ -47,12 +53,14 @@ def listPath(conn, service_name, path,
         if conn.is_using_smb2:
             _listPath_SMB2(
                 conn, service_name, path, cb, eb, search = search,
-                pattern = pattern, timeout = timeout, limit=limit
+                pattern = pattern, timeout = timeout, limit=limit,
+                begin_at=begin_at, ignore=ignore
             )
         else:
             _listPath_SMB1(
                 conn, service_name, path, cb, eb, search = search,
-                pattern = pattern, timeout = timeout, limit=limit
+                pattern = pattern, timeout = timeout, limit=limit,
+                begin_at=begin_at, ignore=ignore
             )
         while conn.is_busy:
             conn._pollForNetBIOSPacket(timeout)
@@ -64,7 +72,7 @@ def listPath(conn, service_name, path,
 
 def _listPath_SMB2(
         conn, service_name, path, callback, errback, search, pattern,
-        timeout=30, limit=0,
+        timeout=30, limit=0, begin_at=0, ignore=None
     ):
     if not conn.has_authenticated:
         raise NotReadyError('SMB connection not authenticated')
@@ -76,8 +84,9 @@ def _listPath_SMB2(
     if path.endswith('\\'):
         path = path[:-1]
     messages_history = [ ]
-    results = [ ]
-
+    results = Results()
+    if not ignore:
+        ignore = []
     def sendCreate(tid):
         create_context_data = binascii.unhexlify(
             "28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00 "
@@ -154,12 +163,20 @@ def _listPath_SMB2(
                 return data_bytes[offset:]
 
             filename = data_bytes[offset2:offset2+filename_length].decode('UTF-16LE')
+            if filename in ignore:
+                if next_offset:
+                    offset += next_offset
+                    continue
+                else:
+                    break
             short_name = short_name.decode('UTF-16LE')
-            results.append(SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
-                                      convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
-                                      file_size, alloc_size, file_attributes, short_name, filename))
-            if limit != 0 and len(results) >= limit:
-                return False
+            if results.at >= begin_at:
+                results.append(SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
+                                          convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
+                                          file_size, alloc_size, file_attributes, short_name, filename))
+                if limit != 0 and len(results) >= limit:
+                    return False
+            results.at += 1
             if next_offset:
                 offset += next_offset
             else:
@@ -198,7 +215,7 @@ def _listPath_SMB2(
 
 def _listPath_SMB1(
         self, service_name, path, callback, errback, search,
-        pattern, timeout = 30, limit=0
+        pattern, timeout = 30, limit=0, begin_at=0, ignore=None
     ):
     if not self.has_authenticated:
         raise NotReadyError('SMB connection not authenticated')
@@ -208,7 +225,9 @@ def _listPath_SMB1(
     if not path.endswith('\\'):
         path += '\\'
     messages_history = [ ]
-    results = [ ]
+    results = Results()
+    if not ignore:
+        ignore = []
 
     def sendFindFirst(tid):
         setup_bytes = struct.pack('<H', 0x0001)  # TRANS2_FIND_FIRST2 sub-command. See [MS-CIFS]: 2.2.6.2.1
@@ -252,13 +271,21 @@ def _listPath_SMB1(
                 return data_bytes[offset:]
 
             filename = data_bytes[offset2:offset2+filename_length].decode('UTF-16LE')
+            if filename in ignore:
+                if next_offset:
+                    offset += next_offset
+                    continue
+                else:
+                    break
             short_name = short_name.decode('UTF-16LE')
             shared_file = SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
                                       convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
                                       file_size, alloc_size, file_attributes, short_name, filename)
-            results.append(shared_file)
-            if limit > 0 and len(results) >= limit:
-                return False
+            if results.at >= begin_at:
+                results.append(shared_file)
+                if limit > 0 and len(results) >= limit:
+                    return False
+            results.at += 1
             if next_offset:
                 offset += next_offset
             else:
@@ -585,3 +612,54 @@ errback, starting_offset, timeout = 30, **kwargs):
     else:
         sendOpen(conn.connected_trees[service_name])
 
+
+def iter_listPath(conn, service_name, path,
+             search = DFLTSEARCH,
+             pattern = '*', timeout = 30, limit=0, begin_at=0, ignore=None):
+    """
+    Retrieve an iterator of directory listing of files/folders at *path*
+
+    :param string/unicode service_name: the name of the shared folder for the *path*
+    :param string/unicode path: path relative to the *service_name* where we are interested to learn about its files/sub-folders.
+    :param integer search: integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py).
+                           The default *search* value will query for all read-only, hidden, system, archive files and directories.
+    :param string/unicode pattern: the filter to apply to the results before returning to the client.
+    :return: A list of :doc:`smb.base.SharedFile<smb_SharedFile>` instances.
+    """
+    if not conn.sock:
+        raise NotConnectedError('Not connected to server')
+
+    results = [ ]
+    results = Results()
+
+    def cb(entries):
+        conn.is_busy = False
+        results.extend(entries)
+
+    def eb(failure):
+        conn.is_busy = False
+        raise failure
+
+    conn.is_busy = True
+    try:
+        if conn.is_using_smb2:
+            _listPath_SMB2(
+                conn, service_name, path, cb, eb, search = search,
+                pattern = pattern, timeout = timeout, limit=limit,
+                begin_at=begin_at, ignore=ignore,
+            )
+        else:
+            _listPath_SMB1(
+                conn, service_name, path, cb, eb, search = search,
+                pattern = pattern, timeout = timeout, limit=limit,
+                begin_at=begin_at, ignore=ignore,
+            )
+        while conn.is_busy:
+            conn._pollForNetBIOSPacket(timeout)
+            while True:
+                try:
+                    yield results.popleft()
+                except IndexError:
+                    break
+    finally:
+        conn.is_busy = False
