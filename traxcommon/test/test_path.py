@@ -1,5 +1,6 @@
 import os
 import datetime
+from . import data_path
 from .. import path
 from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
@@ -22,10 +23,6 @@ def teardown_module():
     p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
     if p.exists():
         p.remove()
-
-
-def data_path(filename):
-    return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 
 def mock_find_dfs_share(path, api=None):
