@@ -202,6 +202,22 @@ class EdifactParser(object):
         self.fp = open(filename, 'r')
         self.in_isa = False
 
+    def iter_parts(self):
+        index = 1
+        start = None
+        end = None
+        for seg in self:
+            if seg[:3] == 'UNA':
+                if start is not None:
+                    end = self.fp.tell() - len(seg)
+                    yield index, start, end
+                    index += 1
+                    start = self.fp.tell() - len(seg)
+                else:
+                    start = self.fp.tell() - len(seg)
+        end = self.fp.tell()
+        yield index, start, end
+
     def next(self):
         if self.nseg >= 100:
             raise StopIteration

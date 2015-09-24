@@ -25,4 +25,5 @@ def test_edifact_parsing():
     assert a[1][3] == ['TRAX.HPENTEMEA']
 
 def test_multi_edifact():
-    pass
+    a = list(EdifactParser(filename=data_path('multi_edifact')).iter_parts())
+    assert a == [(1, 0, 1321), (2, 1321, 2484)], a
