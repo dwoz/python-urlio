@@ -216,6 +216,9 @@ class EdifactParser(object):
                 else:
                     start = self.fp.tell() - len(seg)
         end = self.fp.tell()
+        # If the file does not start with an UNA header 'start' will be None
+        if start is None:
+            start = 0
         yield index, start, end
 
     def next(self):
@@ -235,17 +238,19 @@ class EdifactParser(object):
                 self.decimal_mark = chunk[5]
                 self.release_char = chunk[6]
                 self.segment_delim = chunk[8]
-            self.in_una = True
-            self.fp.seek(n + 9)
-            if self.split_elements:
-                self.nseg += 1
-                return [
-                    _.split(self.component_data) for _ in
-                    chunk[:9].split(self.data_element)
-                ]
+                self.fp.seek(n + 9)
+                self.in_una = True
+                if self.split_elements:
+                    self.nseg += 1
+                    return [
+                        _.split(self.component_data) for _ in
+                        chunk[:9].split(self.data_element)
+                    ]
+                else:
+                    self.nseg += 1
+                    return chunk[:9]
             else:
-                self.nseg += 1
-                return chunk[:9]
+                self.fp.seek(n)
         n = self.fp.tell()
         chunk = ''
         while self.segment_delim not in chunk:
