@@ -1,3 +1,20 @@
+python-traxcommon (0.5.24) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #73. Started by user Daneil Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.23
+  * Patch version bump
+  * Initial commit of edifact parser
+  * Re-use data_path function
+  * Find multiple edifacts in a single doc
+
+  [ dwoz ]
+  * Merge pull request #99 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 29 Sep 2015 10:40:02 -0700
+
 python-traxcommon (0.5.23) testing; urgency=low
 
   [ Jenkins ]
