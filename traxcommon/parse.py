@@ -173,6 +173,102 @@ def parse_isa(data, max_tries=10):
     return data[:a+b+c]
 
 
+class EdifactParser(object):
+    """
+    Parse EDIFACT files
+
+    Invalid files will raise a BadFile exception.
+    """
+
+    def __init__(self, filename=None, fp=None, split_elements=False):
+        self.nseg = 0
+        self.split_elements = split_elements
+        self.version = None
+        self.fp = fp
+        self.in_una = False
+        if self.fp:
+            self.fp.seek(0)
+        else:
+            if filename:
+                self.open_file(filename)
+            else:
+                raise Exception("Must supply filename or fp")
+
+    def __iter__(self):
+        """Return the iterator for use in a for loop"""
+        return self
+
+    def open_file(self, filename):
+        self.fp = open(filename, 'r')
+        self.in_isa = False
+
+    def iter_parts(self):
+        index = 1
+        start = None
+        end = None
+        for seg in self:
+            if seg[:3] == 'UNA':
+                if start is not None:
+                    end = self.fp.tell() - len(seg)
+                    yield index, start, end
+                    index += 1
+                    start = self.fp.tell() - len(seg)
+                else:
+                    start = self.fp.tell() - len(seg)
+        end = self.fp.tell()
+        yield index, start, end
+
+    def next(self):
+        if self.nseg >= 100:
+            raise StopIteration
+        if not self.in_una:
+            self.component_data = ':'
+            self.data_element = '+'
+            self.decimal_mark = ','
+            self.release_char = '?'
+            self.segment_delim = '\''
+            n = self.fp.tell()
+            chunk = self.fp.read(300)
+            if chunk.startswith('UNA'):
+                self.component_data = chunk[3]
+                self.data_element = chunk[4]
+                self.decimal_mark = chunk[5]
+                self.release_char = chunk[6]
+                self.segment_delim = chunk[8]
+            self.in_una = True
+            self.fp.seek(n + 9)
+            if self.split_elements:
+                self.nseg += 1
+                return [
+                    _.split(self.component_data) for _ in
+                    chunk[:9].split(self.data_element)
+                ]
+            else:
+                self.nseg += 1
+                return chunk[:9]
+        n = self.fp.tell()
+        chunk = ''
+        while self.segment_delim not in chunk:
+            _ = self.fp.read(300)
+            if not _:
+               break
+            chunk += _
+        if not chunk:
+            raise StopIteration
+        segment = chunk.split(self.segment_delim, 1)[0]
+        #print 'seek to', n + len(segment) + 1
+        #print 'chunk', segment
+        self.fp.seek(n + len(segment) + 1)
+        if self.split_elements:
+            self.nseg += 1
+            return [
+                _.split(self.component_data) for _ in segment.split(self.data_element)
+            ]
+        else:
+            self.nseg += 1
+            return segment
+
+
 def value_transform(data_in):
     if not data_in:
         return data_in
