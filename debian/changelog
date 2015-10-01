@@ -1,3 +1,19 @@
+python-traxcommon (0.5.26) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #75. Started by GitHub push by dwoz.
+
+  [ Daniel Wozniak ]
+  * Deal with new lines in non standard Edifact files
+  * fix wart in last commit
+  * Merge tag release/0.5.25
+  * Patch version bump
+
+  [ dwoz ]
+  * Merge pull request #101 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 01 Oct 2015 12:08:02 -0700
+
 python-traxcommon (0.5.25) testing; urgency=medium
 
   [ Jenkins ]
