@@ -193,6 +193,8 @@ class EdifactParser(object):
                 self.open_file(filename)
             else:
                 raise Exception("Must supply filename or fp")
+        self.newline_after_sep = False
+        self.ending_newline = False
 
     def __iter__(self):
         """Return the iterator for use in a for loop"""
@@ -260,10 +262,25 @@ class EdifactParser(object):
             chunk += _
         if not chunk:
             raise StopIteration
-        segment = chunk.split(self.segment_delim, 1)[0]
+        l = chunk.split(self.segment_delim, 1)
+        last_chunk = False
+        if len(l) == 1:
+            last_chunk = True
+        segment = l[0]# chunk.split(self.segment_delim, 1)[0]
+        # Store the original length since we may trim it.
+        seg_len = len(segment)
+        if segment[0] == '\n':
+            segment = segment[1:]
+            self.newline_after_sep = True
+            if last_chunk:
+                self.ending_newline = True
+        elif self.newline_after_sep == True:
+            raise Exception("Expected new line")
         #print 'seek to', n + len(segment) + 1
         #print 'chunk', segment
-        self.fp.seek(n + len(segment) + 1)
+        self.fp.seek(n + seg_len + 1)
+        if not segment:
+            raise StopIteration
         if self.split_elements:
             self.nseg += 1
             return [
