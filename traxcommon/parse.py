@@ -224,8 +224,6 @@ class EdifactParser(object):
         yield index, start, end
 
     def next(self):
-        if self.nseg >= 100:
-            raise StopIteration
         if not self.in_una:
             self.component_data = ':'
             self.data_element = '+'
@@ -243,13 +241,11 @@ class EdifactParser(object):
                 self.fp.seek(n + 9)
                 self.in_una = True
                 if self.split_elements:
-                    self.nseg += 1
                     return [
                         _.split(self.component_data) for _ in
                         chunk[:9].split(self.data_element)
                     ]
                 else:
-                    self.nseg += 1
                     return chunk[:9]
             else:
                 self.fp.seek(n)
