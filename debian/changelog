@@ -1,3 +1,18 @@
+python-traxcommon (0.5.25) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #74. Started by GitHub push by rekibnikufesin.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.24
+  * Fix warts in parsing Edifact with UNA header
+  * Patch version bump
+
+  [ Will Button ]
+  * Merge pull request #100 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 29 Sep 2015 15:01:37 -0700
+
 python-traxcommon (0.5.24) testing; urgency=medium
 
   [ Jenkins ]
