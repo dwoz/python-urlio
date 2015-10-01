@@ -193,7 +193,7 @@ class EdifactParser(object):
                 self.open_file(filename)
             else:
                 raise Exception("Must supply filename or fp")
-        self.new_line_after_sep = False
+        self.newline_after_sep = False
         self.ending_newline = False
 
     def __iter__(self):
@@ -271,10 +271,10 @@ class EdifactParser(object):
         seg_len = len(segment)
         if segment[0] == '\n':
             segment = segment[1:]
-            self.new_line_after_sep = True
+            self.newline_after_sep = True
             if last_chunk:
                 self.ending_newline = True
-        elif self.new_line_after_sep == True:
+        elif self.newline_after_sep == True:
             raise Exception("Expected new line")
         #print 'seek to', n + len(segment) + 1
         #print 'chunk', segment
