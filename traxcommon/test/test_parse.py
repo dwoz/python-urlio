@@ -27,12 +27,13 @@ def test_edifact_parsing():
 def test_multi_edifact_a():
     a = EdifactParser(filename=data_path('edifact'))
     b = list(a.iter_parts())
-    assert b == [(1, 0, 2303)], b
+    assert b == [(1, 0, 250917)], b
 
 def test_multi_edifact_b():
     a = EdifactParser(filename=data_path('multi_edifact'))
     b = list(a.iter_parts())
-    assert b == [(1, 0, 1321), (2, 1321, 2484)], b
+    assert b == [(1, 0, 1320), (2, 1320, 2640)], b
+    fp = open(data_path('multi_edifact'))
 
 def test_multi_edifact_c():
     a = EdifactParser(filename=data_path('HPI_AS2PRO.TRAXPROD.file.201509291957116DE1BAC3.oigsodesadvams.0468766546.in'))

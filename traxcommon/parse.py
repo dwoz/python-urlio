@@ -206,26 +206,16 @@ class EdifactParser(object):
 
     def iter_parts(self):
         index = 1
-        start = None
+        start = 0
         end = None
         for seg in self:
-            if seg[:3] == 'UNA':
-                if start is not None:
-                    end = self.fp.tell() - len(seg)
-                    yield index, start, end
-                    index += 1
-                    start = self.fp.tell() - len(seg)
-                else:
-                    start = self.fp.tell() - len(seg)
-        end = self.fp.tell()
-        # If the file does not start with an UNA header 'start' will be None
-        if start is None:
-            start = 0
-        yield index, start, end
+            if seg[:3] == 'UNZ':
+                end = self.fp.tell()
+                yield index, start, end
+                start = self.fp.tell()
+                index += 1
 
     def next(self):
-        if self.nseg >= 100:
-            raise StopIteration
         if not self.in_una:
             self.component_data = ':'
             self.data_element = '+'
@@ -243,13 +233,11 @@ class EdifactParser(object):
                 self.fp.seek(n + 9)
                 self.in_una = True
                 if self.split_elements:
-                    self.nseg += 1
                     return [
                         _.split(self.component_data) for _ in
                         chunk[:9].split(self.data_element)
                     ]
                 else:
-                    self.nseg += 1
                     return chunk[:9]
             else:
                 self.fp.seek(n)
