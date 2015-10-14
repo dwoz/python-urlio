@@ -209,6 +209,7 @@ class EdifactParser(object):
         start = 0
         end = None
         for seg in self:
+            print seg
             if seg[:3] == 'UNZ':
                 end = self.fp.tell()
                 yield index, start, end
@@ -257,7 +258,7 @@ class EdifactParser(object):
         segment = l[0]# chunk.split(self.segment_delim, 1)[0]
         # Store the original length since we may trim it.
         seg_len = len(segment)
-        if segment[0] == '\n':
+        if segment and segment[0] == '\n':
             segment = segment[1:]
             self.newline_after_sep = True
             if last_chunk:
@@ -268,7 +269,7 @@ class EdifactParser(object):
         #print 'chunk', segment
         self.fp.seek(n + seg_len + 1)
         if not segment:
-            raise StopIteration
+            return ''
         if self.split_elements:
             self.nseg += 1
             return [
