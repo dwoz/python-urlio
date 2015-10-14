@@ -928,9 +928,9 @@ def mimetype_from_buffer(buffer):
         raise Exception("Unable to load magic database")
     s = m.buffer(buffer)
     m.close()
-    if EDIDET.search(buffer):
+    if EDIDET.search(buffer[:20]):
         s = "application/EDI-X12"
-    elif EDIFACTDET.search(buffer):
+    elif EDIFACTDET.search(buffer[:20]):
         s = "application/EDIFACT"
     return s
 
