@@ -1,3 +1,18 @@
+python-traxcommon (0.5.28) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #77. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.27
+  * Bump patch version
+  * Fix buggy mime-type detection
+
+  [ Mike Palmer ]
+  * Merge pull request #103 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Wed, 14 Oct 2015 12:51:34 -0700
+
 python-traxcommon (0.5.27) testing; urgency=medium
 
   [ Jenkins ]
