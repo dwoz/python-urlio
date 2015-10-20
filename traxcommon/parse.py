@@ -29,12 +29,13 @@ class X12Parser(object):
 
     alphanums = string.letters + string.digits
 
-    def __init__(self, filename=None, fp=None, split_elements=False):
+    def __init__(self, filename=None, fp=None, split_elements=False, offset=0):
         self.split_elements = split_elements
         self.version = None
         self.fp = fp
+        self._offset = offset
         if self.fp:
-            self.fp.seek(0)
+            self.fp.seek(self._offset)
             self.in_isa = False
         else:
             if filename:
@@ -51,7 +52,7 @@ class X12Parser(object):
         self.in_isa = False
 
     def iter_parts(self):
-        self.fp.seek(0)
+        self.fp.seek(self._offset)
         index = 1
         start = None
         end = None
@@ -180,14 +181,15 @@ class EdifactParser(object):
     Invalid files will raise a BadFile exception.
     """
 
-    def __init__(self, filename=None, fp=None, split_elements=False):
+    def __init__(self, filename=None, fp=None, split_elements=False, offset=0):
         self.nseg = 0
         self.split_elements = split_elements
         self.version = None
         self.fp = fp
         self.in_una = False
+        self._offset = offset
         if self.fp:
-            self.fp.seek(0)
+            self.fp.seek(self._offset)
         else:
             if filename:
                 self.open_file(filename)
@@ -205,6 +207,7 @@ class EdifactParser(object):
         self.in_isa = False
 
     def iter_parts(self):
+        self.fp.seek(self._offset)
         index = 1
         start = 0
         end = None
