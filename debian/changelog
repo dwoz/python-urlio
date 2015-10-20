@@ -1,3 +1,21 @@
+python-traxcommon (0.5.29) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #78. Started by GitHub push by rekibnikufesin.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.28
+  * Patch version bump
+  * Fix bug in parsing edifact with empty segmants
+  * More consistant dfs cache updates
+  * Return unicode from join method
+  * Add optional offset to Edi and Edifact parsers
+
+  [ Will Button ]
+  * Merge pull request #104 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 20 Oct 2015 14:04:31 -0700
+
 python-traxcommon (0.5.28) testing; urgency=medium
 
   [ Jenkins ]
