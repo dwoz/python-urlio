@@ -463,7 +463,7 @@ class LocalPath(BasePath):
 
     @staticmethod
     def static_join(dirname, basename):
-        return "{0}/{1}".format(dirname, basename)
+        return u"{0}/{1}".format(dirname, basename)
 
     def readline(self):
         return self.fp.readline()
