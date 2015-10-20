@@ -51,6 +51,7 @@ class DfsCache(dict):
     def __init__(self, *args, **opts):
         super(DfsCache, self).__init__(*args, **opts)
         self.fetch_event = multiprocessing.Event()
+        self.last_update = datetime.datetime(1970, 01, 01)
 
     def load(self, path=DFSCACHE_PATH):
         if not os.path.exists(path):
@@ -58,6 +59,12 @@ class DfsCache(dict):
         if os.path.exists(path):
             with open(path, 'r') as f:
                 self.update(json.loads(f.read()))
+            cache_time = datetime.datetime.utcfromtimestamp(
+                int(str(DFSCACHE['timestamp'])[:-3])
+            )
+            dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=20)
+            if cache_time < dlt:
+                log.warn("Dfs cache timestamp is more than 20 minutes old")
 
     def fetch(self, path=DFSCACHE_PATH, uri=DFS_REF_API):
         if self.fetch_event.is_set():
@@ -86,6 +93,7 @@ class DfsCache(dict):
             log.exception("Exception fetching cache")
             return False
         finally:
+            self.last_update = datetime.datetime.utcnow()
             self.fetch_event.clear()
 
 class TraxCommonException(Exception):
@@ -181,11 +189,8 @@ def find_dfs_share(uri, **opts):
         load_dfs_cache()
         log.warn("No dfs cache present")
     elif AUTO_UPDATE_DFSCACHE:
-        cache_time = datetime.datetime.utcfromtimestamp(
-            int(str(DFSCACHE['timestamp'])[:-3])
-        )
         dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
-        if cache_time < dlt:
+        if DFSCACHE.last_update < dlt:
             if DFSCACHE.fetch():
                 load_dfs_cache()
     slashed_domain = u'\\\\{0}'.format(domain).lower()
