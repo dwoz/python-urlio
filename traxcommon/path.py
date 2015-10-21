@@ -88,6 +88,7 @@ class DfsCache(dict):
                     )
                 )
             try:
+                os.chmod(tmp, int('666', 8))
                 os.rename(tmp, path)
             except:
                 log.exception("Exception renaming cache")
