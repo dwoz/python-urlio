@@ -87,7 +87,11 @@ class DfsCache(dict):
                         separators=(',', ':')
                     )
                 )
-            os.rename(tmp, path)
+            try:
+                os.rename(tmp, path)
+            except:
+                log.exception("Exception renaming cache")
+                os.remove(tmp)
             return path
         except Exception as e:
             log.exception("Exception fetching cache")
