@@ -102,9 +102,15 @@ class X12Parser(object):
             ISA_SEGMANTS = ISA.split(self.element_sep)
             self.fp.seek(n + gs_loc)
             # A strict version would look at segmant char 106
-            self.subelm_delim = ISA_SEGMANTS[-1][0]
-            self.segmant_delim = ISA_SEGMANTS[-1][1]
-            self.segmant_suffix = ISA_SEGMANTS[-1][2:]
+            DELIMS = ISA_SEGMANTS[-1]
+            if len(DELIMS) == 1:
+                self.subelm_delim = ''
+                self.segmant_delim = ISA_SEGMANTS[-1][0]
+                self.segmant_suffix = ''
+            else:
+                self.subelm_delim = ISA_SEGMANTS[-1][0]
+                self.segmant_delim = ISA_SEGMANTS[-1][1]
+                self.segmant_suffix = ISA_SEGMANTS[-1][2:]
             self.version = ISA_SEGMANTS[12]
             self.in_isa = True
             if self.split_elements:
@@ -137,7 +143,7 @@ class X12Parser(object):
                     if self.split_elements:
                         return segment.split(self.element_sep)
                     return segment
-                elif i != '\n':
+                elif i not in ['\r', '\n']:
                     try:
                         seg.append(i)
                     except TypeError:
