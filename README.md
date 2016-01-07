@@ -35,7 +35,13 @@
   ```
   brew install libmagic
   ```
-  
+
+* Install python cryptography and link against homebrew's openssl (its newer than the default osx openssl)
+  ```
+  brew install openssl
+  env LDFLAGS="-L$(brew --prefix openssl)/lib" CFLAGS="-I$(brew --prefix openssl)/include" pip install cryptography  
+  ```
+
 * You should now have all the dependencies installed. You can run the tests to verify everything is correctly set up.
 
   ```
