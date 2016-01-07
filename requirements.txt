@@ -2,7 +2,7 @@ pysmb==1.1.13
 requests>=2.0.0
 boto==2.3.0
 repoze.lru
-nose
 -e git+git@github.com:threatstack/libmagic.git@5.18#egg=python-magic&subdirectory=python
 cryptography
 xmltodict
+nose

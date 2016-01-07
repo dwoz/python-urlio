@@ -20,9 +20,9 @@ def teardown_module():
     for filename in path.Path(dirname).filenames():
         if path.Path(filename).exists():
             path.Path(filename).remove()
-    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
-    if p.exists():
-        p.remove()
+    #p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
+    #if p.exists():
+    #    p.remove()
 
 
 def mock_find_dfs_share(path, api=None):
@@ -353,19 +353,19 @@ def test_atime():
         p.atime == datetime.datetime(2015, 3, 29, 10, 20, 44, 209107)
     ), p.atime
 
-def test_stat_2003():
-    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\stat_test\test.txt')
-    stat = p.stat()
-    assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
-
-def test_chunk_write_2003():
-    fpath = r'\\fxb01fs0300.filex.com\FileRouterTest\chunk_write\test.txt'
-    p = path.Path(fpath, 'w')
-    p.write('foo')
-    p.write('bar')
-    p = path.Path(fpath)
-    rslt = p.read()
-    assert rslt == 'foobar', rslt
+#def test_stat_2003():
+#    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\stat_test\test.txt')
+#    stat = p.stat()
+#    assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
+#
+#def test_chunk_write_2003():
+#    fpath = r'\\fxb01fs0300.filex.com\FileRouterTest\chunk_write\test.txt'
+#    p = path.Path(fpath, 'w')
+#    p.write('foo')
+#    p.write('bar')
+#    p = path.Path(fpath)
+#    rslt = p.read()
+#    assert rslt == 'foobar', rslt
 
 def test_chunk_write_2008():
     p = SMBPath(
@@ -431,8 +431,8 @@ def test_list_empty():
     l = list(p.ls())
     assert not l
 
-def test_list_files_empty():
-    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\static_test\empty')
-    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
-    l = list(p.filenames())
-    assert not l
+#def test_list_files_empty():
+#    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\static_test\empty')
+#    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+#    l = list(p.filenames())
+#    assert not l
