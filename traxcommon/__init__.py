@@ -2,4 +2,4 @@
 Common python functionality
 """
 
-VERSION = (0, 5, 30)
+VERSION = (0, 6, 0)
