@@ -25,6 +25,17 @@ class X12Parser(object):
     Parse X12 files
 
     Invalid files will raise a BadFile exception.
+
+    Delimiters -
+      ISA*00**00**ZZ*RECEIVERID*12*SENDERID*100325*1113*U*00403*000011436*0*T*>~ 
+         ^                                                                    ^^^
+         |                                                                    |||
+         +-- data_element_separator                                           |||
+                                                       component_separator ---+||
+                                                                               ||
+                                                       segmant_terminator -----+|
+                                                                                |
+                                                       segmant_suffix ----------+
     """
 
     alphanums = string.letters + string.digits
@@ -88,33 +99,33 @@ class X12Parser(object):
             # The fourth character in the ISA is the element separator
             # but is optional, the default is *
             if chunk[3] in '0123456789':
-                self.element_sep = '*'
+                self.data_element_separator = '*' # Data element separator
             else:
-                self.element_sep = chunk[3]
+                self.data_element_separator = chunk[3] # Data element separator
             # TODO: This could potentially fail if the sender or
             # receiver is 15 characters and the last two are GS. The
             # logic in the parse_isa function handles this case by continuing
             # to search until a valid ISA is found.
-            gs_loc = chunk.find('GS' + self.element_sep)
+            gs_loc = chunk.find('GS' + self.data_element_separator)
             if gs_loc < 0:
                 raise StopIteration
             ISA = chunk[:gs_loc]
-            ISA_SEGMANTS = ISA.split(self.element_sep)
+            ISA_SEGMANTS = ISA.split(self.data_element_separator)
             self.fp.seek(n + gs_loc)
             # A strict version would look at segmant char 106
             DELIMS = ISA_SEGMANTS[-1]
             if len(DELIMS) == 1:
-                self.subelm_delim = ''
-                self.segmant_delim = ISA_SEGMANTS[-1][0]
-                self.segmant_suffix = ''
+                self.component_separator = ''
+                self.segmant_terminator = ISA_SEGMANTS[-1][0]
+                self.segmant_suffix = '' # Segmant suffix
             else:
-                self.subelm_delim = ISA_SEGMANTS[-1][0]
-                self.segmant_delim = ISA_SEGMANTS[-1][1]
-                self.segmant_suffix = ISA_SEGMANTS[-1][2:]
+                self.component_separator = ISA_SEGMANTS[-1][0]
+                self.segmant_terminator = ISA_SEGMANTS[-1][1] # Segmant separator
+                self.segmant_suffix = ISA_SEGMANTS[-1][2:] # Segmant suffix
             self.version = ISA_SEGMANTS[12]
             self.in_isa = True
             if self.split_elements:
-                return ISA.split(self.element_sep)
+                return ISA.split(self.data_element_separator)
             else:
                 return ISA
         else:
@@ -125,7 +136,7 @@ class X12Parser(object):
             while 1:
                 i = self.fp.read(1)
                 if i == '\0': continue
-                if i == self.segmant_delim:
+                if i == self.segmant_terminator:
                     suffix_len = len(self.segmant_suffix)
                     if suffix_len > 0:
                         suffix = self.fp.read(suffix_len)
@@ -141,7 +152,7 @@ class X12Parser(object):
                     if segment.startswith('IEA'):
                         self.in_isa = False
                     if self.split_elements:
-                        return segment.split(self.element_sep)
+                        return segment.split(self.data_element_separator)
                     return segment
                 elif i not in ['\r', '\n']:
                     try:
@@ -319,3 +330,20 @@ def xml_to_dict(fp, force_cdata=True, **kwargs):
 
 def xml_to_json(fp, force_cdata=True, **kwargs):
     return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, **kwargs))
+
+def x12transform(fp, data_element_separator=None, component_delim=None, segmant_terminator=None, segmant_suffix=None):
+    parser = X12Parser(fp=fp, split_elements=True)
+    s = ''
+    for element in parser:
+        data_element_separator = data_element_separator or parser.data_element_separator
+        segmant_delim = segmant_delim or parser.segmant_delim
+        segmant_suffix = segmant_suffix or parser.segmant_suffix
+        component_separator = component_separator or parser.comonent_separator
+        if element[0] == 'ISA':
+            element[-1] = ''.join([component_separator, segmant_terminator])
+            s += data_element_separator.join(element)
+            s += segmant_suffix
+        else:
+            s += data_element_separator.join(element)
+            s += segmant_terminator + segmant_suffix
+    return s
