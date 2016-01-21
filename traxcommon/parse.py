@@ -331,12 +331,12 @@ def xml_to_dict(fp, force_cdata=True, **kwargs):
 def xml_to_json(fp, force_cdata=True, **kwargs):
     return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, **kwargs))
 
-def x12transform(fp, data_element_separator=None, component_delim=None, segmant_terminator=None, segmant_suffix=None):
+def x12transform(fp, data_element_separator=None, component_separator=None, segmant_terminator=None, segmant_suffix=None):
     parser = X12Parser(fp=fp, split_elements=True)
     s = ''
     for element in parser:
         data_element_separator = data_element_separator or parser.data_element_separator
-        segmant_delim = segmant_delim or parser.segmant_delim
+        segmant_terminator = segmant_terminator or parser.segmant_terminator
         segmant_suffix = segmant_suffix or parser.segmant_suffix
         component_separator = component_separator or parser.comonent_separator
         if element[0] == 'ISA':
