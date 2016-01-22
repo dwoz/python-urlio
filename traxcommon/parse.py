@@ -335,14 +335,22 @@ def x12transform(fp, data_element_separator=None, component_separator=None, segm
     parser = X12Parser(fp=fp, split_elements=True)
     s = ''
     for element in parser:
+        def bytes(i):
+            if type(i) == unicode:
+                return i.encode('ascii')
+            return i
         if data_element_separator is None:
             data_element_separator = parser.data_element_separator
+        data_element_separator = bytes(data_element_separator)
         if segmant_terminator is None:
             segmant_terminator = parser.segmant_terminator
+        segmant_terminator = bytes(segmant_terminator)
         if segmant_suffix is None:
             segmant_suffix = parser.segmant_suffix
+        segmant_suffix = bytes(segmant_suffix)
         if component_separator is None:
             component_separator = parser.component_separator
+        component_separator = bytes(component_separator)
         if element[0] == 'ISA':
             element[-1] = ''.join([component_separator, segmant_terminator])
             s += data_element_separator.join(element)
