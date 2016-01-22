@@ -338,7 +338,7 @@ def x12transform(fp, data_element_separator=None, component_separator=None, segm
         data_element_separator = data_element_separator or parser.data_element_separator
         segmant_terminator = segmant_terminator or parser.segmant_terminator
         segmant_suffix = segmant_suffix or parser.segmant_suffix
-        component_separator = component_separator or parser.comonent_separator
+        component_separator = component_separator or parser.component_separator
         if element[0] == 'ISA':
             element[-1] = ''.join([component_separator, segmant_terminator])
             s += data_element_separator.join(element)
