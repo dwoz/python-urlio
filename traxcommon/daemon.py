@@ -130,7 +130,7 @@ def start_daemon(
         sys.stderr.write(message % (pidfile))
         sys.exit(1)
     log.info("Daemonize")
-    pid = daemonize(at_exit=at_exit, reload=reload)
+    pid = daemonize(at_exit=at_exit, reload=reload, uid=uid, gid=gid)
     try:
         writepid(pidfile, pid)
     except Exception as e:
@@ -181,9 +181,9 @@ def stop_daemon(pidfile, removepid=removepid):
             sys.exit(1)
 
 
-def restart_daemon(daemon, pidfile, starter=start_daemon, stopper=stop_daemon):
+def restart_daemon(daemon, pidfile, starter=start_daemon, stopper=stop_daemon, uid=None, gid=None):
     stopper(pidfile)
-    starter(daemon, pidfile)
+    starter(daemon, pidfile, uid=uid, gid=gid)
 
 
 class ProcessWorker(object):
