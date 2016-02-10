@@ -911,6 +911,13 @@ class SMBPath(BasePath):
     def isdir(self):
         return self._attrs.isDirectory
 
+    #TODO: Add mathod with same signature to LocalPath
+    def rename(self, newname):
+        newp = Path(newname)
+        if newp.server_name != self.server_name or newp.share != self.share:
+            raise Exception("Can only rename on the same server and share")
+        c = self.get_connection()
+        c.rename(self.share, self.relpath, newp.relpath)
 
 def mimeencoding_from_buffer(buffer):
     m = magic.open(magic.MAGIC_MIME_ENCODING)
