@@ -642,7 +642,7 @@ class SMBPath(BasePath):
                 timeout=self.timeout
             )
             self._conn.timestamp = time.time()
-        elif time.time() - self.MAX_CONNECTION_TIME > self._conn.timetamp():
+        elif time.time() - self.MAX_CONNECTION_TIME > self._conn.timetamp:
             self._conn = get_smb_connection(
                 self.server_name, self.domain, self.user, self.password,
                 timeout=self.timeout
