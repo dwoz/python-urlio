@@ -580,6 +580,7 @@ def getFiletime(dt):
 
 
 class SMBPath(BasePath):
+    MAX_CONNECTION_TIME = 60
 
     def __init__(
             self, path, mode='r', user=None, password=None, api=None,
@@ -640,6 +641,13 @@ class SMBPath(BasePath):
                 self.server_name, self.domain, self.user, self.password,
                 timeout=self.timeout
             )
+            self._conn.timestamp = time.time()
+        elif time.time() - self.MAX_CONNECTION_TIME > self._conn.timestamp:
+            self._conn = get_smb_connection(
+                self.server_name, self.domain, self.user, self.password,
+                timeout=self.timeout
+            )
+            self._conn.timestamp = time.time()
         return self._conn
 
     def exists(self, relpath=None):
