@@ -45,6 +45,7 @@ class X12Parser(object):
         self.version = None
         self.fp = fp
         self._offset = offset
+        self._stop = False
         if self.fp:
             self.fp.seek(self._offset)
             self.in_isa = False
@@ -87,6 +88,8 @@ class X12Parser(object):
         We're using the array module.  Written in C this should be very
         efficient at adding and converting to a string.
         """
+        if self._stop:
+            raise StopIteration
         seg = array.array('c')
         if not self.in_isa:
             n = self.fp.tell()
@@ -148,6 +151,14 @@ class X12Parser(object):
                             self.fp.seek(self.fp.tell() - suffix_len)
                     # End of segment found, exit the loop and return the
                     # segment.
+                    segment = seg.tostring()
+                    if segment.startswith('IEA'):
+                        self.in_isa = False
+                    if self.split_elements:
+                        return segment.split(self.data_element_separator)
+                    return segment
+                elif not i:
+                    self._stop = True
                     segment = seg.tostring()
                     if segment.startswith('IEA'):
                         self.in_isa = False
