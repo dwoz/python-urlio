@@ -1,4 +1,7 @@
+from nose.plugins.attrib import attr
 import os
+import binascii
+import hashlib
 import datetime
 from . import data_path
 from .. import path
@@ -353,19 +356,20 @@ def test_atime():
         p.atime == datetime.datetime(2015, 3, 29, 10, 20, 44, 209107)
     ), p.atime
 
-#def test_stat_2003():
-#    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\stat_test\test.txt')
-#    stat = p.stat()
-#    assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
-#
-#def test_chunk_write_2003():
-#    fpath = r'\\fxb01fs0300.filex.com\FileRouterTest\chunk_write\test.txt'
-#    p = path.Path(fpath, 'w')
-#    p.write('foo')
-#    p.write('bar')
-#    p = path.Path(fpath)
-#    rslt = p.read()
-#    assert rslt == 'foobar', rslt
+def test_stat_2003():
+    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter test\stat_test\test.txt')
+    stat = p.stat()
+    assert stat['atime'] == datetime.datetime(2016, 2, 21, 3, 31, 56, 288246), stat['atime']
+    #assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
+
+def test_chunk_write_2003():
+    fpath = r'\\fxb02fs0300.filex.com\Filerouter Test\chunk_write\test.txt'
+    p = path.Path(fpath, 'w')
+    p.write('foo')
+    p.write('bar')
+    p = path.Path(fpath)
+    rslt = p.read()
+    assert rslt == 'foobar', rslt
 
 def test_chunk_write_2008():
     p = SMBPath(
@@ -431,8 +435,71 @@ def test_list_empty():
     l = list(p.ls())
     assert not l
 
-#def test_list_files_empty():
-#    p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\static_test\empty')
-#    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
-#    l = list(p.filenames())
+
+def test_list_files_empty():
+    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\static_test\empty')
+    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+    l = list(p.filenames())
 #    assert not l
+
+
+@attr('slow')
+def test_large_file_2003():
+    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt', 'w')
+    if p.exists():
+        p.remove()
+    whsh = hashlib.md5()
+    rhsh = hashlib.md5()
+    _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
+    whsh.update(_)
+    p.write(_)
+    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt')
+    while True:
+        _ = p.read(1000 * 1000 * 20)
+        if not _:
+            break
+        rhsh.update(_)
+    w = whsh.hexdigest()
+    r = rhsh.hexdigest()
+    assert w == r, (w, r)
+
+
+@attr('slow')
+def test_large_file_samba():
+    p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt', 'w')
+    if p.exists():
+        p.remove()
+    whsh = hashlib.md5()
+    rhsh = hashlib.md5()
+    _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
+    whsh.update(_)
+    p.write(_)
+    p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt')
+    while True:
+        _ = p.read(1000 * 1000 * 20)
+        if not _:
+            break
+        rhsh.update(_)
+    w = whsh.hexdigest()
+    r = rhsh.hexdigest()
+    assert w == r, (w, r)
+
+@attr('slow')
+def test_large_file_2008():
+    p = path.Path(r'\\filex.com\it\stg\large_test_file.txt', 'w')
+    if p.exists():
+        p.remove()
+    whsh = hashlib.md5()
+    rhsh = hashlib.md5()
+    _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
+    whsh.update(_)
+    p.write(_)
+    p = path.Path(r'\\filex.com\it\stg\large_test_file.txt')
+    while True:
+        _ = p.read(1000 * 1000 * 20)
+        if not _:
+            break
+        rhsh.update(_)
+    w = whsh.hexdigest()
+    r = rhsh.hexdigest()
+    assert w == r, (w, r)
