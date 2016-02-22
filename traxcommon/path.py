@@ -510,7 +510,7 @@ class LocalPath(BasePath):
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
-        is_direct_tcp=True,
+        is_direct_tcp=False,
     ):
     if is_direct_tcp:
         port = 445
@@ -524,7 +524,7 @@ def get_smb_connection(
         )
         raise
     conn = SMBConnection(
-        user, pas, client, server, domain=domain, is_direct_tcp=is_direct_tcp
+        str(user), str(pas), str(client), str(server), domain=str(domain), is_direct_tcp=is_direct_tcp
     )
     conn.connect(server_ip, port, timeout=timeout)
     return conn
