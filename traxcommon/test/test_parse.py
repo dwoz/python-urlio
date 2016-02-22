@@ -1,5 +1,5 @@
 from . import data_path
-from ..parse import xml_to_json, EdifactParser, x12transform
+from ..parse import xml_to_json, EdifactParser, x12transform, X12Parser
 from StringIO import StringIO
 
 
@@ -119,3 +119,42 @@ def test_x12transform():
     )
     assert s == transformed, repr(s)
 
+def test_no_ending_nl():
+    """
+    Parse edi which is missing last segmant terminator
+    """
+    src = (
+        'ISA+00+          +00+          +ZZ+EXDO           +ZZ+TRAX.H'
+        'PLA      +140905+2132+U+00401+922950489+1+P+^\nGS+IM+EXDO+TR'
+        'AX.HPLA+20140905+2132+922950489+X+004010\nST+210+922950489\n'
+        'B3++E2J0563155+22J0169431+CC+K+20140905+5035++++EXDO\nC3+USD'
+        '+1.  \nN9+OR+CKG\nN9+DE+GDL\nN9+8X+INBOUND ASN\nG62+10+20140'
+        '826\nG62+11+20140827\nG62+12+20140904\nR3+CA+++A++++++DD+ST'
+        '\nN9+SO+0027914338\nN9+SO+0027914335\nN9+SO+0027914334\nLX+1'
+        '\nN9+IK+E2J0563155\nN9+BM+421140028\nN9+MB+99924399631\nN9+P'
+        'O+H5258685\nN9+PO+H5258678\nN9+PO+H5258677\nN9+DO+6931296262'
+        '\nN9+DO+6931296261\nN9+DO+6931296260\nL0+1+++9.0+G+0.04+X+2+'
+        'PLT++K\nL0+1+6000+OR+9.0+B++++++K\nL1+1+++3093++++400++++AIR'
+        ' FREIGHT\nL1+1+++1765++++405++++FUEL SURCHARGE\nL1+1+++177++'
+        '++GSS++++ISS\nL4+43+18+31+C+1\nL4+47+15+29+C+1\nN1+BT+Hewlet'
+        'tPackard Mexico S de\nN3+RL de CV /Prolongacion Reforma #80'
+        '0+Col. Lomas de Santa Fe\nN4+Mexico+DF+01210+MX\nN1+SH+INVEN'
+        'TEC(CHONGQING) CORPORATION\nN3+NO.66 WEST DISTRICT 2ND RD\nN'
+        '4+CHONGQING 401331+++CN\nN1+CN+Hewlett Packard de Mexico SA '
+        'de CV\nN3+Montemorelos#299+Colonia Loma Bonita\nN4+Guadalaja'
+        'ra+JA+45060+MX\nL3+9.0+B+++5035+++++++K\nSE+41+922950489\nGE'
+        '+1+922950489\nIEA+1+922950489'
+    )
+    parser = X12Parser(fp=StringIO(src), split_elements=True)
+    isa = None
+    iea = None
+    for a in parser:
+        if a[0] == 'ISA':
+            isa = a
+        if a[0] == 'IEA':
+            iea = a
+        print a
+    assert isa == ['ISA', '00', '          ', '00', '          ', 'ZZ',
+        'EXDO           ', 'ZZ', 'TRAX.HPLA      ', '140905', '2132', 'U',
+        '00401', '922950489', '1', 'P', '^\n'], isa
+    assert iea == ['IEA', '1', '922950489'], iea
