@@ -77,7 +77,7 @@ class DfsCache(dict):
                     "Non 200 response: {}".format(response.status_code)
                 )
             data = response.json()
-            tmp = tempfile.mktemp()
+            tmp = tempfile.mktemp(dir=os.path.dirname(DFSCACHE_PATH))
             with open(tmp, 'wb') as f:
                 f.write(
                     json.dumps(
