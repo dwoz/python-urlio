@@ -9,19 +9,6 @@ from smb_ext import getDfsReferral
 log = logging.getLogger(__name__)
 
 
-
-DC_BL = [
-    'fxdc0005.filex.com',
-    'fxdc0016.filex.com',
-    'fxdc0018.filex.com',
-]
-dc = 'fxdc0001.filex.com'
-domain = 'filex.com'
-server_ip = socket.gethostbyname(dc)
-log.debug('server ip: %s', server_ip)
-con = SMBConnection(path.SMB_USER, path.SMB_PASS, 'client', dc.split('.')[0], domain)
-con.connect(server_ip)
-
 def lookupdcs(domain):
     resolver = dns.resolver.Resolver()
     dcs = []
