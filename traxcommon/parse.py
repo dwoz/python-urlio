@@ -226,6 +226,8 @@ class EdifactParser(object):
         self.ending_newline = False
         self.end_of_stream = False
         self.buffer = ''
+        self.start_of_buffer = offset
+        self._started = False
 
     def __iter__(self):
         """Return the iterator for use in a for loop"""
@@ -258,10 +260,9 @@ class EdifactParser(object):
 
     def next(self):
         while True:
-            if self.fp.tell() == 0:
-                self.start_of_buffer = 0
-            elif not self.buffer:
+            if self._started and not self.buffer:
                 raise StopIteration
+            self._started = True
             if not self.end_of_stream:
                 chunk = self.fp.read(300)
                 if not chunk:

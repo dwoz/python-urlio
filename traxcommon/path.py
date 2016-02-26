@@ -51,7 +51,7 @@ class DfsCache(dict):
     def __init__(self, *args, **opts):
         super(DfsCache, self).__init__(*args, **opts)
         self.fetch_event = multiprocessing.Event()
-        self.last_update = datetime.datetime(1970, 01, 01)
+        self.last_update = datetime.datetime(1970, 1, 1)
 
     def load(self, path=DFSCACHE_PATH):
         if not os.path.exists(path):
