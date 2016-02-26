@@ -33,9 +33,9 @@ class X12Parser(object):
          +-- data_element_separator                                           |||
                                                        component_separator ---+||
                                                                                ||
-                                                       segmant_terminator -----+|
+                                                       segment_terminator -----+|
                                                                                 |
-                                                       segmant_suffix ----------+
+                                                       segment_suffix ----------+
     """
 
     alphanums = string.letters + string.digits
@@ -82,7 +82,8 @@ class X12Parser(object):
     def next(self):
         """return the next segment from the file or raise StopIteration
 
-        Here we'll return the next segment, this will be a 'bare' segment
+        Here we'll return the next segment, this will be a 'bare'
+        segment
         without the segment terminator.
 
         We're using the array module.  Written in C this should be very
@@ -95,7 +96,7 @@ class X12Parser(object):
             n = self.fp.tell()
             # A strict implimentation would just take the first 106 bytes,
             # however we receive EDI that would fail. So instead we grab the
-            # first 150 bytes and search for the GS segmant
+            # first 150 bytes and search for the GS segment
             chunk = self.fp.read(300)
             if len(chunk) < 4:
                 raise StopIteration
@@ -115,16 +116,16 @@ class X12Parser(object):
             ISA = chunk[:gs_loc]
             ISA_SEGMANTS = ISA.split(self.data_element_separator)
             self.fp.seek(n + gs_loc)
-            # A strict version would look at segmant char 106
+            # A strict version would look at segment char 106
             DELIMS = ISA_SEGMANTS[-1]
             if len(DELIMS) == 1:
                 self.component_separator = ''
-                self.segmant_terminator = ISA_SEGMANTS[-1][0]
-                self.segmant_suffix = '' # Segmant suffix
+                self.segment_terminator = ISA_SEGMANTS[-1][0]
+                self.segment_suffix = '' # Segmant suffix
             else:
                 self.component_separator = ISA_SEGMANTS[-1][0]
-                self.segmant_terminator = ISA_SEGMANTS[-1][1] # Segmant separator
-                self.segmant_suffix = ISA_SEGMANTS[-1][2:] # Segmant suffix
+                self.segment_terminator = ISA_SEGMANTS[-1][1] # Segmant separator
+                self.segment_suffix = ISA_SEGMANTS[-1][2:] # Segmant suffix
             self.version = ISA_SEGMANTS[12]
             self.in_isa = True
             if self.split_elements:
@@ -139,14 +140,14 @@ class X12Parser(object):
             while 1:
                 i = self.fp.read(1)
                 if i == '\0': continue
-                if i == self.segmant_terminator:
-                    suffix_len = len(self.segmant_suffix)
+                if i == self.segment_terminator:
+                    suffix_len = len(self.segment_suffix)
                     if suffix_len > 0:
                         suffix = self.fp.read(suffix_len)
-                        if suffix != self.segmant_suffix:
+                        if suffix != self.segment_suffix:
                             log.debug(
                                 "Invalid suffix in edi document: header=%s parsed=%s",
-                                suffix, self.segmant_suffix
+                                suffix, self.segment_suffix
                             )
                             self.fp.seek(self.fp.tell() - suffix_len)
                     # End of segment found, exit the loop and return the
@@ -174,7 +175,7 @@ class X12Parser(object):
                         )
 
 def parse_isa(data, max_tries=10):
-    isa_segmants = []
+    isa_segments = []
     a = data.find("ISA")
     isadata = data[a:]
     elmsep = isadata[3]
@@ -186,17 +187,15 @@ def parse_isa(data, max_tries=10):
         tried += 1
         if tried > max_tries:
             raise Exception("Max tries reached")
-        print 'b is', b
         c = isadata[b:].find("GS" + elmsep)
         if c < 0:
             raise Exception("Valid ISA not found")
-        print 'gs found at', b + c
-        isa_segmants = isadata[:b+c].split(elmsep)
-        if len(isa_segmants) < 16:
-            print 'isa seg less than 16:', len(isa_segmants), b, c
+        isa_segments = isadata[:b+c].split(elmsep)
+        if len(isa_segments) < 16:
+            print 'isa seg less than 16:', len(isa_segments), b, c
             b += c + 2
             continue
-        elif len(isa_segmants) > 17:
+        elif len(isa_segments) > 17:
             raise Exception("Valid ISA not found")
         break
     return data[:a+b+c]
@@ -225,6 +224,8 @@ class EdifactParser(object):
                 raise Exception("Must supply filename or fp")
         self.newline_after_sep = False
         self.ending_newline = False
+        self.end_of_stream = False
+        self.buffer = ''
 
     def __iter__(self):
         """Return the iterator for use in a for loop"""
@@ -237,78 +238,95 @@ class EdifactParser(object):
     def iter_parts(self):
         self.fp.seek(self._offset)
         index = 1
-        start = 0
+        start = None
         end = None
-        for seg in self:
-            print seg
-            if seg[:3] == 'UNZ':
-                end = self.fp.tell()
+        for segment in self:
+            if segment[:3] == 'UNA':
+                start = self.start_of_segment
+                print 'has start a',  start
+            elif start is None and segment[:3] == 'UNB':
+                start = self.start_of_segment
+                print 'has start b',  start
+            if segment[:3] == 'UNZ':
+                end = self.start_of_buffer
+                print 'has end', end
+            if start is not None and end is not None:
                 yield index, start, end
-                start = self.fp.tell()
                 index += 1
+                start = None
+                end = None
 
     def next(self):
-        if not self.in_una:
-            self.component_data = ':'
-            self.data_element = '+'
-            self.decimal_mark = ','
-            self.release_char = '?'
-            self.segment_delim = '\''
-            n = self.fp.tell()
-            chunk = self.fp.read(300)
-            if chunk.startswith('UNA'):
-                self.component_data = chunk[3]
-                self.data_element = chunk[4]
-                self.decimal_mark = chunk[5]
-                self.release_char = chunk[6]
-                self.segment_delim = chunk[8]
-                self.fp.seek(n + 9)
-                self.in_una = True
-                if self.split_elements:
-                    return [
-                        _.split(self.component_data) for _ in
-                        chunk[:9].split(self.data_element)
-                    ]
-                else:
-                    return chunk[:9]
+        while True:
+            if self.fp.tell() == 0:
+                self.start_of_buffer = 0
+            elif not self.buffer:
+                raise StopIteration
+            if not self.end_of_stream:
+                chunk = self.fp.read(300)
+                if not chunk:
+                    self.end_of_stream = True
+                chunk = self.buffer + chunk
             else:
-                self.fp.seek(n)
-        n = self.fp.tell()
-        chunk = ''
-        while self.segment_delim not in chunk:
-            _ = self.fp.read(300)
-            if not _:
-               break
-            chunk += _
-        if not chunk:
-            raise StopIteration
-        l = chunk.split(self.segment_delim, 1)
-        last_chunk = False
-        if len(l) == 1:
-            last_chunk = True
-        segment = l[0]# chunk.split(self.segment_delim, 1)[0]
-        # Store the original length since we may trim it.
-        seg_len = len(segment)
-        if segment and segment[0] == '\n':
-            segment = segment[1:]
-            self.newline_after_sep = True
-            if last_chunk:
-                self.ending_newline = True
-        elif self.newline_after_sep == True:
-            raise Exception("Expected new line")
-        #print 'seek to', n + len(segment) + 1
-        #print 'chunk', segment
-        self.fp.seek(n + seg_len + 1)
-        if not segment:
-            return ''
-        if self.split_elements:
-            self.nseg += 1
-            return [
-                _.split(self.component_data) for _ in segment.split(self.data_element)
-            ]
-        else:
-            self.nseg += 1
-            return segment
+                chunk = self.buffer
+            if not self.in_una:
+                if chunk.startswith('\n'):
+                    chunk = chunk[1:]
+                    self.start_of_buffer += 1
+                self.component_data = ':'
+                self.data_element = '+'
+                self.decimal_mark = ','
+                self.release_char = '?'
+                self.segment_delim = '\''
+                if chunk.startswith('UNA'):
+                    self.component_data = chunk[3]
+                    self.data_element = chunk[4]
+                    self.decimal_mark = chunk[5]
+                    self.release_char = chunk[6]
+                    self.segment_delim = chunk[8]
+                    self.buffer = chunk[9:]
+                    self.start_of_segment = self.start_of_buffer
+                    self.start_of_buffer = self.start_of_buffer + 9
+                    if self.split_elements:
+                        return [
+                            _.split(self.component_data) for _ in
+                            chunk[:9].split(self.data_element)
+                        ]
+                    else:
+                        return chunk[:9]
+                self.in_una = True
+            orig_len = len(chunk)
+            l = escape_split(chunk, self.segment_delim, self.release_char, 1)
+            last_chunk = False
+            segment = l[0]
+            if len(l) == 1 and not self.end_of_stream:
+                if l[0] == '\n':
+                    self.buffer = ''
+                else:
+                    self.buffer = l[0]
+                continue
+            elif len(l) == 1 and self.end_of_stream:
+                self.buffer = ''
+            else:
+                self.buffer = l[1]
+            self.start_of_segment = self.start_of_buffer
+            self.start_of_buffer += orig_len - len(self.buffer)
+            if not segment:
+                raise StopIteration
+            if segment[0] == '\n':
+                segment = segment[1:]
+                self.newline_after_sep = True
+            if segment[:3] == 'UNZ':
+                self.in_una = False
+            if self.split_elements:
+                self.nseg += 1
+                return [
+                    escape_split(_, self.component_data, self.release_char)
+                    for _ in escape_split(segment, self.data_element, self.release_char)
+                ]
+            else:
+                self.nseg += 1
+                return segment
 
 
 def value_transform(data_in):
@@ -342,7 +360,8 @@ def xml_to_dict(fp, force_cdata=True, **kwargs):
 def xml_to_json(fp, force_cdata=True, **kwargs):
     return json.dumps(xml_to_dict(fp, force_cdata=force_cdata, **kwargs))
 
-def x12transform(fp, data_element_separator=None, component_separator=None, segmant_terminator=None, segmant_suffix=None):
+def x12transform(fp, data_element_separator=None, component_separator=None,
+        segment_terminator=None, segment_suffix=None):
     parser = X12Parser(fp=fp, split_elements=True)
     s = ''
     for element in parser:
@@ -353,20 +372,39 @@ def x12transform(fp, data_element_separator=None, component_separator=None, segm
         if data_element_separator is None:
             data_element_separator = parser.data_element_separator
         data_element_separator = bytes(data_element_separator)
-        if segmant_terminator is None:
-            segmant_terminator = parser.segmant_terminator
-        segmant_terminator = bytes(segmant_terminator)
-        if segmant_suffix is None:
-            segmant_suffix = parser.segmant_suffix
-        segmant_suffix = bytes(segmant_suffix)
+        if segment_terminator is None:
+            segment_terminator = parser.segment_terminator
+        segment_terminator = bytes(segment_terminator)
+        if segment_suffix is None:
+            segment_suffix = parser.segment_suffix
+        segment_suffix = bytes(segment_suffix)
         if component_separator is None:
             component_separator = parser.component_separator
         component_separator = bytes(component_separator)
         if element[0] == 'ISA':
-            element[-1] = ''.join([component_separator, segmant_terminator])
+            element[-1] = ''.join([component_separator, segment_terminator])
             s += data_element_separator.join(element)
-            s += segmant_suffix
+            s += segment_suffix
         else:
             s += data_element_separator.join(element)
-            s += segmant_terminator + segmant_suffix
+            s += segment_terminator + segment_suffix
     return s
+
+def escape_split(s, delim, escape_chr='\\', max_split=0):
+    i, res, buf, n = 0, [], '', 0
+    while True:
+        j, e = s.find(delim, i), 0
+        if j < 0:  # end reached
+            return res + [buf + s[i:]]  # add remainder
+        elif max_split and n == max_split:
+            return res + [buf + s[i:]]
+        while j - e and s[j - e - 1] == escape_chr:
+            e += 1  # number of escapes
+        d = e // 2  # number of double escapes
+        if e != d * 2:  # odd number of escapes
+            buf += s[i:j - d - 1] + s[j]  # add the escaped char
+            i = j + 1  # and skip it
+            continue  # add more to buf
+        res.append(buf + s[i:j - d])
+        n += 1
+        i, buf = j + len(delim), ''  # start after delim

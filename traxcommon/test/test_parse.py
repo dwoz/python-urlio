@@ -60,10 +60,10 @@ def test_edifact_parsing_b():
         "B:2.000'QTY+12:1.000:EA'FTX+AFT+++S2'RFF+PE:C299'PCI+24+1000162050"
         "'QTY+52:0.000:CT'UNT+36+1'UNE+1+9505598'UNZ+1+9505598'"
     )
-    a = EdifactParser(fp=StringIO(s))
+    a = EdifactParser(fp=StringIO(s), split_elements=True)
     l = list(a)
-    assert len(l) == 42
-    assert l[-1].startswith('UNZ')
+    assert len(l) == 40, len(l)
+    assert l[-1][0][0] == 'UNZ', l[-1][0]
 
 def test_x12transform():
     edi = (
@@ -92,8 +92,8 @@ def test_x12transform():
         StringIO(edi),
         data_element_separator='+',
         component_separator='^',
-        segmant_terminator='-',
-        segmant_suffix='\n',
+        segment_terminator='-',
+        segment_suffix='\n',
     )
     transformed = (
         'ISA+00+          +00+          +ZZ+EXDO           +ZZ+TRAX.H'
@@ -121,7 +121,7 @@ def test_x12transform():
 
 def test_no_ending_nl():
     """
-    Parse edi which is missing last segmant terminator
+    Parse edi which is missing last segment terminator
     """
     src = (
         'ISA+00+          +00+          +ZZ+EXDO           +ZZ+TRAX.H'
