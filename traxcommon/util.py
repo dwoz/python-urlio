@@ -4,7 +4,6 @@ import os
 import StringIO
 import time
 from six.moves import urllib
-#import urllib
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
