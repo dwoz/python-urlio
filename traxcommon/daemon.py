@@ -171,7 +171,7 @@ def stop_daemon(pidfile, removepid=removepid):
             os.kill(pid, signal.SIGTERM)
             time.sleep(1)
             n += 1
-    except OSError, err:
+    except OSError as err:
         err = str(err)
         if err.find("No such process") > 0:
             if os.path.exists(pidfile):
@@ -219,7 +219,6 @@ class ProcessWorker(object):
         self.process.terminate()
 
     def run(self, args, kwargs):
-        print 'process start'
         threadpool = []
         while len(threadpool) < self.num_threads:
             a = ThreadWorker(self.target, args, kwargs)
@@ -230,7 +229,6 @@ class ProcessWorker(object):
                 a.join(self.join_wait)
                 if not a.is_alive():
                     threadpool.remove(a)
-        print 'process end'
         log.info("Process end")
 
 

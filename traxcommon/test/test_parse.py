@@ -1,6 +1,9 @@
 from . import data_path
 from ..parse import xml_to_json, EdifactParser, x12transform, X12Parser
-from StringIO import StringIO
+from six import StringIO
+import six
+if six.PY3:
+    from io import BytesIO
 
 
 def test_xmltojson():
@@ -39,7 +42,10 @@ def test_multi_edifact_b():
 def test_multi_edifact_c():
     a = EdifactParser(filename=data_path('HPI_AS2PRO.TRAXPROD.file.201509291957116DE1BAC3.oigsodesadvams.0468766546.in'))
     b = list(a.iter_parts())
-    assert b == [(1, 0, 906)], b
+    if six.PY3:
+        assert b == [(1, 0, 905)], b
+    else:
+        assert b == [(1, 0, 906)], b
 
 def test_edifact_parsing_b():
     s = (
@@ -88,8 +94,9 @@ def test_x12transform():
         "B***5035*******K!SE*41*922950489!GE*1*922950489!IEA*1*92295"
         "0489!"
     )
+    fp = StringIO(edi)
     s = x12transform(
-        StringIO(edi),
+        fp,
         data_element_separator='+',
         component_separator='^',
         segment_terminator='-',
@@ -153,7 +160,6 @@ def test_no_ending_nl():
             isa = a
         if a[0] == 'IEA':
             iea = a
-        print a
     assert isa == ['ISA', '00', '          ', '00', '          ', 'ZZ',
         'EXDO           ', 'ZZ', 'TRAX.HPLA      ', '140905', '2132', 'U',
         '00401', '922950489', '1', 'P', '^\n'], isa

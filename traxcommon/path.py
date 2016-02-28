@@ -1,19 +1,17 @@
-import StringIO
+import six
 import json
-import ConfigParser
 import socket
 import glob as libglob
 import os
 import datetime
 import requests
+import io
 import re
 import time
 import smb
-import boto
 import hashlib
 import magic
 import tempfile
-from boto.s3.key import Key
 import multiprocessing
 from smb.SMBConnection import SMBConnection
 from smb.SMBConnection import OperationFailure
@@ -22,7 +20,7 @@ from smb.smb2_constants import *
 import threading
 import logging
 import repoze.lru
-from smb_ext import iter_listPath, listPath, storeFileFromOffset
+from .smb_ext import iter_listPath, listPath, storeFileFromOffset
 log = logging.getLogger(__name__)
 
 ONLINE = u'ONLINE'
@@ -84,8 +82,7 @@ class DfsCache(dict):
                         data,
                         sort_keys=True,
                         indent=4,
-                        separators=(',', ':')
-                    )
+                    ).encode('utf-8')
                 )
             try:
                 os.chmod(tmp, int('666', 8))
@@ -127,8 +124,27 @@ def depth_first_resources(domain_cache):
                     domain_cache[ns][resource]
                 )
             )
-    resources.sort(by_depth, reverse=True)
-    return resources
+    sorted_resources = sorted(resources, key=cmp_to_key(by_depth), reverse=True)
+    return sorted_resources
+
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 
 def find_target_in_cache(uri, cache, case_sensative=False):
@@ -215,6 +231,7 @@ def find_dfs_share(uri, **opts):
     if domain.count('.') > 1:
         domain = '.'.join(domain.split('.')[-2:])
     part = uri.lower().split(path.lower(), 1)[1]
+    log.info("MEH %s %s %s", part, path, uri)
     if len(part):
         path = u"{0}\\{1}".format(
             sharedir, uri[-len(part):].lstrip('\\')
@@ -587,8 +604,8 @@ class SMBPath(BasePath):
             clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
             timeout=120, _attrs=None,
             ):
-        if type(path) == str:
-            path = path.decode('utf-8')
+        #if type(path) == str:
+        #    path = path.decode('utf-8')
         self._set_path(path)
         self.find_dfs_share = find_dfs_share or default_find_dfs_share
         server_name, share, domain, relpath = self.find_dfs_share(self.path)
@@ -627,13 +644,15 @@ class SMBPath(BasePath):
     def read(self, size=-1, conn=None):
         if conn is None:
             conn = self.get_connection()
-        fp = StringIO.StringIO()
+        fp = io.BytesIO()
         conn.retrieveFileFromOffset(
             self.share, self.relpath, fp, self._index, size
         )
         self._index = self._index + fp.tell()
         fp.seek(0)
-        return fp.read()
+        if six.PY2:
+            return fp.read()
+        return fp.read().decode('utf-8')
 
     def get_connection(self):
         if not self._conn:
@@ -695,7 +714,7 @@ class SMBPath(BasePath):
 
     def write(self, fp):
         if not hasattr(fp, 'read'):
-            fp = StringIO.StringIO(fp)
+            fp = io.BytesIO(fp.encode('utf-8'))
         if self.mode == 'r':
             raise Exception("File not open for writing")
         if self.WRITELOCK:
