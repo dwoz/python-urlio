@@ -3,6 +3,7 @@ debian/*.substvars
 debian/*.debhelper*
 debian/files
 debian/python-traxcommon/
+debian/python3-traxcommon/
 
 # Passwords and keys
 etc/credentials
