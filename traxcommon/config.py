@@ -1,7 +1,11 @@
 """
 Methods and Classes related to configuration
 """
-import ConfigParser
+import six
+if six.PY2:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 import logging
 import os
 
