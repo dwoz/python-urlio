@@ -126,12 +126,12 @@ def _listPath_SMB2(
         ignore = []
     def sendCreate(tid):
         create_context_data = binascii.unhexlify(
-            "28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00 "
-            "44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00 "
-            "00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00 "
-            "00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00 "
-            "00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00 "
-            "51 46 69 64 00 00 00 00".replace(' ', '').replace('\n', ''))
+            b"28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00 "
+            b"44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00 "
+            b"00 00 00 00 00 00 00 00 18 00 00 00 10 00 04 00 "
+            b"00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00 "
+            b"00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00 "
+            b"51 46 69 64 00 00 00 00".replace(b' ', b'').replace(b'\n', b''))
         m = SMB2Message(SMB2CreateRequest(path,
                                           file_attributes = 0,
                                           access_mask = FILE_READ_DATA | FILE_READ_EA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
@@ -164,20 +164,20 @@ def _listPath_SMB2(
         messages_history.append(m)
 
     def queryCB(query_message, **kwargs):
-        messages_history.append(query_message)
-        if query_message.status == 0:
-            data_buf = decodeQueryStruct(
-                kwargs['data_buf'] + query_message.payload.data,
-                query_message.tid, kwargs['fid']
-            )
-            if data_buf is False:
-                closeFid(query_message.tid, kwargs['fid'], results = results)
-            else:
-                sendQuery(query_message.tid, kwargs['fid'], data_buf)
-        elif query_message.status == 0x80000006L:  # STATUS_NO_MORE_FILES
-            closeFid(query_message.tid, kwargs['fid'], results = results)
-        else:
-            closeFid(query_message.tid, kwargs['fid'], error = query_message.status)
+         messages_history.append(query_message)
+         if query_message.status == 0:
+             data_buf = decodeQueryStruct(
+                 kwargs['data_buf'].encode('utf-8') + query_message.payload.data,
+                 query_message.tid, kwargs['fid']
+             )
+             if data_buf is False:
+                 closeFid(query_message.tid, kwargs['fid'], results = results)
+             else:
+                 sendQuery(query_message.tid, kwargs['fid'], data_buf)
+         elif query_message.status == 0x80000006:  # STATUS_NO_MORE_FILES
+             closeFid(query_message.tid, kwargs['fid'], results = results)
+         else:
+             closeFid(query_message.tid, kwargs['fid'], error = query_message.status)
 
     def decodeQueryStruct(data_bytes, tid, fid):
         # SMB_FIND_FILE_BOTH_DIRECTORY_INFO structure. See [MS-CIFS]: 2.2.8.1.7 and [MS-SMB]: 2.2.8.1.1
@@ -233,7 +233,7 @@ def _listPath_SMB2(
         elif kwargs['error'] is not None:
             errback(OperationFailure('Failed to list %s on %s: Query failed with errorcode 0x%08x' % ( path, service_name, kwargs['error'] ), messages_history))
 
-    if not conn.connected_trees.has_key(service_name):
+    if service_name not in conn.connected_trees:
         def connectCB(connect_message, **kwargs):
             messages_history.append(connect_message)
             if connect_message.status == 0:
@@ -332,10 +332,10 @@ def _listPath_SMB1(
     def findFirstCB(find_message, **kwargs):
         messages_history.append(find_message)
         if not find_message.status.hasError:
-            if not kwargs.has_key('total_count'):
+            if 'total_count' not in kwargs:
                 # TRANS2_FIND_FIRST2 response. [MS-CIFS]: 2.2.6.2.2
                 sid, search_count, end_of_search, _, last_name_offset = struct.unpack('<HHHHH', find_message.payload.params_bytes[:10])
-                kwargs.update({ 'sid': sid, 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': '' })
+                kwargs.update({ 'sid': sid, 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': b'' })
             else:
                 sid, end_of_search, last_name_offset = kwargs['sid'], kwargs['end_of_search'], kwargs['last_name_offset']
 
@@ -345,7 +345,7 @@ def _listPath_SMB1(
                 if d is False:
                     send_next = True
                     end_of_search = True
-                elif not kwargs.has_key('data_count'):
+                elif 'data_count' not in kwargs:
                     if len(find_message.payload.data_bytes) != find_message.payload.total_data_count:
                         kwargs.update({ 'data_count': len(find_message.payload.data_bytes),
                                         'total_count': find_message.payload.total_data_count,
@@ -392,10 +392,10 @@ def _listPath_SMB1(
     def findNextCB(find_message, **kwargs):
         messages_history.append(find_message)
         if not find_message.status.hasError:
-            if not kwargs.has_key('total_count'):
+            if 'total_count' not in kwargs:
                 # TRANS2_FIND_NEXT2 response. [MS-CIFS]: 2.2.6.3.2
                 search_count, end_of_search, _, last_name_offset = struct.unpack('<HHHH', find_message.payload.params_bytes[:8])
-                kwargs.update({ 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': '' })
+                kwargs.update({ 'end_of_search': end_of_search, 'last_name_offset': last_name_offset, 'data_buf': b'' })
             else:
                 end_of_search, last_name_offset = kwargs['end_of_search'], kwargs['last_name_offset']
 
@@ -405,7 +405,7 @@ def _listPath_SMB1(
                 if d is False:
                     send_next = True
                     end_of_search = True
-                elif not kwargs.has_key('data_count'):
+                elif 'data_count' not in kwargs:
                     if len(find_message.payload.data_bytes) != find_message.payload.total_data_count:
                         kwargs.update({ 'data_count': len(find_message.payload.data_bytes),
                                         'total_count': find_message.payload.total_data_count,
@@ -428,7 +428,7 @@ def _listPath_SMB1(
         else:
             errback(OperationFailure('Failed to list %s on %s: Unable to retrieve file list' % ( path, service_name ), messages_history))
 
-    if not self.connected_trees.has_key(service_name):
+    if service_name not in self.connected_trees:
         def connectCB(connect_message, **kwargs):
             messages_history.append(connect_message)
             if not connect_message.status.hasError:
@@ -445,7 +445,7 @@ def _listPath_SMB1(
         sendFindFirst(self.connected_trees[service_name])
 
 
-def storeFileFromOffset(conn, service_name, path, file_obj, offset = 0L, timeout = 30, overwrite=False):
+def storeFileFromOffset(conn, service_name, path, file_obj, offset = 0, timeout = 30, overwrite=False):
     """
     Store the contents of the *file_obj* at *path* on the *service_name*.
     :param string/unicode service_name: the name of the shared folder for the *path*
@@ -497,14 +497,14 @@ def _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, callback, errb
         else:
             OVERWRITE = FILE_OPEN_IF
         create_context_data = binascii.unhexlify(
-            "28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00"
-            "44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00"
-            "00 00 00 00 00 00 00 00 20 00 00 00 10 00 04 00"
-            "00 00 18 00 08 00 00 00 41 6c 53 69 00 00 00 00"
-            "85 62 00 00 00 00 00 00 18 00 00 00 10 00 04 00"
-            "00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00"
-            "00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00"
-            "51 46 69 64 00 00 00 00".replace(' ', '').replace('\n', '')
+            b"28 00 00 00 10 00 04 00 00 00 18 00 10 00 00 00"
+            b"44 48 6e 51 00 00 00 00 00 00 00 00 00 00 00 00"
+            b"00 00 00 00 00 00 00 00 20 00 00 00 10 00 04 00"
+            b"00 00 18 00 08 00 00 00 41 6c 53 69 00 00 00 00"
+            b"85 62 00 00 00 00 00 00 18 00 00 00 10 00 04 00"
+            b"00 00 18 00 00 00 00 00 4d 78 41 63 00 00 00 00"
+            b"00 00 00 00 10 00 04 00 00 00 18 00 00 00 00 00"
+            b"51 46 69 64 00 00 00 00".replace(b' ', b'').replace(b'\n', b'')
         )
         m = SMB2Message(SMB2CreateRequest(path,
                                           file_attributes = ATTR_ARCHIVE,
@@ -561,7 +561,7 @@ def _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, callback, errb
         elif kwargs['error'] is not None:
             errback(OperationFailure('Failed to store %s on %s: Write failed' % ( path, service_name ), messages_history))
 
-    if not conn.connected_trees.has_key(service_name):
+    if service_name not in conn.connected_trees:
         def connectCB(connect_message, **kwargs):
             messages_history.append(connect_message)
             if connect_message.status == 0:
@@ -633,7 +633,7 @@ errback, starting_offset, timeout = 30, **kwargs):
         conn._sendSMBMessage(m)
         messages_history.append(m)
 
-    if not conn.connected_trees.has_key(service_name):
+    if service_name not in conn.connected_trees:
         def connectCB(connect_message, **kwargs):
             messages_history.append(connect_message)
             if not connect_message.status.hasError:

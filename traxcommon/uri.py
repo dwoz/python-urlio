@@ -1,8 +1,7 @@
 """
 Create and parse uriversal resource identifiers
 """
-from urlparse import urlparse, parse_qs
-from urllib import urlencode
+from six.moves.urllib.parse import urlparse, parse_qs, urlencode
 import re
 
 class STRINGRE:

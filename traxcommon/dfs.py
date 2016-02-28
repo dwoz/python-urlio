@@ -35,7 +35,7 @@ class _BaseDfsObject(object):
                 con = self._smb_connection(server)
             except:
                 log.exception("Unable to connect: {}".format(server))
-                servers[dc] = False
+                servers[server] = False
                 continue
             break
         if not con:
@@ -146,7 +146,7 @@ class DfsNamespace(_BaseDfsObject):
             if not ttl or ttl > i['ttl']:
                 ttl = i['ttl']
             hostname = i['network_address_name'].split('\\')[1]
-            self._namespace_servers['{}.{}'.format(hostname, domain)] = True
+            self._namespace_servers['{}.{}'.format(hostname, self.domain)] = True
         self._namespace_servers_expire = ttl
 
     def _ensure_namespace_servers(self):
@@ -176,6 +176,12 @@ class DfsNamespace(_BaseDfsObject):
                 'server': '{}.{}'.format(hostname, self.domain),
                 'share':  '\\'.join(i['network_address_name'].split('\\')[2:]).lower()
             }
+            from path import split_host_path
+            server, service = split_host_path(i['network_address_name'])
+            sharedir = ''
+            if '\\' in service:
+                service, sharedir = service.split('\\', 1)
+            log.info("MEHHH %s %s", data, path)
         return self._paths[path]['server'], self._paths[path]['share']
 
     def _purge_expired_paths(self):

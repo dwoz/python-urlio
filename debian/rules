@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-PYVERS = $(shell pyversions -r -v)
+#PYVERS = $(shell pyversions -r -v)
 
 %:
-	dh $@ --with python2
+	dh $@ --with python2,python3 --buildsystem=pybuild

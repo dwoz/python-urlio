@@ -7,7 +7,7 @@ python-traxcommon (0.5.29) testing; urgency=medium
   * Merge tag release/0.5.28
   * Patch version bump
   * Fix bug in parsing edifact with empty segmants
-  * More consistant dfs cache updates
+  * More consistent dfs cache updates
   * Return unicode from join method
   * Add optional offset to Edi and Edifact parsers
 

@@ -3,7 +3,7 @@ import datetime
 import os
 import StringIO
 import time
-import urllib
+from six.moves import urllib
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding

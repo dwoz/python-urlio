@@ -1,3 +1,4 @@
+import six
 from nose.plugins.attrib import attr
 import os
 import binascii
@@ -45,7 +46,7 @@ def test_find_dfs_share_b():
     try:
         rslt = find_dfs_share('\\\\filex.com\\comm', case_sensative=True)
     except FindDfsShare as e:
-        assert e.message == "No dfs cache result found"
+        assert e.args[0] == "No dfs cache result found"
         return
     assert False, "no excption raised"
 
@@ -61,7 +62,7 @@ def test_find_dfs_share_d():
     try:
         rslt = find_dfs_share('\\\\Filex.com\\comm', case_sensative=True)
     except FindDfsShare as e:
-        assert e.message == "No dfs cache result found"
+        assert e.args[0] == "No dfs cache result found"
         return
     assert False, "no excption raised"
 
@@ -341,9 +342,13 @@ def test_mtime():
         mode='r',
         find_dfs_share=mock_find_dfs_share
     )
+    if six.PY3:
+        expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825793)
+    else:
+        expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
     assert (
-        p.mtime == datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
-    ), p.mtime
+        p.mtime == expect
+    ), (p.mtime, expect)
 
 
 def test_atime():

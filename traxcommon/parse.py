@@ -1,9 +1,15 @@
+from __future__ import print_function
+import six
 import collections
 import string
 import array
 import re
 import logging
 import json
+if six.PY3:
+    from string import ascii_letters, digits
+else:
+    from string import letters as ascii_letters, digits
 
 import xmltodict
 
@@ -38,7 +44,7 @@ class X12Parser(object):
                                                        segment_suffix ----------+
     """
 
-    alphanums = string.letters + string.digits
+    alphanums = ascii_letters + digits
 
     def __init__(self, filename=None, fp=None, split_elements=False, offset=0):
         self.split_elements = split_elements
@@ -91,7 +97,7 @@ class X12Parser(object):
         """
         if self._stop:
             raise StopIteration
-        seg = array.array('c')
+        seg = []
         if not self.in_isa:
             n = self.fp.tell()
             # A strict implimentation would just take the first 106 bytes,
@@ -102,7 +108,7 @@ class X12Parser(object):
                 raise StopIteration
             # The fourth character in the ISA is the element separator
             # but is optional, the default is *
-            if chunk[3] in '0123456789':
+            if chunk[3] in list(b'0123456789'):
                 self.data_element_separator = '*' # Data element separator
             else:
                 self.data_element_separator = chunk[3] # Data element separator
@@ -111,6 +117,7 @@ class X12Parser(object):
             # logic in the parse_isa function handles this case by continuing
             # to search until a valid ISA is found.
             gs_loc = chunk.find('GS' + self.data_element_separator)
+            print(gs_loc, chunk)
             if gs_loc < 0:
                 raise StopIteration
             ISA = chunk[:gs_loc]
@@ -152,7 +159,8 @@ class X12Parser(object):
                             self.fp.seek(self.fp.tell() - suffix_len)
                     # End of segment found, exit the loop and return the
                     # segment.
-                    segment = seg.tostring()
+                    #segment = seg.tostring()
+                    segment = ''.join(seg)
                     if segment.startswith('IEA'):
                         self.in_isa = False
                     if self.split_elements:
@@ -160,7 +168,8 @@ class X12Parser(object):
                     return segment
                 elif not i:
                     self._stop = True
-                    segment = seg.tostring()
+                    #segment = seg.tostring()
+                    segment = ''.join(seg)
                     if segment.startswith('IEA'):
                         self.in_isa = False
                     if self.split_elements:
@@ -173,6 +182,7 @@ class X12Parser(object):
                         raise BadFile(
                             'Corrupt characters found or unexpected EOF: {}'.format(repr(i))
                         )
+    __next__ = next
 
 def parse_isa(data, max_tries=10):
     isa_segments = []
@@ -192,7 +202,7 @@ def parse_isa(data, max_tries=10):
             raise Exception("Valid ISA not found")
         isa_segments = isadata[:b+c].split(elmsep)
         if len(isa_segments) < 16:
-            print 'isa seg less than 16:', len(isa_segments), b, c
+            print('isa seg less than 16:', len(isa_segments), b, c)
             b += c + 2
             continue
         elif len(isa_segments) > 17:
@@ -245,13 +255,13 @@ class EdifactParser(object):
         for segment in self:
             if segment[:3] == 'UNA':
                 start = self.start_of_segment
-                print 'has start a',  start
+                print('has start a',  start)
             elif start is None and segment[:3] == 'UNB':
                 start = self.start_of_segment
-                print 'has start b',  start
+                print('has start b',  start)
             if segment[:3] == 'UNZ':
                 end = self.start_of_buffer
-                print 'has end', end
+                print('has end', end)
             if start is not None and end is not None:
                 yield index, start, end
                 index += 1
@@ -329,6 +339,7 @@ class EdifactParser(object):
                 self.nseg += 1
                 return segment
 
+    __next__ = next
 
 def value_transform(data_in):
     if not data_in:
@@ -367,9 +378,10 @@ def x12transform(fp, data_element_separator=None, component_separator=None,
     s = ''
     for element in parser:
         def bytes(i):
-            if type(i) == unicode:
-                return i.encode('ascii')
             return i
+            #if type(i) == unicode:
+            #    return i.encode('ascii')
+            #return i
         if data_element_separator is None:
             data_element_separator = parser.data_element_separator
         data_element_separator = bytes(data_element_separator)

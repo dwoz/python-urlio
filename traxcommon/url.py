@@ -52,7 +52,6 @@ class SMBUrl(SMBPath):
         self._orig_uri = uri
         self.uri = Uri(uri)
         path = u'\\\\{}{}'.format(self.uri.host, self.uri.path.replace('/', '\\'))
-        print path
         self._set_path(path)
         self.find_dfs_share = find_dfs_share or default_find_dfs_share
         server_name, share, domain, relpath = self.find_dfs_share(self.path)

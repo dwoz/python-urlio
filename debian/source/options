@@ -1,0 +1,7 @@
+tar-ignore = "lib/*"
+tar-ignore = ".git/*"
+tar-ignore = ".git"
+tar-ignore = "bin/*"
+tar-ignore = "src/*"
+tar-ignore = "local/*"
+tar-ignore = "include/*"

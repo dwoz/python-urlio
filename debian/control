@@ -2,24 +2,25 @@ Source: python-traxcommon
 Maintainer: Trax DevOps <devops@traxtech.com>
 Section: python
 Priority: optional
-Build-Depends: python-dev (>= 2.6.6-3), debhelper (>= 9)
+Build-Depends: python-dev, debhelper (>= 9), python3-dev, dh-python
 X-Python-Version: >= 2.7
-Standards-Version: 3.9.3
+X-Python3-Version: >= 3.4
+Standards-Version: 3.9.6
 
 Package: python-traxcommon
 Architecture: any
-Depends: ${misc:Depends},
- ${python:Depends},
- ${shlibs:Depends},
- python-pysmb,
- python-requests (>= 2.0.0),
- python-repoze.lru,
- python-magic,
- python-boto,
- python-kerberos,
- krb5-user,
- python-winrm,
- python-cryptography,
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-pysmb,
+ python-requests (>= 2.0.0), python-repoze.lru, python-magic,
+ python-cryptography, python-six
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
- devops rockstars
+ devops rockstars. virtual package
+
+Package: python3-traxcommon
+Architecture: any
+Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}, python3-pysmb,
+ python3-requests (>= 2.0.0), python3-repoze.lru, python3-magic,
+ python3-cryptography, python3-six
+Provides: ${python3:Provides}
+Description: Common python functionality for trax technologies developers and
+ devops rockstars. virtual package
