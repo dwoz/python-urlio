@@ -51,7 +51,7 @@ def parse_config(fp, default_section='general'):
     the dictionary with another dictionary representing the items in
     that section.
     """
-    parser = ConfigParser.ConfigParser()
+    parser = ConfigParser()
     parser.readfp(fp)
     config = {}
     for section in parser.sections():
