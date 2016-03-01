@@ -10,7 +10,7 @@ Standards-Version: 3.9.6
 Package: python-traxcommon
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-pysmb,
- python-requests (>= 2.0.0), python-repoze.lru, python-magic,
+ python-requests, python-repoze.lru, python-magic,
  python-cryptography, python-six
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
@@ -19,7 +19,7 @@ Description: Common python functionality for trax technologies developers and
 Package: python3-traxcommon
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}, python3-pysmb,
- python3-requests (>= 2.0.0), python3-repoze.lru, python3-magic,
+ python3-requests, python3-repoze.lru, python3-magic,
  python3-cryptography, python3-six
 Provides: ${python3:Provides}
 Description: Common python functionality for trax technologies developers and
