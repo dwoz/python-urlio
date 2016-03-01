@@ -117,7 +117,7 @@ class X12Parser(object):
             # logic in the parse_isa function handles this case by continuing
             # to search until a valid ISA is found.
             gs_loc = chunk.find('GS' + self.data_element_separator)
-            print(gs_loc, chunk)
+            #print(gs_loc, chunk)
             if gs_loc < 0:
                 raise StopIteration
             ISA = chunk[:gs_loc]
@@ -202,7 +202,7 @@ def parse_isa(data, max_tries=10):
             raise Exception("Valid ISA not found")
         isa_segments = isadata[:b+c].split(elmsep)
         if len(isa_segments) < 16:
-            print('isa seg less than 16:', len(isa_segments), b, c)
+            #print('isa seg less than 16:', len(isa_segments), b, c)
             b += c + 2
             continue
         elif len(isa_segments) > 17:
@@ -255,13 +255,13 @@ class EdifactParser(object):
         for segment in self:
             if segment[:3] == 'UNA':
                 start = self.start_of_segment
-                print('has start a',  start)
+                #print('has start a',  start)
             elif start is None and segment[:3] == 'UNB':
                 start = self.start_of_segment
-                print('has start b',  start)
+                #print('has start b',  start)
             if segment[:3] == 'UNZ':
                 end = self.start_of_buffer
-                print('has end', end)
+                #print('has end', end)
             if start is not None and end is not None:
                 yield index, start, end
                 index += 1
