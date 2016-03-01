@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
-#PYVERS = $(shell pyversions -r -v)
+#export DH_VERBOSE = 1
+export PYBUILD_NAME = traxcommon
+
 
 %:
 	dh $@ --with python2,python3 --buildsystem=pybuild

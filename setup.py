@@ -20,6 +20,10 @@ setup(
     name='traxcommon',
     version='.'.join([str(i) for i in VERSION]),
     description='Trax common python functionality',
+    classifiers=[
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.4",
+    ],
     author='Trax Technologies, Inc',
     author_email='devops@traxtech.com',
     url='https://github.com/TraxTechnologies/python-common',
