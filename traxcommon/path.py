@@ -713,7 +713,10 @@ class SMBPath(BasePath):
 
     def write(self, fp):
         if not hasattr(fp, 'read'):
-            fp = io.BytesIO(fp.encode('utf-8'))
+            if six.PY2:
+                fp = six.StringIO(fp)
+            else:
+                fp = io.BytesIO(fp.encode('utf-8'))
         if self.mode == 'r':
             raise Exception("File not open for writing")
         if self.WRITELOCK:
