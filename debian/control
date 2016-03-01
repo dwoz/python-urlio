@@ -11,7 +11,7 @@ Package: python-traxcommon
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-pysmb,
  python-requests, python-repoze.lru, python-magic,
- python-cryptography, python-six
+ python-cryptography, python-six, python-xmltodict
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars. virtual package
@@ -20,7 +20,7 @@ Package: python3-traxcommon
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}, python3-pysmb,
  python3-requests, python3-repoze.lru, python3-magic,
- python3-cryptography, python3-six
+ python3-cryptography, python3-six, python3-xmltodict
 Provides: ${python3:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars. virtual package
