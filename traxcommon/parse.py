@@ -378,10 +378,9 @@ def x12transform(fp, data_element_separator=None, component_separator=None,
     s = ''
     for element in parser:
         def bytes(i):
+            if type(i) == unicode:
+                return i.encode('ascii')
             return i
-            #if type(i) == unicode:
-            #    return i.encode('ascii')
-            #return i
         if data_element_separator is None:
             data_element_separator = parser.data_element_separator
         data_element_separator = bytes(data_element_separator)
