@@ -17,10 +17,10 @@ def legacy_auth_url(login_url, request):
     else:
         params['secure'] = 'false'
     redirurl = "{}?{}".format(
-        login_url, urllib.urlencode(params)
+        login_url, urllib.parse.urlencode(params)
     )
     return "{}?{}".format(
-        login_url, urllib.urlencode(params)
+        login_url, urllib.parse.urlencode(params)
     )
 
 
