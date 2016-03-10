@@ -9,6 +9,7 @@ import io
 import re
 import time
 import smb
+import nmb.NetBIOS
 import hashlib
 import magic
 import tempfile
@@ -498,6 +499,20 @@ class LocalPath(BasePath):
         }
 
 
+def getBIOSName(remote_smb_ip, timeout=30):
+    """
+    Lookup the NetBIOS name for the given ip
+    """
+    try:
+        bios = nmb.NetBIOS.NetBIOS()
+        srv_name = bios.queryIPForName(remote_smb_ip, timeout=timeout)
+    except:
+        log.exception("NetBIOS look up timeout, check remote_smb_ip again.")
+    finally:
+        bios.close()
+    return srv_name[0]
+
+
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
@@ -514,8 +529,9 @@ def get_smb_connection(
             hostname
         )
         raise
+    server_bios_name = getBIOSName(server_ip)
     conn = SMBConnection(
-        str(user), str(pas), str(client), str(server), domain=str(domain), is_direct_tcp=is_direct_tcp
+        str(user), str(pas), str(client), str(server_bios_name), domain=str(domain), is_direct_tcp=is_direct_tcp
     )
     conn.connect(server_ip, port, timeout=timeout)
     return conn
