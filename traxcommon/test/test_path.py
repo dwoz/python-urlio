@@ -8,7 +8,7 @@ from . import data_path
 from .. import path
 from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
-    FindDfsShare
+    FindDfsShare, getBIOSName
 )
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
@@ -508,3 +508,11 @@ def test_large_file_2008():
     w = whsh.hexdigest()
     r = rhsh.hexdigest()
     assert w == r, (w, r)
+
+def test_netbios_lookup():
+    a = getBIOSName('205.159.43.10')
+    assert a == 'FXDC0001', '{} != {}'.format(a, 'FXDC0001')
+
+def test_bad_netbios_server():
+    p = Path(r'\\fxcebfs0300.filex.com\Data Entry\Images')
+    assert p.exists()
