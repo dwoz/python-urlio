@@ -260,31 +260,6 @@ def normalize_path(path):
     return path.replace('\\', '/')
 
 
-class WriteLock(object):
-
-    def __init__(self, locks=None):
-        if not locks:
-            locks = {}
-        self.locks = {}
-
-    def acquire(self, server, share, path):
-        key = (server, share, path)
-        log.debug('write-lock acquire: %s', key)
-        if key not in self.locks:
-            self.locks[key] = multiprocessing.Lock()
-        self.locks[key].acquire()
-
-    def release(self, server, share, path):
-        key = (server, share, path)
-        log.debug('write-lock release: %s', key)
-        if key not in self.locks:
-            log.debug('write-lock release but adding lock: %s', key)
-            self.locks[key] = multiprocessing.Lock()
-        log.debug('write-lock release call: %s', key)
-        self.locks[key].release()
-        self.locks.pop(key)
-
-
 def denormalize_path(path):
     "Convert a posix style path to nt style"
     return path.replace('/', '\\')
