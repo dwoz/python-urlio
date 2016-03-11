@@ -9,6 +9,7 @@ import io
 import re
 import time
 import smb
+import nmb.NetBIOS
 import hashlib
 import magic
 import tempfile
@@ -260,31 +261,6 @@ def normalize_path(path):
     return path.replace('\\', '/')
 
 
-class WriteLock(object):
-
-    def __init__(self, locks=None):
-        if not locks:
-            locks = {}
-        self.locks = {}
-
-    def acquire(self, server, share, path):
-        key = (server, share, path)
-        log.debug('write-lock acquire: %s', key)
-        if key not in self.locks:
-            self.locks[key] = multiprocessing.Lock()
-        self.locks[key].acquire()
-
-    def release(self, server, share, path):
-        key = (server, share, path)
-        log.debug('write-lock release: %s', key)
-        if key not in self.locks:
-            log.debug('write-lock release but adding lock: %s', key)
-            self.locks[key] = multiprocessing.Lock()
-        log.debug('write-lock release call: %s', key)
-        self.locks[key].release()
-        self.locks.pop(key)
-
-
 def denormalize_path(path):
     "Convert a posix style path to nt style"
     return path.replace('/', '\\')
@@ -523,6 +499,18 @@ class LocalPath(BasePath):
         }
 
 
+def getBIOSName(remote_smb_ip, timeout=30):
+    """
+    Lookup the NetBIOS name for the given ip
+    """
+    try:
+        bios = nmb.NetBIOS.NetBIOS()
+        srv_name = bios.queryIPForName(remote_smb_ip, timeout=timeout)
+    finally:
+        bios.close()
+    if srv_name:
+        return srv_name[0]
+
 
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
@@ -539,8 +527,13 @@ def get_smb_connection(
             hostname
         )
         raise
+    server_bios_name = getBIOSName(server_ip)
+    if server_bios_name:
+        server_name = server_bios_name
+    else:
+        server_name = server
     conn = SMBConnection(
-        str(user), str(pas), str(client), str(server), domain=str(domain), is_direct_tcp=is_direct_tcp
+        str(user), str(pas), str(client), str(server_name), domain=str(domain), is_direct_tcp=is_direct_tcp
     )
     conn.connect(server_ip, port, timeout=timeout)
     return conn
