@@ -8,6 +8,10 @@ debian/python3-traxcommon/
 # Passwords and keys
 etc/credentials
 
+# Ignore coverage
+.coverage
+coverge/*
+
 # Virtual environment
 .Python
 bin/activate*
