@@ -215,3 +215,15 @@ def test_no_ending_nl():
         'EXDO           ', 'ZZ', 'TRAX.HPLA      ', '140905', '2132', 'U',
         '00401', '922950489', '1', 'P', '^\n'], isa
     assert iea == ['IEA', '1', '922950489'], iea
+
+def test_split_multi_edi_a():
+    parser = X12Parser(filename=data_path('IDI110DHLT_Emerson_CN'))
+    parts = list(parser.iter_parts())
+    assert parts == [
+        (1, 0, 978),
+        (2, 978, 87173),
+        (3, 87173, 175537),
+        (4, 175537, 239953),
+        (5, 239953, 340878),
+        (6, 340878, 349685)
+    ], parts
