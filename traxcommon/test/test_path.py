@@ -10,6 +10,7 @@ from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
     FindDfsShare, getBIOSName
 )
+import pytest
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
@@ -447,7 +448,7 @@ def test_list_files_empty():
     l = list(p.filenames())
 #    assert not l
 
-
+@pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 @attr('slow')
 def test_large_file_2003():
     p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt', 'w')
@@ -469,6 +470,7 @@ def test_large_file_2003():
     assert w == r, (w, r)
 
 
+@pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 @attr('slow')
 def test_large_file_samba():
     p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt', 'w')
@@ -489,6 +491,7 @@ def test_large_file_samba():
     r = rhsh.hexdigest()
     assert w == r, (w, r)
 
+@pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 @attr('slow')
 def test_large_file_2008():
     p = path.Path(r'\\filex.com\it\stg\large_test_file.txt', 'w')
