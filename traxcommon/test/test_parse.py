@@ -71,6 +71,57 @@ def test_edifact_parsing_b():
     assert len(l) == 40, len(l)
     assert l[-1][0][0] == 'UNZ', l[-1][0]
 
+
+def test_edifact_parsing_c():
+    s = (
+        "UNB+UNOC:4+003897733:01:HPE+TRAX:ZZ+20151014:1949+9505598++DESADV'\n"
+        "UNG+DESADV+IGSOAMHPE+TRAX+20151014:1949+9505598+UN+D:99B'\nUNH+1+DES"
+        "ADV:D:99B:UN'\nBGM+351:::OUT+1000162050+9'\nDTM+11:201510160000EST:303"
+        "'\nDTM+137:201510141544:203'\nMEA+CT+SQ+NMP'\nMEA+WT+AAD+LB:2.000'\nRFF+SI"
+        ":1000162050'RFF+ON:4760916894-473-1'\nRFF+AAO:Delivery Block 60 remo"
+        "ved.  Line?: 1'\nRFF+SF:US00'\nRFF+OP:0632634485'\nRFF+ZZZ:1 1'\nRFF+ACE:0"
+        "000001602641083'\nRFF+BM:1000162050'\nRFF+AOJ:SAPPN1'\nNAD+SP+0080077208"
+        ":161++Hewlett Packard Enterprise/SDO-US+400 WEST 69TH STREET+LOVEL"
+        "AND+CO+80538+US'\nNAD+SR+C200:ZZZ'\nNAD+FW+NOSCAC:160'\nNAD+SF+C299:160+"
+        "+Hewlett Packard Enterprise Company:C/O UPS-SCS+2230 Outer Loop+LO"
+        "UISVILLE+KY+40219+US'\nNAD+ST+0080118531:160++Hewlett Packard Enterp"
+        "rise/HFPU+165 DASCOMB RD+ANDOVER+MA+01810+US'\nLOC+20+US'\nTOD+6++DDU'\n"
+        "FTX+DEL+++Standard'\nFTX+ABD+++ZSLQ'\nFTX+PRI+++91'\nCPS+1'\nLIN+1++12-236"
+        "09-04:VP'\nPIA+1+HA:MP'\nIMD+F++:::FAN,TUBE AXIAL 4.5?'\n?'\n'MEA+WT+AAA+L"
+        "B:2.000'\nQTY+12:1.000:EA'\nFTX+AFT+++S2'\nRFF+PE:C299'\nPCI+24+1000162050"
+        "'\nQTY+52:0.000:CT'\nUNT+36+1'\nUNE+1+9505598'UNZ+1+9505598'\n"
+    )
+    a = EdifactParser(fp=StringIO(s), split_elements=True)
+    l = list(a)
+    assert len(l) == 40, len(l)
+    assert l[-1][0][0] == 'UNZ', l[-1][0]
+
+
+def test_edifact_parsing_e():
+    s = (
+        "UNB+UNOC:4+003897733:01:HPE+TRAX:ZZ+20151014:1949+9505598++DESADV'"
+        "UNG+DESADV+IGSOAMHPE+TRAX+20151014:1949+9505598+UN+D:99B'UNH+1+DES"
+        "ADV:D:99B:UN'BGM+351:::OUT+1000162050+9'DTM+11:201510160000EST:303"
+        "'DTM+137:201510141544:203'MEA+CT+SQ+NMP'MEA+WT+AAD+LB:2.000'RFF+SI"
+        ":1000162050'RFF+ON:4760916894-473-1'RFF+AAO:Delivery Block 60 remo"
+        "ved.  Line?: 1'RFF+SF:US00'RFF+OP:0632634485'RFF+ZZZ:1 1'RFF+ACE:0"
+        "000001602641083'RFF+BM:1000162050'RFF+AOJ:SAPPN1'NAD+SP+0080077208"
+        ":161++Hewlett Packard Enterprise/SDO-US+400 WEST 69TH STREET+LOVEL"
+        "AND+CO+80538+US'NAD+SR+C200:ZZZ'NAD+FW+NOSCAC:160'NAD+SF+C299:160+"
+        "+Hewlett Packard Enterprise Company:C/O UPS-SCS+2230 Outer Loop+LO"
+        "UISVILLE+KY+40219+US'NAD+ST+0080118531:160++Hewlett Packard Enterp"
+        "rise/HFPU+165 DASCOMB RD+ANDOVER+MA+01810+US'LOC+20+US'TOD+6++DDU'"
+        "FTX+DEL+++Standard'FTX+ABD+++ZSLQ'FTX+PRI+++91'CPS+1'LIN+1++12-236"
+        "09-04:VP'PIA+1+HA:MP'IMD+F++:::FAN,TUBE AXIAL 4.5?'?''MEA+WT+AAA+L"
+        "B:2.000'QTY+12:1.000:EA'FTX+AFT+++S2'RFF+PE:C299'PCI+24+1000162050"
+        "'QTY+52:0.000:CT'UNT+36+1'UNE+1+9505598'UNZ+1+9505598'"
+    )
+    a = EdifactParser(fp=StringIO(s), split_elements=True)
+    l = list(a)
+    assert len(l) == 40, len(l)
+    assert l[-1][0][0] == 'UNZ', l[-1][0]
+
+
 def test_x12transform():
     edi = (
         "ISA*00*          *00*          *ZZ*EXDO           *ZZ*TRAX."
@@ -164,3 +215,15 @@ def test_no_ending_nl():
         'EXDO           ', 'ZZ', 'TRAX.HPLA      ', '140905', '2132', 'U',
         '00401', '922950489', '1', 'P', '^\n'], isa
     assert iea == ['IEA', '1', '922950489'], iea
+
+def test_split_multi_edi_a():
+    parser = X12Parser(filename=data_path('IDI110DHLT_Emerson_CN'))
+    parts = list(parser.iter_parts())
+    assert parts == [
+        (1, 0, 978),
+        (2, 978, 87173),
+        (3, 87173, 175537),
+        (4, 175537, 239953),
+        (5, 239953, 340878),
+        (6, 340878, 349685)
+    ], parts

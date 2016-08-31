@@ -104,8 +104,21 @@ class X12Parser(object):
             # however we receive EDI that would fail. So instead we grab the
             # first 150 bytes and search for the GS segment
             chunk = self.fp.read(300)
-            if len(chunk) < 4:
-                raise StopIteration
+
+            # Keep consuming if we are not at the start of an isa yet.
+            start_of_isa = chunk.find('ISA')
+            while start_of_isa == -1:
+                if len(chunk) < 4:
+                    raise StopIteration
+                n = self.fp.tell()
+                chunk = self.fp.read(300)
+                start_of_isa = chunk.find('ISA')
+
+            # Make sure we are at the beginning of an ISA and we have 300 bytes
+            # to look through for a GS.
+            if start_of_isa != 0:
+                chunk = chunk[start_of_isa:] + self.fp.read(300 - start_of_isa)
+
             # The fourth character in the ISA is the element separator
             # but is optional, the default is *
             if chunk[3] in list(b'0123456789'):
