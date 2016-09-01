@@ -5,6 +5,8 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 from traxcommon import VERSION
 
+USE_TOX=False
+
 
 with open('requirements.txt') as fp:
     install_requires = []
@@ -20,8 +22,8 @@ with open('requirements.txt') as fp:
         install_requires.append(b)
 
 
-class Tox(TestCommand):
-    user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+class TestCmd(TestCommand):
+    user_options = [('test-args=', 'a', "Arguments to pass to test runner")]
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.tox_args = None
@@ -30,13 +32,24 @@ class Tox(TestCommand):
         self.test_args = []
         self.test_suite = True
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import tox
-        import shlex
-        args = self.tox_args
-        if args:
-            args = shlex.split(self.tox_args)
-        tox.cmdline(args=args)
+        if USE_TOX:
+            #import here, cause outside the eggs aren't loaded
+            import tox
+            import shlex
+            args = self.tox_args
+            if args:
+                args = shlex.split(self.test_args)
+            tox.cmdline(args=args)
+        else:
+            import pytest
+            errno = pytest.main(self.test_args)
+            sys.exit(errno)
+
+    @classmethod
+    def tests_require(cls):
+        if USE_TOX:
+            return ['tox==1.8.0']
+        return ['pytest==2.8.5']
 
 
 setup(
@@ -51,7 +64,17 @@ setup(
     author_email='devops@traxtech.com',
     url='https://github.com/TraxTechnologies/python-common',
     packages=['traxcommon'],
-    install_requires=install_requires,
-    tests_require=['tox'],
-    cmdclass = {'test': Tox},
+    dependency_links=['git+git@github.com:threatstack/libmagic.git@5.18#egg=Magic_file_extensions&subdirectory=python'],
+    install_requires=[
+        'pysmb==1.1.13',
+        'requests>=2.0.0',
+        'repoze.lru==0.6',
+        'cryptography==1.3.4',
+        'xmltodict==0.9.0',
+        'six==1.10.0',
+        'pytest==2.8.5',
+        'pytest-cov==1.8.0',
+    ],
+    tests_require=TestCmd.tests_require(),
+    cmdclass = {'test': TestCmd},
 )
