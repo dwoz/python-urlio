@@ -2,7 +2,7 @@ Source: python-traxcommon
 Maintainer: Trax DevOps <devops@traxtech.com>
 Section: python
 Priority: optional
-Build-Depends: python-dev, debhelper (>= 9), python3-dev, dh-python
+Build-Depends: python-dev, debhelper (>= 9), python3-dev, dh-python, python-pytest
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.4
 Standards-Version: 3.9.6

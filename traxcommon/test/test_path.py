@@ -1,5 +1,4 @@
 import six
-from nose.plugins.attrib import attr
 import os
 import binascii
 import hashlib
@@ -449,7 +448,6 @@ def test_list_files_empty():
 #    assert not l
 
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
-@attr('slow')
 def test_large_file_2003():
     p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt', 'w')
     if p.exists():
@@ -471,7 +469,6 @@ def test_large_file_2003():
 
 
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
-@attr('slow')
 def test_large_file_samba():
     p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt', 'w')
     if p.exists():
@@ -492,7 +489,6 @@ def test_large_file_samba():
     assert w == r, (w, r)
 
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
-@attr('slow')
 def test_large_file_2008():
     p = path.Path(r'\\filex.com\it\stg\large_test_file.txt', 'w')
     if p.exists():

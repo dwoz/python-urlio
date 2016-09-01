@@ -1,6 +1,6 @@
 
 from traxcommon.util import legacy_auth_url
-from helpers import ParsedUrl
+from .helpers import ParsedUrl
 
 def test_legacy_auth_url():
     class MockRequest:

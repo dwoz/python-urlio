@@ -1,4 +1,4 @@
-from urlparse import urlparse, parse_qs
+from six.moves.urllib.parse import urlparse, parse_qs
 
 class ParsedUrl(object):
     """

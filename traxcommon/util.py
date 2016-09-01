@@ -1,9 +1,9 @@
 import binascii
 import datetime
 import os
-import StringIO
 import time
 from six.moves import urllib
+from six import StringIO
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
@@ -127,7 +127,7 @@ class PKCS7Encoder(object):
         @param text The text to encode.
         '''
         l = len(text)
-        output = StringIO.StringIO()
+        output = StringIO()
         val = self.k - (l % self.k)
         for _ in xrange(val):
             output.write('%02x' % val)
