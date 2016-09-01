@@ -390,9 +390,14 @@ def x12transform(fp, data_element_separator=None, component_separator=None,
     parser = X12Parser(fp=fp, split_elements=True)
     s = ''
     for element in parser:
+        # TODO: This seems sketch in python3 land. Needs some thought and/or
+        # testing.
         def bytes(i):
-            if type(i) == unicode:
-                return i.encode('ascii')
+            try:
+                if type(i) == unicode:
+                    return i.encode('ascii')
+            except NameError:
+                return i
             return i
         if data_element_separator is None:
             data_element_separator = parser.data_element_separator
