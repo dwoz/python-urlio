@@ -5,3 +5,7 @@ export PYBUILD_NAME = traxcommon
 
 %:
 	dh $@ --with python2,python3 --buildsystem=pybuild
+
+override_dh_auto_test:
+	python setup.py test
+	python3 setup.py test
