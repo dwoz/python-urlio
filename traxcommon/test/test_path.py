@@ -554,6 +554,7 @@ def test_local_unicode_file():
     p = Path(data_path('שנוכל לבדוק עם.txt'))
     data = p.read()
 
+@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_smb_write_from_unicode_file():
     filename = 'שנוכל לבדוק עם.txt'
     with io.open(data_path(filename), 'rb') as fp:
