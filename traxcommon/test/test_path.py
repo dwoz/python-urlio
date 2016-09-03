@@ -1,9 +1,11 @@
-import six
+# -*- coding: utf-8 -*
+from __future__ import absolute_import, print_function, unicode_literals
+import io
 import os
 import binascii
 import hashlib
 import datetime
-from . import data_path
+from .helpers import data_path, PY3
 from .. import path
 from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
@@ -147,7 +149,7 @@ def test_path3():
         find_dfs_share=mock_find_dfs_share
     )
     s = path.read()
-    assert s == 'This is a small test file', s
+    assert s == b'This is a small test file', s
 
 
 def test_localpath_dirname1():
@@ -218,9 +220,9 @@ def test_local_path_files():
     os.makedirs('/tmp/test_local_path_files')
     P1 = '/tmp/test_local_path_files/foo.xml'
     P2 = '/tmp/test_local_path_files/foo.txt'
-    with open(P2, 'w') as fp:
+    with io.open(P2, 'w') as fp:
         fp.write('foo.txt')
-    with open(P1, 'w') as fp:
+    with io.open(P1, 'w') as fp:
         fp.write('foo.xml')
     try:
         p = LocalPath('/tmp/test_local_path_files')
@@ -247,7 +249,7 @@ def test_smb_remove():
         mode='w',
         find_dfs_share=mock_find_dfs_share
     )
-    p.write('this is a test file')
+    p.write('this is a test file'.encode('utf-8'))
     p = SMBPath(
         "{0}\\{1}".format(BASE, 'test_smb_remove\\testfile'),
         find_dfs_share=mock_find_dfs_share
@@ -331,11 +333,11 @@ def test_read():
     a = p.read(5)
     index = p.tell()
     assert index == 5, index
-    assert a == 'Nice ', a
+    assert a == b'Nice ', a
     a = p.read(4)
     index = p.tell()
     assert index == 9, index
-    assert a == 'test', a
+    assert a == b'test', a
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_size():
@@ -353,7 +355,7 @@ def test_mtime():
         mode='r',
         find_dfs_share=mock_find_dfs_share
     )
-    if six.PY3:
+    if PY3:
         expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825793)
     else:
         expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
@@ -384,11 +386,11 @@ def test_stat_2003():
 def test_chunk_write_2003():
     fpath = r'\\fxb02fs0300.filex.com\Filerouter Test\chunk_write\test.txt'
     p = path.Path(fpath, 'w')
-    p.write('foo')
-    p.write('bar')
+    p.write(b'foo')
+    p.write(b'bar')
     p = path.Path(fpath)
     rslt = p.read()
-    assert rslt == 'foobar', rslt
+    assert rslt == b'foobar', rslt
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_chunk_write_2008():
@@ -397,15 +399,15 @@ def test_chunk_write_2008():
         mode='w',
         find_dfs_share=mock_find_dfs_share
     )
-    p.write('foo')
-    p.write('bar')
+    p.write(b'foo')
+    p.write(b'bar')
     p = SMBPath(
         "{}\\{}\\{}".format(BASE, 'test_chunk_write', 'test.txt'),
         mode='r',
         find_dfs_share=mock_find_dfs_share
     )
     rslt = p.read()
-    assert rslt == 'foobar', rslt
+    assert rslt == b'foobar', rslt
 
 RECURSE_VALS = [
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',
@@ -541,3 +543,23 @@ def test_netbios_lookup():
 def test_bad_netbios_server():
     p = Path(r'\\fxcebfs0300.filex.com\Data Entry\Images')
     assert p.exists()
+
+
+def test_local_unicode_file_stdlib():
+    with io.open(data_path('שנוכל לבדוק עם.txt'), 'rb') as fp:
+        data = fp.read()
+    assert type(data) == bytes
+
+def test_local_unicode_file():
+    p = Path(data_path('שנוכל לבדוק עם.txt'))
+    data = p.read()
+
+def test_smb_write_from_unicode_file():
+    filename = 'שנוכל לבדוק עם.txt'
+    with io.open(data_path(filename), 'rb') as fp:
+        data = fp.read()
+    p = Path(r'\\filex.com\it\stg\{}'.format(filename), 'w')
+    p.write(data)
+    p = Path(r'\\filex.com\it\stg\{}'.format(filename), 'r')
+    assert data == p.read()
+    assert type(data) == bytes

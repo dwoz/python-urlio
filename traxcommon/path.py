@@ -56,7 +56,7 @@ class DfsCache(dict):
         if not os.path.exists(path):
             self.fetch(path)
         if os.path.exists(path):
-            with open(path, 'r') as f:
+            with io.open(path, 'r') as f:
                 self.update(json.loads(f.read()))
             cache_time = datetime.datetime.utcfromtimestamp(
                 int(str(DFSCACHE['timestamp'])[:-3])
@@ -77,7 +77,7 @@ class DfsCache(dict):
                 )
             data = response.json()
             tmp = tempfile.mktemp(dir=os.path.dirname(DFSCACHE_PATH))
-            with open(tmp, 'wb') as f:
+            with io.open(tmp, 'wb') as f:
                 f.write(
                     json.dumps(
                         data,
@@ -356,7 +356,7 @@ class LocalPath(BasePath):
     def fp(self):
         if not hasattr(self, '_fp') or not self._fp or self._fp.closed:
             dirname = os.path.dirname(self.path)
-            self._fp = open(self.path, self.mode)
+            self._fp = io.open(self.path, self.mode)
         return self._fp
 
     def seek(self, index, *args):
@@ -642,9 +642,7 @@ class SMBPath(BasePath):
         )
         self._index = self._index + fp.tell()
         fp.seek(0)
-        if six.PY2:
-            return fp.read()
-        return fp.read().decode('utf-8')
+        return fp.read()
 
     def get_connection(self):
         if not self._conn:
@@ -706,10 +704,7 @@ class SMBPath(BasePath):
 
     def write(self, fp):
         if not hasattr(fp, 'read'):
-            if six.PY2:
-                fp = six.StringIO(fp)
-            else:
-                fp = io.BytesIO(fp.encode('utf-8'))
+            fp = io.BytesIO(fp)
         if self.mode == 'r':
             raise Exception("File not open for writing")
         if self.WRITELOCK:

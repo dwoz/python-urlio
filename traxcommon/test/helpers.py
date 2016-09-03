@@ -1,4 +1,12 @@
+import os
 from six.moves.urllib.parse import urlparse, parse_qs
+import six
+
+
+PY3 = six.PY3
+
+def data_path(filename):
+    return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 class ParsedUrl(object):
     """
