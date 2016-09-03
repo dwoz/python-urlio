@@ -27,5 +27,5 @@ def test_smb_write():
         find_dfs_share=mock_find_dfs_share
     )
     s = path.read()
-    assert s == 'This is a small test file', s
+    assert s == b'This is a small test file', s
 

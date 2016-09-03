@@ -642,9 +642,7 @@ class SMBPath(BasePath):
         )
         self._index = self._index + fp.tell()
         fp.seek(0)
-        if six.PY2:
-            return fp.read()
-        return fp.read().decode('utf-8')
+        return fp.read()
 
     def get_connection(self):
         if not self._conn:

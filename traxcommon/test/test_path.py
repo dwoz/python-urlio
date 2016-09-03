@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import six
 import os
 import binascii
 import hashlib
 import datetime
-from . import data_path
+from .helpers import data_path
 from .. import path
 from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
@@ -147,7 +148,7 @@ def test_path3():
         find_dfs_share=mock_find_dfs_share
     )
     s = path.read()
-    assert s == 'This is a small test file', s
+    assert s == b'This is a small test file', s
 
 
 def test_localpath_dirname1():
@@ -331,11 +332,11 @@ def test_read():
     a = p.read(5)
     index = p.tell()
     assert index == 5, index
-    assert a == 'Nice ', a
+    assert a == b'Nice ', a
     a = p.read(4)
     index = p.tell()
     assert index == 9, index
-    assert a == 'test', a
+    assert a == b'test', a
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_size():
@@ -388,7 +389,7 @@ def test_chunk_write_2003():
     p.write('bar')
     p = path.Path(fpath)
     rslt = p.read()
-    assert rslt == 'foobar', rslt
+    assert rslt == b'foobar', rslt
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_chunk_write_2008():
@@ -405,7 +406,7 @@ def test_chunk_write_2008():
         find_dfs_share=mock_find_dfs_share
     )
     rslt = p.read()
-    assert rslt == 'foobar', rslt
+    assert rslt == b'foobar', rslt
 
 RECURSE_VALS = [
     '\\\\filex.com\\it\\stg\\static_tests\\test_recurse\\doc1.txt',

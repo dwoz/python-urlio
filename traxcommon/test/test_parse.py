@@ -1,4 +1,5 @@
-from . import data_path
+from __future__ import absolute_import
+from .helpers import data_path
 from ..parse import xml_to_json, EdifactParser, x12transform, X12Parser
 from six import StringIO
 import six
