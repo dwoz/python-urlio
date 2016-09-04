@@ -8,8 +8,9 @@ import datetime
 from .helpers import data_path, PY3
 from .. import path
 from ..path import (
-    Path, SMBPath, LocalPath, smb_dirname, find_dfs_share,
-    FindDfsShare, getBIOSName
+    Path, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
+    getBIOSName, mimetype_from_buffer, mimeencoding_from_buffer, mimeencoding,
+    mimetype
 )
 import pytest
 
@@ -564,3 +565,17 @@ def test_smb_write_from_unicode_file():
     p = Path(r'\\filex.com\it\stg\{}'.format(filename), 'r')
     assert data == p.read()
     assert type(data) == bytes
+
+def test_mimeencoding_from_buffer():
+    s = b'this is some test text'
+    assert mimeencoding_from_buffer(s) == 'us-ascii'
+
+def test_mimetype_from_buffer():
+    s = b'this is some test text'
+    assert mimetype_from_buffer(s) == 'text/plain'
+
+def test_mimeencoding():
+    assert mimeencoding(data_path('שנוכל לבדוק עם.txt')) == 'utf-8'
+
+def test_mimetype():
+    assert mimetype(data_path('שנוכל לבדוק עם.txt')) == 'text/plain'

@@ -34,8 +34,12 @@ SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 AUTO_UPDATE_DFSCACHE = True
-EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
-EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+if six.PY2:
+    EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
+else:
+    EDIDET = re.compile(b'^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
+    EDIFACTDET = re.compile(b'^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 DFSCACHE = {}
 DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_READONLY |
@@ -975,6 +979,8 @@ def mimetype(path):
         raise Exception("Unable to load magic database")
     s = m.file(path)
     m.close()
+    with open(path, 'rb') as fp:
+        buffer = fp.read(20)
     if EDIDET.search(buffer):
         s = "application/EDI-X12"
     elif EDIFACTDET.search(buffer):
