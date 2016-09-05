@@ -62,9 +62,10 @@ class X12Parser(object):
                 self._fp = io.open(filename, 'rb')
             else:
                 raise Exception("Must supply filename or fp")
-        self.fp = self._fp
         if not isinstance(self._fp, io.TextIOBase):
             self.fp = io.TextIOWrapper(self._fp, encoding=self.encoding)
+        else:
+            self.fp = self._fp
 
     def __iter__(self):
         """Return the iterator for use in a for loop"""
@@ -248,10 +249,10 @@ class EdifactParser(object):
                 self._fp = io.open(filename, 'rb')
             else:
                 raise Exception("Must supply filename or fp")
-        self.fp = self._fp
         if not isinstance(self._fp, io.TextIOBase):
             self.fp = io.TextIOWrapper(self._fp, encoding=self.encoding)
-
+        else:
+            self.fp = self._fp
         self.newline_after_sep = False
         self.ending_newline = False
         self.end_of_stream = False
@@ -297,7 +298,6 @@ class EdifactParser(object):
                 chunk = self.fp.read(300)
                 if not chunk:
                     self.end_of_stream = True
-                #print("****** {} {}".format(repr(self.buffer[:100]), repr(chunk[:100])))
                 chunk = self.buffer + chunk
             else:
                 chunk = self.buffer
