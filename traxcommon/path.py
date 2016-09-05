@@ -291,7 +291,7 @@ def path_is_posix_style(path):
     return os.name == 'posix'
 
 
-def Path(path, mode='r'):
+def Path(path, mode='rb'):
     "Path factory"
     if path_is_smb(path):
         return SMBPath(path, mode)
@@ -348,7 +348,7 @@ class BasePath(object):
 
 class LocalPath(BasePath):
 
-    def __init__(self, path, mode='r'):
+    def __init__(self, path, mode='rb'):
         self._set_path(path)
         self.mode = mode
 

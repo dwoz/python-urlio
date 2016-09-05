@@ -1,4 +1,5 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
+import io
 import six
 import collections
 import string
@@ -46,28 +47,28 @@ class X12Parser(object):
 
     alphanums = ascii_letters + digits
 
-    def __init__(self, filename=None, fp=None, split_elements=False, offset=0):
+    def __init__(self, filename=None, fp=None, split_elements=False, offset=0, encoding=None):
+        self.encoding = encoding
         self.split_elements = split_elements
         self.version = None
-        self.fp = fp
+        self._fp = fp
         self._offset = offset
         self._stop = False
-        if self.fp:
-            self.fp.seek(self._offset)
-            self.in_isa = False
+        self.in_isa = False
+        if self._fp:
+            self._fp.seek(self._offset)
         else:
             if filename:
-                self.open_file(filename)
+                self._fp = io.open(filename, 'rb')
             else:
                 raise Exception("Must supply filename or fp")
+        self.fp = self._fp
+        if not isinstance(self._fp, io.TextIOBase):
+            self.fp = io.TextIOWrapper(self._fp, encoding=self.encoding)
 
     def __iter__(self):
         """Return the iterator for use in a for loop"""
         return self
-
-    def open_file(self, filename):
-        self.fp = open(filename, 'r')
-        self.in_isa = False
 
     def iter_parts(self):
         self.fp.seek(self._offset)
@@ -121,7 +122,7 @@ class X12Parser(object):
 
             # The fourth character in the ISA is the element separator
             # but is optional, the default is *
-            if chunk[3] in list(b'0123456789'):
+            if chunk[3] in list('0123456789'):
                 self.data_element_separator = '*' # Data element separator
             else:
                 self.data_element_separator = chunk[3] # Data element separator
@@ -231,20 +232,26 @@ class EdifactParser(object):
     Invalid files will raise a BadFile exception.
     """
 
-    def __init__(self, filename=None, fp=None, split_elements=False, offset=0):
+    def __init__(self, filename=None, fp=None, split_elements=False, offset=0, encoding=None):
+        self.encoding = None
         self.nseg = 0
         self.split_elements = split_elements
         self.version = None
-        self.fp = fp
         self.in_una = False
         self._offset = offset
-        if self.fp:
-            self.fp.seek(self._offset)
+
+        self._fp = fp
+        if self._fp:
+            self._fp.seek(self._offset)
         else:
             if filename:
-                self.open_file(filename)
+                self._fp = io.open(filename, 'rb')
             else:
                 raise Exception("Must supply filename or fp")
+        self.fp = self._fp
+        if not isinstance(self._fp, io.TextIOBase):
+            self.fp = io.TextIOWrapper(self._fp, encoding=self.encoding)
+
         self.newline_after_sep = False
         self.ending_newline = False
         self.end_of_stream = False
@@ -290,6 +297,7 @@ class EdifactParser(object):
                 chunk = self.fp.read(300)
                 if not chunk:
                     self.end_of_stream = True
+                #print("****** {} {}".format(repr(self.buffer[:100]), repr(chunk[:100])))
                 chunk = self.buffer + chunk
             else:
                 chunk = self.buffer
