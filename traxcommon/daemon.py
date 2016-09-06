@@ -54,13 +54,17 @@ def daemonize(
 
     os.umask(0)
     os.chdir("/")
+
+
     # redirect standard file descriptors
-    si = io.open(stdin, 'r')
-    os.dup2(si.fileno(), sys.stdin.fileno())
-    so = io.open(stdout, 'a+')
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    se = io.open(stderr, 'a+', 0)
-    os.dup2(se.fileno(), sys.stderr.fileno())
+    #si = io.open(stdin, 'r')
+    #os.dup2(si.fileno(), sys.stdin.fileno())
+    #so = io.open(stdout, 'a+')
+    #os.dup2(so.fileno(), sys.stdout.fileno())
+    #se = io.open(stderr, 'a+', 0)
+    #os.dup2(se.fileno(), sys.stderr.fileno())
+
+
     if gid:
         os.setgid(gid)
     if uid:
