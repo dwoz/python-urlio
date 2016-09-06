@@ -54,11 +54,6 @@ def daemonize(
 
     os.umask(0)
     os.chdir("/")
-    if gid:
-        os.setgid(gid)
-    if uid:
-        os.setuid(uid)
-
     # redirect standard file descriptors
     si = io.open(stdin, 'r')
     os.dup2(si.fileno(), sys.stdin.fileno())
@@ -66,6 +61,11 @@ def daemonize(
     os.dup2(so.fileno(), sys.stdout.fileno())
     se = io.open(stderr, 'a+', 0)
     os.dup2(se.fileno(), sys.stderr.fileno())
+    if gid:
+        os.setgid(gid)
+    if uid:
+        os.setuid(uid)
+
 
     #XXX Causes JoinableQueue to fail with bad file descriptor
     # Close all open file descriptors
