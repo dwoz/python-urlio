@@ -10,6 +10,7 @@ import time
 import traceback
 import threading
 import multiprocessing
+import io
 
 log = logging.getLogger(__name__)
 NULL = os.devnull
@@ -59,11 +60,11 @@ def daemonize(
         os.setuid(uid)
 
     # redirect standard file descriptors
-    si = open(stdin, 'r')
+    si = io.open(stdin, 'r')
     os.dup2(si.fileno(), sys.stdin.fileno())
-    so = open(stdout, 'a+')
+    so = io.open(stdout, 'a+')
     os.dup2(so.fileno(), sys.stdout.fileno())
-    se = open(stderr, 'a+', 0)
+    se = io.open(stderr, 'a+', 0)
     os.dup2(se.fileno(), sys.stderr.fileno())
 
     #XXX Causes JoinableQueue to fail with bad file descriptor
