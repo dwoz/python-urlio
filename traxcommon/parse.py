@@ -246,7 +246,7 @@ class EdifactParser(object):
             self._fp.seek(self._offset)
         else:
             if filename:
-                self._fp = io.open(filename, 'rb')
+                self._fp = io.open(filename, mode='rb')
             else:
                 raise Exception("Must supply filename or fp")
         if not isinstance(self._fp, io.TextIOBase):
@@ -263,10 +263,6 @@ class EdifactParser(object):
     def __iter__(self):
         """Return the iterator for use in a for loop"""
         return self
-
-    def open_file(self, filename):
-        self.fp = open(filename, 'r')
-        self.in_isa = False
 
     def iter_parts(self):
         self.fp.seek(self._offset)

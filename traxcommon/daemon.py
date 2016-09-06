@@ -59,11 +59,11 @@ def daemonize(
         os.setuid(uid)
 
     # redirect standard file descriptors
-    si = file(stdin, 'r')
+    si = open(stdin, 'r')
     os.dup2(si.fileno(), sys.stdin.fileno())
-    so = file(stdout, 'a+')
+    so = open(stdout, 'a+')
     os.dup2(so.fileno(), sys.stdout.fileno())
-    se = file(stderr, 'a+', 0)
+    se = open(stderr, 'a+', 0)
     os.dup2(se.fileno(), sys.stderr.fileno())
 
     #XXX Causes JoinableQueue to fail with bad file descriptor
@@ -116,7 +116,7 @@ def start_daemon(
         path, cmd = os.path.split(sys.argv[0])
         pidfile = '/tmp/{0}.pid'.format(cmd.replace(' ', '_'))
     try:
-        with file(pidfile, 'r') as pf:
+        with open(pidfile, 'r') as pf:
             a = pf.read().strip()
             if a:
                 pid = int(a)
@@ -157,7 +157,7 @@ def start_daemon(
 
 def stop_daemon(pidfile, removepid=removepid):
     try:
-        with file(pidfile, 'r') as pf:
+        with open(pidfile, 'r') as pf:
             pid = int(pf.read().strip())
     except IOError:
         pid = None

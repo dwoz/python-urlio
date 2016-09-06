@@ -224,3 +224,74 @@ def test_split_multi_edi_a():
         (5, 239953, 340878),
         (6, 340878, 349685)
     ], parts
+
+def test_can_read_after_split_edi():
+    src = (
+        b'ISA+00+          +00+          +ZZ+EXDO           +ZZ+TRAX.H'
+        b'PLA      +140905+2132+U+00401+922950489+1+P+^\nGS+IM+EXDO+TR'
+        b'AX.HPLA+20140905+2132+922950489+X+004010\nST+210+922950489\n'
+        b'B3++E2J0563155+22J0169431+CC+K+20140905+5035++++EXDO\nC3+USD'
+        b'+1.  \nN9+OR+CKG\nN9+DE+GDL\nN9+8X+INBOUND ASN\nG62+10+20140'
+        b'826\nG62+11+20140827\nG62+12+20140904\nR3+CA+++A++++++DD+ST'
+        b'\nN9+SO+0027914338\nN9+SO+0027914335\nN9+SO+0027914334\nLX+1'
+        b'\nN9+IK+E2J0563155\nN9+BM+421140028\nN9+MB+99924399631\nN9+P'
+        b'O+H5258685\nN9+PO+H5258678\nN9+PO+H5258677\nN9+DO+6931296262'
+        b'\nN9+DO+6931296261\nN9+DO+6931296260\nL0+1+++9.0+G+0.04+X+2+'
+        b'PLT++K\nL0+1+6000+OR+9.0+B++++++K\nL1+1+++3093++++400++++AIR'
+        b' FREIGHT\nL1+1+++1765++++405++++FUEL SURCHARGE\nL1+1+++177++'
+        b'++GSS++++ISS\nL4+43+18+31+C+1\nL4+47+15+29+C+1\nN1+BT+Hewlet'
+        b'tPackard Mexico S de\nN3+RL de CV /Prolongacion Reforma #80'
+        b'0+Col. Lomas de Santa Fe\nN4+Mexico+DF+01210+MX\nN1+SH+INVEN'
+        b'TEC(CHONGQING) CORPORATION\nN3+NO.66 WEST DISTRICT 2ND RD\nN'
+        b'4+CHONGQING 401331+++CN\nN1+CN+Hewlett Packard de Mexico SA '
+        b'de CV\nN3+Montemorelos#299+Colonia Loma Bonita\nN4+Guadalaja'
+        b'ra+JA+45060+MX\nL3+9.0+B+++5035+++++++K\nSE+41+922950489\nGE'
+        b'+1+922950489\nIEA+1+922950489'
+    )
+    fp=io.BytesIO(src)
+    parser = X12Parser(fp=fp)
+    parts = list(parser.iter_parts())
+    assert parts == [(1, 0, 1123)], parts
+    fp.seek(0)
+    assert src == fp.read()
+
+def test_can_read_after_iter_x12parser():
+    src = (
+        b'ISA+00+          +00+          +ZZ+EXDO           +ZZ+TRAX.H'
+        b'PLA      +140905+2132+U+00401+922950489+1+P+^\nGS+IM+EXDO+TR'
+        b'AX.HPLA+20140905+2132+922950489+X+004010\nST+210+922950489\n'
+        b'B3++E2J0563155+22J0169431+CC+K+20140905+5035++++EXDO\nC3+USD'
+        b'+1.  \nN9+OR+CKG\nN9+DE+GDL\nN9+8X+INBOUND ASN\nG62+10+20140'
+        b'826\nG62+11+20140827\nG62+12+20140904\nR3+CA+++A++++++DD+ST'
+        b'\nN9+SO+0027914338\nN9+SO+0027914335\nN9+SO+0027914334\nLX+1'
+        b'\nN9+IK+E2J0563155\nN9+BM+421140028\nN9+MB+99924399631\nN9+P'
+        b'O+H5258685\nN9+PO+H5258678\nN9+PO+H5258677\nN9+DO+6931296262'
+        b'\nN9+DO+6931296261\nN9+DO+6931296260\nL0+1+++9.0+G+0.04+X+2+'
+        b'PLT++K\nL0+1+6000+OR+9.0+B++++++K\nL1+1+++3093++++400++++AIR'
+        b' FREIGHT\nL1+1+++1765++++405++++FUEL SURCHARGE\nL1+1+++177++'
+        b'++GSS++++ISS\nL4+43+18+31+C+1\nL4+47+15+29+C+1\nN1+BT+Hewlet'
+        b'tPackard Mexico S de\nN3+RL de CV /Prolongacion Reforma #80'
+        b'0+Col. Lomas de Santa Fe\nN4+Mexico+DF+01210+MX\nN1+SH+INVEN'
+        b'TEC(CHONGQING) CORPORATION\nN3+NO.66 WEST DISTRICT 2ND RD\nN'
+        b'4+CHONGQING 401331+++CN\nN1+CN+Hewlett Packard de Mexico SA '
+        b'de CV\nN3+Montemorelos#299+Colonia Loma Bonita\nN4+Guadalaja'
+        b'ra+JA+45060+MX\nL3+9.0+B+++5035+++++++K\nSE+41+922950489\nGE'
+        b'+1+922950489\nIEA+1+922950489'
+    )
+    fp=io.BytesIO(src)
+    parser = X12Parser(fp=fp, split_elements=True, offset=0)
+    parts = []
+    broke = False
+    for i in parser:
+        parts.append(i)
+        if i[0] == 'ISA':
+            broke = True
+            break
+    assert broke == True
+    assert fp.closed == False
+    isa = ['ISA', '00', '          ', '00', '          ', 'ZZ', 'EXDO           ', 'ZZ', 'TRAX.HPLA      ', '140905', '2132', 'U', '00401', '922950489', '1', 'P', '^\n']
+    #iea = ['IEA', '1', '922950489']
+    assert parts[0] == isa
+    #assert parts[-1] == iea
+    fp.seek(0)
+    assert src == fp.read()
