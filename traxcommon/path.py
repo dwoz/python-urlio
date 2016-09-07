@@ -691,17 +691,7 @@ class SMBPath(BasePath):
                     pass
                 else:
                     continue
-                try:
-                    c.createDirectory(self.share, path)
-                except smb.smb_structs.OperationFailure as e:
-                    pass
-                exists = True
-                try:
-                    c.listPath(self.share, path, timeout=self.timeout)
-                except smb.smb_structs.OperationFailure:
-                    exists = False
-                if not exists:
-                    raise e
+                c.createDirectory(self.share, path)
         finally:
             if self.WRITELOCK:
                 self.WRITELOCK.release(self.server_name, self.share, self.relpath)
