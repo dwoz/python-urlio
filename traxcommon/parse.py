@@ -234,7 +234,7 @@ class EdifactParser(object):
     """
 
     def __init__(self, filename=None, fp=None, split_elements=False, offset=0, encoding=None):
-        self.encoding = None
+        self.encoding = encoding
         self.nseg = 0
         self.split_elements = split_elements
         self.version = None

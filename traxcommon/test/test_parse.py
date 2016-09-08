@@ -295,3 +295,15 @@ def test_can_read_after_iter_x12parser():
     #assert parts[-1] == iea
     fp.seek(0)
     assert src == fp.read()
+
+def test_instantiate_edifact_parser_encoding():
+    fp = io.BytesIO(b'')
+    parser = EdifactParser(fp=fp, encoding='iso-8859-1')
+    assert parser.encoding == 'iso-8859-1'
+    assert parser.fp.encoding == 'iso-8859-1'
+
+def test_instantiate_x12parser_encoding():
+    fp = io.BytesIO(b'')
+    parser = X12Parser(fp=fp, encoding='iso-8859-1')
+    assert parser.encoding == 'iso-8859-1'
+    assert parser.fp.encoding == 'iso-8859-1'
