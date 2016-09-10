@@ -8,6 +8,7 @@ import datetime
 import requests
 import io
 import re
+import shutil
 import time
 import smb
 import nmb.NetBIOS
@@ -516,6 +517,9 @@ class LocalPath(BasePath):
             'ctime': self.ctime,
         }
 
+    def rmtree(self):
+        shutil.rmtree(self.path)
+
 
 def getBIOSName(remote_smb_ip, timeout=30):
     """
@@ -970,6 +974,15 @@ class SMBPath(BasePath):
             raise Exception("Can only rename on the same server and share")
         c = self.get_connection()
         c.rename(self.share, self.relpath, newp.relpath)
+
+    def rmtree(self):
+        for _, dirs, files in p.walk(top_down=True):
+            for d in dirs:
+                if d.exists():
+                    d.remove()
+            for f in files:
+                f.remove()
+            _.remove()
 
 def mimeencoding_from_buffer(buffer):
     m = magic.open(magic.MAGIC_MIME_ENCODING)
