@@ -1,5 +1,7 @@
 from ..uri import Uri, relative_uri, is_ipv6
 
+import pytest
+
 def test_ipv61():
     'fe80:0000:0000:0000:0204:61ff:fe9d:f156 is full IPv6 address'
     assert is_ipv6('fe80:0000:0000:0000:0204:61ff:fe9d:f156')
