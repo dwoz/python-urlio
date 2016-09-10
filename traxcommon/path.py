@@ -520,6 +520,9 @@ class LocalPath(BasePath):
     def rmtree(self):
         shutil.rmtree(self.path)
 
+    def rename(self, newname)
+        os.rename(self.path, newname)
+        self.path = newname
 
 def getBIOSName(remote_smb_ip, timeout=30):
     """
@@ -967,13 +970,13 @@ class SMBPath(BasePath):
     def isdir(self):
         return self._attrs.isDirectory
 
-    #TODO: Add mathod with same signature to LocalPath
     def rename(self, newname):
         newp = Path(newname)
         if newp.server_name != self.server_name or newp.share != self.share:
             raise Exception("Can only rename on the same server and share")
         c = self.get_connection()
         c.rename(self.share, self.relpath, newp.relpath)
+        self.relpath = newp.relpath
 
     def rmtree(self):
         for _, dirs, files in p.walk(top_down=True):
