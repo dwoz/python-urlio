@@ -979,7 +979,7 @@ class SMBPath(BasePath):
         self.relpath = newp.relpath
 
     def rmtree(self):
-        for _, dirs, files in p.walk(top_down=True):
+        for _, dirs, files in self.walk(top_down=True):
             for d in dirs:
                 if d.exists():
                     d.remove()
