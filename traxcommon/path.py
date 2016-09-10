@@ -520,7 +520,7 @@ class LocalPath(BasePath):
     def rmtree(self):
         shutil.rmtree(self.path)
 
-    def rename(self, newname)
+    def rename(self, newname):
         os.rename(self.path, newname)
         self.path = newname
 
