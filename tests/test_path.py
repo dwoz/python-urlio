@@ -8,8 +8,8 @@ import os
 import errno
 import tempfile
 from .helpers import data_path, PY3
-from .. import path
-from ..path import (
+from traxcommon import path
+from traxcommon.path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
     getBIOSName, mimetype_from_buffer, mimeencoding_from_buffer, mimeencoding,
     mimetype, OperationFailure

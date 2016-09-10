@@ -1,4 +1,4 @@
-from ..uri import Uri, relative_uri, is_ipv6
+from traxcommon.uri import Uri, relative_uri, is_ipv6
 
 import pytest
 

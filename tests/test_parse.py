@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import io
 from .helpers import data_path
-from ..parse import xml_to_json, EdifactParser, x12transform, X12Parser
+from traxcommon.parse import xml_to_json, EdifactParser, x12transform, X12Parser
 import six
 if six.PY3:
     from io import BytesIO
