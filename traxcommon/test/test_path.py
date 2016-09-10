@@ -579,3 +579,16 @@ def test_mimeencoding():
 
 def test_mimetype():
     assert mimetype(data_path('שנוכל לבדוק עם.txt')) == 'text/plain'
+
+def test_smb_join():
+    p = SMBPath('\\\\filex.com\\it\\stg\\a', find_dfs_share=mock_find_dfs_share)
+    assert p.join('b', 'c', 'd').path == '\\\\filex.com\\it\\stg\\a\\b\\c\\d'
+    p = SMBPath('\\\\filex.com\\it\\stg\\a\\', find_dfs_share=mock_find_dfs_share)
+    assert p.join('b', 'c', 'd').path == '\\\\filex.com\\it\\stg\\a\\b\\c\\d'
+    p = SMBPath('\\\\filex.com\\it\\stg\\a', find_dfs_share=mock_find_dfs_share)
+    assert p.join('b', '\\c\\', '\\d').path == '\\\\filex.com\\it\\stg\\a\\b\\c\\d'
+
+def test_local_join():
+    assert LocalPath('/tmp/a').join('b', 'c', 'd').path == '/tmp/a/b/c/d'
+    assert LocalPath('/tmp/a/').join('b', 'c', 'd').path == '/tmp/a/b/c/d'
+    assert LocalPath('/tmp/a/').join('b/', '/c', '/d/').path == '/tmp/a/b/c/d'

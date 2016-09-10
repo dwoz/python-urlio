@@ -459,12 +459,15 @@ class LocalPath(BasePath):
         parts = self.path.rstrip('/').split('/')
         return parts[-1] or '/'
 
-    def join(self, joinname, **kwargs):
-        return LocalPath(self.static_join(self.path, joinname), **kwargs)
+    def join(self, *joins, **kwargs):
+        p = self
+        for joinname in joins:
+            p = LocalPath(p.static_join(p.path, joinname), **kwargs)
+        return p
 
     @staticmethod
     def static_join(dirname, basename):
-        return u"{0}/{1}".format(dirname, basename)
+        return u"{0}/{1}".format(dirname.rstrip('/'), basename.strip('/'))
 
     def readline(self):
         return self.fp.readline()
@@ -888,8 +891,11 @@ class SMBPath(BasePath):
     def rel_basename(self):
         return smb_basename(self.relpath)
 
-    def join(self, joinpath, **kwargs):
-        return SMBPath(self.static_join(self.path, joinpath), **kwargs)
+    def join(self, *joins, **kwargs):
+        p = self
+        for joinname in joins:
+            p = SMBPath(p.static_join(p.path, joinname), **kwargs)
+        return p
 
     @staticmethod
     def static_join(dirname, basename):
