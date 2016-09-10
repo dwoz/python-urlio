@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*
 from __future__ import absolute_import, print_function, unicode_literals
+import binascii
+import datetime
+import hashlib
 import io
 import os
-import binascii
-import hashlib
-import datetime
+import errno
+import tempfile
 from .helpers import data_path, PY3
 from .. import path
 from ..path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
     getBIOSName, mimetype_from_buffer, mimeencoding_from_buffer, mimeencoding,
-    mimetype
+    mimetype, OperationFailure
 )
 import pytest
+import shutil
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
@@ -592,3 +595,68 @@ def test_local_join():
     assert LocalPath('/tmp/a').join('b', 'c', 'd').path == '/tmp/a/b/c/d'
     assert LocalPath('/tmp/a/').join('b', 'c', 'd').path == '/tmp/a/b/c/d'
     assert LocalPath('/tmp/a/').join('b/', '/c', '/d/').path == '/tmp/a/b/c/d'
+
+
+@pytest.yield_fixture
+def tmp_path():
+    def makedirs(path, exist_ok=False):
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno == errno.EEXIST and os.path.isdir(path) and exist_ok:
+                pass
+            else:
+                raise
+    tmp = tempfile.mkdtemp()
+    makedirs(tmp, exist_ok=True)
+    yield tmp
+    shutil.rmtree(tmp)
+
+def test_local_makdirs(tmp_path):
+    path = LocalPath(tmp_path).join('foo').path
+    p = LocalPath(path)
+    assert not p.exists()
+    p.makedirs(is_dir=True)
+    assert p.exists()
+    with pytest.raises(OSError):
+        p.makedirs(is_dir=True)
+    try:
+        p.makedirs(is_dir=True, exist_ok=True)
+    except OSError:
+        pytest.fail("Unexpected OSError")
+
+@pytest.yield_fixture
+def tmp_smb():
+    BASE = '\\\\filex.com\\it\\stg\\static_tests'
+    if not Path(BASE).exists():
+        raise Exception("Unexpected condition")
+    tmp = tempfile.mkdtemp().rsplit('/', 1)[-1]
+    p = Path(BASE).join(tmp)
+    p.makedirs(is_dir=True)
+    if not p.exists():
+        raise Exception("Unexpected condition")
+    yield p.path
+    for _, dirs, files in p.walk(top_down=True):
+        for d in dirs:
+            if d.exists():
+                d.remove()
+        for f in files:
+            f.remove()
+        _.remove()
+
+def test_smb_makedirs(tmp_smb):
+    path = SMBPath(tmp_smb).join('foo').path
+    p = SMBPath(path)
+    assert not p.exists()
+    p.makedirs(is_dir=True)
+    assert p.exists()
+    with pytest.raises(OperationFailure):
+        p.makedirs(is_dir=True)
+    try:
+        p.makedirs(is_dir=True, exist_ok=True)
+    except OperationFailure:
+        pytest.fail("Unexpected OperationFailure")
+    try:
+        p.join('bar', 'bang').makedirs(is_dir=True)
+    except OperationFailure:
+        pytest.fail("Unexpected OperationFailure")

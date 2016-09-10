@@ -1,5 +1,6 @@
 import six
 import json
+import errno
 import socket
 import glob as libglob
 import os
@@ -491,11 +492,21 @@ class LocalPath(BasePath):
     def atime(self):
         return datetime.datetime.utcfromtimestamp(os.stat(self.path).st_atime)
 
-    def makedirs(self, is_dir=False):
+    def makedirs(self, is_dir=False, exist_ok=False):
         if is_dir:
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except OSError as exc:
+                if exc.errno == errno.EEXIST and os.path.isdir(self.path) and exist_ok:
+                    return
+                raise
         else:
-            os.makedirs(self.basename)
+            try:
+                os.makedirs(self.basename)
+            except OSError as exc:
+                if exc.errno == errno.EEXIST and os.path.isdir(self.basename) and exist_ok:
+                    return
+                raise
 
     def stat(self):
         return {
@@ -674,7 +685,7 @@ class SMBPath(BasePath):
             return False
         return stat != None
 
-    def makedirs(self, relpath=None, is_dir=False):
+    def makedirs(self, relpath=None, is_dir=False, exist_ok=False):
         if not relpath:
             relpath = self.relpath
         c = self.get_connection()
@@ -687,13 +698,14 @@ class SMBPath(BasePath):
             self.WRITELOCK.acquire(self.server_name, self.share, self.relpath)
         try:
             for a in dirs:
-                path = '{0}\\{1}'.format(path, a)
-                try:
-                    c.listPath(self.share, path, timeout=self.timeout)
-                except smb.smb_structs.OperationFailure as e:
-                    pass
-                else:
-                    continue
+                path = '{0}\\{1}'.format(path.strip('\\'), a.strip('\\'))
+                if path != self.relpath or exist_ok:
+                    try:
+                        c.listPath(self.share, path, timeout=self.timeout)
+                    except smb.smb_structs.OperationFailure as e:
+                        pass
+                    else:
+                        continue
                 c.createDirectory(self.share, path)
         finally:
             if self.WRITELOCK:
@@ -744,6 +756,29 @@ class SMBPath(BasePath):
             recurse=recurse,
             return_files=False
         )
+
+    def _walk(self):
+        dirs = []
+        files = []
+        for i in self.ls():
+            if i.isdir():
+                dirs.append(i)
+            else:
+                files.append(i)
+        return dirs, files
+
+    def walk(self, top_down=False):
+        dirs, files = self._walk()
+        if top_down:
+            for x in dirs:
+                for _ in x.walk(top_down=top_down):
+                    yield _
+        yield self, dirs, files
+        if top_down:
+            return
+        for x in dirs:
+            for _ in x.walk(top_down=top_down):
+                yield _
 
     def close(self):
         self.get_connection().close()
