@@ -17,6 +17,8 @@ from ..path import (
 import pytest
 import shutil
 
+import pytest
+
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
 
 if 'SMBUSER' in os.environ:
@@ -644,6 +646,7 @@ def tmp_smb():
             f.remove()
         _.remove()
 
+@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_smb_makedirs(tmp_smb):
     path = SMBPath(tmp_smb).join('foo').path
     p = SMBPath(path)

@@ -6,6 +6,7 @@ import six
 if six.PY3:
     from io import BytesIO
 
+import pytest
 
 def test_xmltojson():
     """
