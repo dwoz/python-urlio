@@ -8,6 +8,9 @@ from smb_ext import getDfsReferral
 
 log = logging.getLogger(__name__)
 
+# TODO: Make things more explicity by defining which DC we should talk to, or
+# at least have and option to run that way.
+DC_BLACKLIST = ['fxdc0013.filex.com', 'fxsjodc0003.filex.com', 'fxdc0015.filex.com']
 
 def lookupdcs(domain):
     resolver = dns.resolver.Resolver()
@@ -31,6 +34,9 @@ class _BaseDfsObject(object):
         valid_servers = [a for a in servers if servers[a]]
         con = None
         for server in valid_servers:
+            if server.lower() in DC_BLACKLIST:
+                log.debug("Skip blacklisted server: %s", server)
+                continue
             try:
                 con = self._smb_connection(server)
             except:
@@ -44,11 +50,14 @@ class _BaseDfsObject(object):
 
 class DfsDomain(_BaseDfsObject):
 
-    def __init__(self, domain):
+    def __init__(self, domain, dcs=None):
         self.domain = domain
         self._valid_dfs_domain = False
         self._valid_dfs_domain_expires = 0
-        self._dcs = {}
+        if dcs:
+            self._dcs = dict.fromkeys(dcs, True)
+        else:
+            self._dcs = {}
         self._dcs_expire = 0
         self._root_servers = {}
         self._root_servers_expire = 0
@@ -66,7 +75,7 @@ class DfsDomain(_BaseDfsObject):
         self._root_servers = {}
         self._root_servers_expire = 0
         con = self._dc_connection()
-        data = con.getDfsReferral('IPC$', '\\\\{}'.format(self.domain))
+        data = getDfsReferral(con, 'IPC$', '\\\\{}'.format(self.domain))
         if len(data) > 1:
             raise Exception("Multiple results from root server lookup")
         self._root_servers = dict.fromkeys(
@@ -83,7 +92,7 @@ class DfsDomain(_BaseDfsObject):
         self._valid_dfs_domain = False
         self._valid_dfs_domain_expires = 0
         con = self._dc_connection()
-        for data in con.getDfsReferral('IPC$', ''):
+        for data in getDfsReferral(con, 'IPC$', ''):
             log.info("Got data from domain request: %s", data)
             if data['special_name'][1:] == self.domain:
                 self._valid_dfs_domain = True
@@ -140,7 +149,7 @@ class DfsNamespace(_BaseDfsObject):
         self._namespace_servers = {}
         self._servers_expirations = {}
         con = self._domain._root_server_connection()
-        data = con.getDfsReferral('IPC$', '\\\\{}\\{}'.format(self.domain, self.name))
+        data = getDfsReferral(con, 'IPC$', '\\\\{}\\{}'.format(self.domain, self.name))
         ttl = 0
         for i in data:
             if not ttl or ttl > i['ttl']:
@@ -167,7 +176,7 @@ class DfsNamespace(_BaseDfsObject):
         if path not in self._paths or self._paths[path]['expires'] < time.time():
             con = self._namespace_server_connection()
             unc = '\\\\{}\\{}\\{}'.format(self.domain, self.name, path)
-            data = con.getDfsReferral('IPC$', unc)
+            data = getDfsReferral(con, 'IPC$', unc)
             for i in data:
                 log.debug('got share location: %s', i)
             hostname = i['network_address_name'].split('\\')[1].lower()
@@ -191,8 +200,11 @@ class DfsNamespace(_BaseDfsObject):
 
 class DfsResolver(object):
 
-    def __init__(self):
+    def __init__(self, resolvers=None):
         self._domains = {}
+        if resolvers:
+            for resolver in resolvers:
+                self._domains[resolver.domain] = resolver
 
     def resolve_unc(self, unc):
         domain, namespace, path = self.parse_unc_parts(unc)

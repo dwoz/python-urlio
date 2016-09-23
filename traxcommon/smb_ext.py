@@ -89,22 +89,16 @@ def getDfsReferral(conn, service_name, path, timeout = 30):
 
     conn.is_busy = True
     try:
-        conn._getDfsReferral(service_name, path, cb, eb, timeout = timeout)
         if conn.is_using_smb2:
-            _listPath_SMB2(
-                conn, service_name, path, cb, eb, timeout = timeout
-            )
+            _getDfsReferral_SMB2(conn, service_name, path, cb, eb, timeout = timeout)
         else:
-            _listPath_SMB1(
-                conn, service_name, path, cb, eb, timeout = timeout
-            )
+            _getDfsReferral_SMB1(conn, service_name, path, cb, eb, timeout = timeout)
         while conn.is_busy:
             conn._pollForNetBIOSPacket(timeout)
     finally:
         conn.is_busy = False
 
     return results
-
 
 
 def _listPath_SMB2(
@@ -577,6 +571,7 @@ def _storeFileFromOffset_SMB2(conn, service_name, path, file_obj, callback, errb
     else:
         sendCreate(conn.connected_trees[service_name])
 
+
 def _storeFileFromOffset_SMB1(conn, service_name, path, file_obj, callback,
 errback, starting_offset, timeout = 30, **kwargs):
     if not conn.has_authenticated:
@@ -715,7 +710,8 @@ def _getDfsReferral_SMB2(conn, service_name, path, callback, errback, timeout = 
 
     def sendGetDfsReferral(tid):
         data_bytes = struct.pack('<H', 4) + path.encode('UTF-16LE') + '\x00'
-        m = SMB2Message(SMB2IoctlRequest('',
+        fid = '\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+        m = SMB2Message(SMB2IoctlRequest(fid,
                                          ctlcode = 0x00060194,  # FSCTL_GET_DFS_REFERREALS
 
                                          flags = 0x0001,
@@ -725,55 +721,139 @@ def _getDfsReferral_SMB2(conn, service_name, path, callback, errback, timeout = 
         conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, enumSnapshotsCB, errback, tid = tid, fid = '')
         messages_history.append(m)
 
+    def closeFid(tid, fid, ret = None, error = None):
+        m = SMB2Message(SMB2CloseRequest(fid))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, closeCB, errback, ret = ret, error = error)
+        messages_history.append(m)
+
+
+    def closeCB(close_message, **kwargs):
+        if kwargs['ret'] is not None:
+            callback(kwargs['ret'])
+        elif kwargs['error'] is not None:
+            errback(OperationFailure('Failed to retrieve %s on %s: Read failed' % ( path, service_name ), messages_history))
+
+
     def enumSnapshotsCB(enum_message, **kwargs):
         messages_history.append(enum_message)
         if enum_message.status == 0:
-            results = [ ]
-            (path_consumed,) = struct.unpack('<H',
-                enum_message.payload.out_data[:2]
-            )
-            (num_referrals,) = struct.unpack('<H',
-                enum_message.payload.out_data[2:4]
-            )
-            (referral_header_flags,) = struct.unpack('<I',
-               enum_message.payload.out_data[4:8]
-            )
-            data = enum_message.payload.out_data[8:]
-            for _ in range(num_referrals):
-                refdata = dict(zip(('version', 'size', 'server_type',
-                    'flags', 'ttl'),struct.unpack('<HHHHI', data[:12])))
-                if refdata['version'] not in [3, 4]:
-                    raise Exception("Unhandled dfs reference response")
-                list_referral = refdata['flags'] & 2 == 2
-                if list_referral:
-                    refdata.update(dict(zip(('special_offset',
-                        'num_expanded', 'expanded_offset'),
-                        struct.unpack('<HHH', data[12:18]))))
-                    udata = data[refdata['special_offset']:].decode('UTF-16LE')
-                    refdata['special_name'] = udata.split('\x00', 1)[0]
-                    if refdata['expanded_offset']:
-                        exps = data[refdata['expanded_offset']:].decode('UTF-16LE')
-                        expnames = exps.split('\x00')[:refdata['num_expanded'] - 1]
-                        refdata['expanded_names'] = expnames
-                else:
-                    #TODO: GUID
-                    refdata.update(dict(zip(('dfspath_offset',
-                        'alt_dfspath_offset', 'network_address_offset'),
-                        struct.unpack('<HHH', data[12:18]))))
-                    if refdata['dfspath_offset']:
-                        udata = data[refdata['dfspath_offset']:].decode('UTF-16LE')
-                        refdata['dfspath_name'] = udata.split('\x00')[0]
-                    if refdata['alt_dfspath_offset']:
-                        udata = data[refdata['alt_dfspath_offset']:].decode('UTF-16LE')
-                        refdata['alt_dfspath_name'] = udata.split('\x00')[0]
-                    if refdata['network_address_offset']:
-                        udata = data[refdata['network_address_offset']:].decode('UTF-16LE')
-                        refdata['network_address_name'] = udata.split('\x00')[0]
-                data = data[refdata['size']:]
-                results.append(refdata)
-            closeFid(kwargs['tid'], kwargs['fid'], results = results)
+            results = ref_data(enum_message.payload.out_data)
+            closeFid(kwargs['tid'], kwargs['fid'], ret = results)
         else:
-            closeFid(kwargs['tid'], kwargs['fid'], status = enum_message.status)
+            closeFid(kwargs['tid'], kwargs['fid'], error = enum_message.status)
 
-def _getDfsReferral_SMB1(self, service_name, path, callback, errback, timeout = 30):
-    raise Exception("Not implimented")
+    if not conn.connected_trees.has_key(path):
+        def connectCB(connect_message, **kwargs):
+            messages_history.append(connect_message)
+            if connect_message.status == 0:
+                conn.connected_trees[path] = connect_message.tid
+                sendGetDfsReferral(connect_message.tid)
+            else:
+                errback(OperationFailure('Failed to list shares: Unable to connect to IPC$', messages_history))
+
+
+        m = SMB2Message(SMB2TreeConnectRequest(r'\\%s\%s' % ( conn.remote_name.upper(), 'IPC$' )))
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, connectCB, errback, path = path)
+        messages_history.append(m)
+    else:
+        sendGetDfsReferral(conn.connected_trees[path])
+
+
+def _getDfsReferral_SMB1(conn, service_name, path, callback, errback, timeout = 30):
+    if not conn.has_authenticated:
+        raise NotReadyError('SMB connection not authenticated')
+    expiry_time = time.time() + timeout
+    ipc_path = 'IPC$'
+    messages_history = [ ]
+
+    def sendGetDfsReferral(tid):
+        params_bytes = struct.pack('<H', 4) + path.encode('UTF-16LE') + '\x00'
+        m = SMBMessage(ComTransaction2Request(max_params_count = 0,
+                                              max_data_count = 4096,
+                                              max_setup_count = 0,
+                                              setup_bytes = '\x10\x00',
+                                              params_bytes = params_bytes,))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        conn.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, enumSnapshotsCB, errback, tid = tid, fid = '')
+        messages_history.append(m)
+
+    def enumSnapshotsCB(enum_message, **kwargs):
+        messages_history.append(enum_message)
+        results = []
+        if not enum_message.status.hasError:
+            results = ref_data(enum_message.payload.data_bytes)
+        else:
+            errback(OperationFailure('Failed to list shares: Unable to locate Server Service RPC endpoint', messages_history))
+            closeFid(kwargs['tid'], kwargs['fid'])
+        callback(results)
+
+
+    def closeFid(tid, fid):
+        m = SMBMessage(ComCloseRequest(fid))
+        m.tid = tid
+        conn._sendSMBMessage(m)
+        messages_history.append(m)
+
+    def connectCB(connect_message, **kwargs):
+        messages_history.append(connect_message)
+        if not connect_message.status.hasError:
+            conn.connected_trees[path] = connect_message.tid
+            sendGetDfsReferral(connect_message.tid)
+        else:
+            errback(OperationFailure('Failed to list shares: Unable to connect to IPC$', messages_history))
+
+    m = SMBMessage(ComTreeConnectAndxRequest(r'\\%s\%s' % ( conn.remote_name.upper(), ipc_path ), SERVICE_ANY, ''))
+    conn._sendSMBMessage(m)
+    conn.pending_requests[m.mid] = _PendingRequest(m.mid, expiry_time, connectCB, errback, path = ipc_path)
+    messages_history.append(m)
+
+
+def ref_data(payload):
+    results = []
+    (path_consumed,) = struct.unpack('<H',
+        payload[:2]
+    )
+    (num_referrals,) = struct.unpack('<H',
+        payload[2:4]
+    )
+    (referral_header_flags,) = struct.unpack('<I',
+       payload[4:8]
+    )
+    data = payload[8:]
+    for _ in range(num_referrals):
+        refdata = dict(zip(('version', 'size', 'server_type',
+            'flags', 'ttl'),struct.unpack('<HHHHI', data[:12])))
+        if refdata['version'] not in [3, 4]:
+            raise Exception("Unhandled dfs reference response")
+        list_referral = refdata['flags'] & 2 == 2
+        if list_referral:
+            refdata.update(dict(zip(('special_offset',
+                'num_expanded', 'expanded_offset'),
+                struct.unpack('<HHH', data[12:18]))))
+            udata = data[refdata['special_offset']:].decode('UTF-16LE')
+            refdata['special_name'] = udata.split('\x00', 1)[0]
+            if refdata['expanded_offset']:
+                exps = data[refdata['expanded_offset']:].decode('UTF-16LE')
+                expnames = exps.split('\x00')[:refdata['num_expanded'] - 1]
+                refdata['expanded_names'] = expnames
+        else:
+            #TODO: GUID
+            refdata.update(dict(zip(('dfspath_offset',
+                'alt_dfspath_offset', 'network_address_offset'),
+                struct.unpack('<HHH', data[12:18]))))
+            if refdata['dfspath_offset']:
+                udata = data[refdata['dfspath_offset']:].decode('UTF-16LE')
+                refdata['dfspath_name'] = udata.split('\x00')[0]
+            if refdata['alt_dfspath_offset']:
+                udata = data[refdata['alt_dfspath_offset']:].decode('UTF-16LE')
+                refdata['alt_dfspath_name'] = udata.split('\x00')[0]
+            if refdata['network_address_offset']:
+                udata = data[refdata['network_address_offset']:].decode('UTF-16LE')
+                refdata['network_address_name'] = udata.split('\x00')[0]
+        data = data[refdata['size']:]
+        results.append(refdata)
+    return results
