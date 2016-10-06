@@ -361,10 +361,7 @@ def test_mtime():
         mode='r',
         find_dfs_share=mock_find_dfs_share
     )
-    if PY3:
-        expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825793)
-    else:
-        expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
+    expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
     assert (
         p.mtime == expect
     ), (p.mtime, expect)
@@ -541,9 +538,11 @@ def test_large_file_2008():
     assert w == r, (w, r)
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+@pytest.mark.xfail(reason='UDP Netbios blocked')
 def test_netbios_lookup():
     a = getBIOSName('205.159.43.10')
     assert a == 'FXDC0001', '{} != {}'.format(a, 'FXDC0001')
+
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_bad_netbios_server():
