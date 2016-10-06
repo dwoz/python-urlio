@@ -8,4 +8,6 @@ pytest==2.8.5
 pytest-cov==1.8.0
 tox==1.8.0
 future
+boto3==1.4.0
 -e git+git@github.com:threatstack/libmagic.git@5.18#egg=Magic_file_extensions&subdirectory=python
+dnspython==1.11.0
