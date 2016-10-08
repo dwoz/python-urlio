@@ -68,8 +68,6 @@ setup(
         'pysmb==1.1.13',
         'requests>=2.0.0',
         'repoze.lru==0.6',
-        'cryptography==1.3.4',
-        'xmltodict==0.9.0',
         'six==1.10.0',
         'pytest==2.8.5',
         'pytest-cov==1.8.0',
