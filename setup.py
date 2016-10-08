@@ -53,18 +53,17 @@ class TestCmd(TestCommand):
 
 
 setup(
-    name='traxcommon',
+    name='urlio',
     version='.'.join([str(i) for i in VERSION]),
-    description='Trax common python functionality',
+    description='Filesystem like access to urls',
     classifiers=[
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.4",
     ],
     author='Trax Technologies, Inc',
     author_email='devops@traxtech.com',
-    url='https://github.com/TraxTechnologies/python-common',
+    url='https://github.com/TraxTechnologies/python-urlio',
     packages=['traxcommon'],
-    dependency_links=['git+git@github.com:threatstack/libmagic.git@5.18#egg=Magic_file_extensions&subdirectory=python'],
     install_requires=[
         'pysmb==1.1.13',
         'requests>=2.0.0',

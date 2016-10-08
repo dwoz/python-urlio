@@ -4,7 +4,7 @@ import pytest
 from .fixtures import *
 
 
-from traxcommon.baseio import *
+from urlio.baseio import *
 
 
 def test_local_url():

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import os
-from traxcommon import path
-from traxcommon.path import SMBPath
+from urlio import path
+from urlio.path import SMBPath
 
 import pytest
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
