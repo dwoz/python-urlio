@@ -5,18 +5,17 @@ import datetime
 import hashlib
 import sys
 import io
+import shutil
 import os
 import errno
 import tempfile
-from .helpers import data_path, PY3
 from urlio import path
 from urlio.path import (
-    Path, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
+    PathFactory, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
     getBIOSName, OperationFailure
 )
-import pytest
-import shutil
 
+from .fixtures import data_path
 import pytest
 
 BASE = '\\\\filex.com\\it\\stg\\static_tests'
@@ -26,15 +25,17 @@ if 'SMBUSER' in os.environ:
 if 'SMBPASS' in os.environ:
     path.SMB_PASS = os.environ['SMBPASS']
 
+Path = PathFactory()
 
 def teardown_module():
     if not pytest.config.getvalue('network'):
         return
     dirname = "{}\\{}".format(BASE, 'test_chunk_write')
-    for filename in path.Path(dirname).filenames():
-        if path.Path(filename).exists():
-            path.Path(filename).remove()
-    #p = path.Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
+    Path = PathFactory()
+    for filename in Path(dirname).filenames():
+        if Path(filename).exists():
+            Path(filename).remove()
+    #p = Path(r'\\fxb01fs0300.filex.com\FileRouterTest\test_chunk_write\test.txt')
     #if p.exists():
     #    p.remove()
 
@@ -97,6 +98,7 @@ def test_find_dfs_share_i():
     assert rslt == ('fxs01cs0093', 'ddsftp', 'filex.com', 'BadPacks\\bar.jpeg'), rslt
 
 def test_patha():
+    Path = PathFactory()
     path = Path(data_path('empty_file'))
     assert path.tell() == 0
 
@@ -382,7 +384,7 @@ def test_atime():
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_stat_2003():
-    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter test\stat_test\test.txt')
+    p = Path(r'\\fxb02fs0300.filex.com\Filerouter test\stat_test\test.txt')
     stat = p.stat()
     assert stat['atime'] == datetime.datetime(2016, 2, 21, 3, 31, 56, 288246), stat['atime']
     #assert stat['atime'] == datetime.datetime(2014, 12, 23, 21, 0, 51, 924522), stat['atime']
@@ -390,10 +392,10 @@ def test_stat_2003():
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_chunk_write_2003():
     fpath = r'\\fxb02fs0300.filex.com\Filerouter Test\chunk_write\test.txt'
-    p = path.Path(fpath, 'w')
+    p = Path(fpath, 'w')
     p.write(b'foo')
     p.write(b'bar')
-    p = path.Path(fpath)
+    p = Path(fpath)
     rslt = p.read()
     assert rslt == b'foobar', rslt
 
@@ -432,13 +434,13 @@ RECURSE_VALS = [
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_recurse():
-    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    p = Path(r'\\filex.com\it\stg\static_tests\test_recurse')
     result = list(p.recurse())
     assert result == RECURSE_VALS, result
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_recurse_offset():
-    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    p = Path(r'\\filex.com\it\stg\static_tests\test_recurse')
     result = list(p.recurse(offset=2))
     assert result == RECURSE_VALS[2:], result
 
@@ -457,28 +459,28 @@ RECURSE_FILES_VALS = [
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_recurse_files():
-    p = path.Path(r'\\filex.com\it\stg\static_tests\test_recurse')
+    p = Path(r'\\filex.com\it\stg\static_tests\test_recurse')
     result = list(p.recurse_files())
     assert result == RECURSE_FILES_VALS, result
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_list_empty():
-    p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+    p = Path(r'\\filex.com\it\stg\static_tests\empty')
     l = list(p.ls())
     assert not l
 
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_list_files_empty():
-    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\static_test\empty')
-    #p = path.Path(r'\\filex.com\it\stg\static_tests\empty')
+    p = Path(r'\\fxb02fs0300.filex.com\Filerouter Test\static_test\empty')
+    #p = Path(r'\\filex.com\it\stg\static_tests\empty')
     l = list(p.filenames())
 #    assert not l
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 def test_large_file_2003():
-    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt', 'w')
+    p = Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt', 'w')
     if p.exists():
         p.remove()
     whsh = hashlib.md5()
@@ -486,7 +488,7 @@ def test_large_file_2003():
     _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
     whsh.update(_)
     p.write(_)
-    p = path.Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt')
+    p = Path(r'\\fxb02fs0300.filex.com\Filerouter Test\large_file.txt')
     while True:
         _ = p.read(1000 * 1000 * 20)
         if not _:
@@ -500,7 +502,7 @@ def test_large_file_2003():
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 def test_large_file_samba():
-    p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt', 'w')
+    p = Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt', 'w')
     if p.exists():
         p.remove()
     whsh = hashlib.md5()
@@ -508,7 +510,7 @@ def test_large_file_samba():
     _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
     whsh.update(_)
     p.write(_)
-    p = path.Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt')
+    p = Path(r'\\smb1.s03.filex.com\ftp\Apple\test\large_test_file.txt')
     while True:
         _ = p.read(1000 * 1000 * 20)
         if not _:
@@ -521,7 +523,7 @@ def test_large_file_samba():
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 @pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 def test_large_file_2008():
-    p = path.Path(r'\\filex.com\it\stg\large_test_file.txt', 'w')
+    p = Path(r'\\filex.com\it\stg\large_test_file.txt', 'w')
     if p.exists():
         p.remove()
     whsh = hashlib.md5()
@@ -529,7 +531,7 @@ def test_large_file_2008():
     _ = binascii.hexlify(os.urandom(1000 * 1000 * 200))
     whsh.update(_)
     p.write(_)
-    p = path.Path(r'\\filex.com\it\stg\large_test_file.txt')
+    p = Path(r'\\filex.com\it\stg\large_test_file.txt')
     while True:
         _ = p.read(1000 * 1000 * 20)
         if not _:

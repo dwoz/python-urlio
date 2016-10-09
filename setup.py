@@ -3,7 +3,7 @@
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-from urlio import VERSION
+from urlio import __version__
 
 USE_TOX=False
 
@@ -54,7 +54,7 @@ class TestCmd(TestCommand):
 
 setup(
     name='urlio',
-    version='.'.join([str(i) for i in VERSION]),
+    version=__version__,
     description='Filesystem like access to urls',
     classifiers=[
         "Programming Language :: Python :: 2.7",
@@ -68,7 +68,6 @@ setup(
         'pysmb==1.1.13',
         'requests>=2.0.0',
         'repoze.lru==0.6',
-        'six==1.10.0',
         'pytest==2.8.5',
         'pytest-cov==1.8.0',
     ],

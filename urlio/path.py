@@ -1,4 +1,5 @@
-import six
+from __future__ import absolute_import
+import sys
 import json
 import errno
 import socket
@@ -15,6 +16,7 @@ import nmb.NetBIOS
 import hashlib
 import tempfile
 import multiprocessing
+
 from smb.SMBConnection import SMBConnection
 from smb.SMBConnection import OperationFailure
 from smb.smb_constants import *
@@ -23,6 +25,7 @@ import threading
 import logging
 import repoze.lru
 from .smb_ext import iter_listPath, listPath, storeFileFromOffset
+from .baseio import BasicIO
 log = logging.getLogger(__name__)
 
 ONLINE = u'ONLINE'
@@ -35,7 +38,7 @@ SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
 DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
 AUTO_UPDATE_DFSCACHE = True
-if six.PY2:
+if sys.version_info <= (3,):
     EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 else:
@@ -292,14 +295,17 @@ def path_is_posix_style(path):
     return os.name == 'posix'
 
 
-def Path(path, mode='rb'):
-    "Path factory"
-    if path_is_smb(path):
-        return SMBPath(path, mode)
-    return LocalPath(path, mode)
+class PathFactory(object):
+    def __call__(self, path, mode='rb'):
+        "Path factory"
+        if path_is_smb(path):
+            return SMBPath(path, mode)
+        return LocalPath(path, mode)
+
 
 def lower(s):
     return s.lower()
+
 
 def normalize_domain(path):
     if path.startswith('\\\\'):
@@ -308,7 +314,8 @@ def normalize_domain(path):
         path = '\\'.join(parts)
     return path
 
-class BasePath(object):
+
+class BasePath(BasicIO):
     """
     Base class for path types to inherit from
     """
@@ -425,7 +432,7 @@ class LocalPath(BasePath):
         this path.
         """
         for a in self.filenames(glob, limit=limit):
-            yield Path(a)
+            yield LocalPath(a)
 
     def dirnames(self, glob='*', limit=0):
         for a in self.ls_names(glob, limit=limit):
@@ -434,7 +441,7 @@ class LocalPath(BasePath):
 
     def dirs(self, glob='*', limit=0):
         for a in self.dirnames(glob, limit=limit):
-            yield Path(a)
+            yield LocalPath(a)
 
     def close(self):
         self.fp.close()
@@ -827,7 +834,7 @@ class SMBPath(BasePath):
                         yield _
                         _done += 1
             elif return_files:
-                yield Path(self.path).join(
+                yield SMBPath(self.path).join(
                     a.filename, _attrs=a
                 )
                 _done += 1
