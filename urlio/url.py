@@ -41,31 +41,20 @@ class LocalUrl(BasicIO):
             raise Exception('wrong protocol type: {}'.format(uri.protocol))
         if not uri.path:
             raise Exception()
-        self.uri = Uri(uri)
+        self.url = str(uri)
         self.__fp = None
         self._mode = mode
 
     @property
     def fp(self):
         if not hasattr(self, '_fp') or not self._fp or self._fp.closed:
-            dirname = os.path.dirname(self.uri.path)
-            self._fp = io.open(self.uri.path, self.mode)
+            dirname = os.path.dirname(Uri(self.url).path)
+            self._fp = io.open(Uri(self.url).path, self.mode)
         return self._fp
 
     @property
     def mode(self):
         return self._mode
-
-    @property
-    def uri(self):
-        """
-        Override LocalPath's uri property to make it settable
-        """
-        return self._uri
-
-    @uri.setter
-    def uri(self, uri):
-        self._uri = uri
 
     def seek(self, index, *args):
         self.fp.seek(index, *args)
@@ -79,11 +68,11 @@ class LocalUrl(BasicIO):
         else:
             return self.fp.read()
 
-    def write(self, s):
-        dirname = os.path.dirname(self.uri.path)
+    def write(self, data):
+        dirname = os.path.dirname(Uri(self.url).path)
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
-        self.fp.write(s)
+        self.fp.write(data)
 
     def exists(self):
         return os.path.exists(self.path)
@@ -166,7 +155,7 @@ class LocalUrl(BasicIO):
     def join(self, *joins, **kwargs):
         p = self
         for joinname in joins:
-            p = LocalPath(p.static_join(p.path, joinname), **kwargs)
+            p = LocalUrl(p.static_join(p.url, joinname), **kwargs)
         return p
 
     @staticmethod

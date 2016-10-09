@@ -14,7 +14,7 @@ def test_local_url():
         'isatty', 'isdir', 'join', 'ls', 'ls_names', 'makedirs', 'mode',
         'mtime', 'read', 'readable', 'readline', 'readlines', 'remove',
         'rename', 'rmtree', 'seek', 'seekable', 'size', 'stat', 'static_join',
-        'tell', 'truncate', 'uri', 'writable', 'write', 'writelines',
+        'tell', 'truncate', 'writable', 'write', 'writelines',
     ]
     for i in expected_attrs:
         assert i in instance_attrs
@@ -36,6 +36,10 @@ def test_local_url_read_write_bytes(testdir):
     a.write(testbytes)
     a = LocalUrl(file, 'rb')
     assert a.read() == testbytes
+
+def test_local_url_join():
+    expected = 'file;//tmp/foo/bar/bang'
+    LocalUrl('file://tmp/foo').join('bar', 'bang').url == expected
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_smb_url_read_write_bytes(smbtestdir):
