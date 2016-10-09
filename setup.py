@@ -3,7 +3,7 @@
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-from traxcommon import VERSION
+from urlio import VERSION
 
 USE_TOX=False
 
@@ -63,7 +63,7 @@ setup(
     author='Trax Technologies, Inc',
     author_email='devops@traxtech.com',
     url='https://github.com/TraxTechnologies/python-urlio',
-    packages=['traxcommon'],
+    packages=['urlio'],
     install_requires=[
         'pysmb==1.1.13',
         'requests>=2.0.0',

@@ -1,1 +1,5 @@
 *.pyc
+
+.tox
+.cache
+urlio.egg-info/

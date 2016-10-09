@@ -21,7 +21,7 @@ def aws_secret_access_key():
 
 @pytest.fixture(scope='session')
 def session_name(suffix='-traxcommon'):
-    return tempfile.mkdtemp(suffix="{}{}".format(time.time(), suffix)).split('/')[-1]
+    return tempfile.mktemp(suffix="{}{}".format(time.time(), suffix)).split('/')[-1]
 
 
 @pytest.yield_fixture(scope='session')

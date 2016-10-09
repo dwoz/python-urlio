@@ -3,16 +3,16 @@ from __future__ import absolute_import, print_function, unicode_literals
 import binascii
 import datetime
 import hashlib
+import sys
 import io
 import os
 import errno
 import tempfile
 from .helpers import data_path, PY3
-from traxcommon import path
-from traxcommon.path import (
+from urlio import path
+from urlio.path import (
     Path, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
-    getBIOSName, mimetype_from_buffer, mimeencoding_from_buffer, mimeencoding,
-    mimetype, OperationFailure
+    getBIOSName, OperationFailure
 )
 import pytest
 import shutil
@@ -362,6 +362,8 @@ def test_mtime():
         find_dfs_share=mock_find_dfs_share
     )
     expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
+    if sys.version_info >= (3,):
+        expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825793)
     assert (
         p.mtime == expect
     ), (p.mtime, expect)
@@ -569,20 +571,6 @@ def test_smb_write_from_unicode_file():
     p = Path(r'\\filex.com\it\stg\{}'.format(filename), 'r')
     assert data == p.read()
     assert type(data) == bytes
-
-def test_mimeencoding_from_buffer():
-    s = b'this is some test text'
-    assert mimeencoding_from_buffer(s) == 'us-ascii'
-
-def test_mimetype_from_buffer():
-    s = b'this is some test text'
-    assert mimetype_from_buffer(s) == 'text/plain'
-
-def test_mimeencoding():
-    assert mimeencoding(data_path('שנוכל לבדוק עם.txt')) == 'utf-8'
-
-def test_mimetype():
-    assert mimetype(data_path('שנוכל לבדוק עם.txt')) == 'text/plain'
 
 def test_smb_join():
     p = SMBPath('\\\\filex.com\\it\\stg\\a', find_dfs_share=mock_find_dfs_share)

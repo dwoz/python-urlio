@@ -13,7 +13,6 @@ import time
 import smb
 import nmb.NetBIOS
 import hashlib
-import magic
 import tempfile
 import multiprocessing
 from smb.SMBConnection import SMBConnection
@@ -986,50 +985,3 @@ class SMBPath(BasePath):
             for f in files:
                 f.remove()
             _.remove()
-
-def mimeencoding_from_buffer(buffer):
-    m = magic.open(magic.MAGIC_MIME_ENCODING)
-    if m.load() != 0:
-        m.close()
-        raise Exception("Unable to load magic database")
-    rslt = m.buffer(buffer)
-    m.close()
-    return rslt
-
-
-def mimeencoding(path):
-    m = magic.open(magic.MAGIC_MIME_ENCODING)
-    if m.load() != 0:
-        m.close()
-        raise Exception("Unable to load magic database")
-    rslt = m.file(path)
-    m.close()
-    return rslt
-
-def mimetype_from_buffer(buffer):
-    m = magic.open(magic.MAGIC_MIME_TYPE)
-    if m.load() != 0:
-        m.close()
-        raise Exception("Unable to load magic database")
-    s = m.buffer(buffer)
-    m.close()
-    if EDIDET.search(buffer[:20]):
-        s = "application/EDI-X12"
-    elif EDIFACTDET.search(buffer[:20]):
-        s = "application/EDIFACT"
-    return s
-
-def mimetype(path):
-    m = magic.open(magic.MAGIC_MIME_TYPE)
-    if m.load() != 0:
-        m.close()
-        raise Exception("Unable to load magic database")
-    s = m.file(path)
-    m.close()
-    with open(path, 'rb') as fp:
-        buffer = fp.read(20)
-    if EDIDET.search(buffer):
-        s = "application/EDI-X12"
-    elif EDIFACTDET.search(buffer):
-        s = "application/EDIFACT"
-    return s
