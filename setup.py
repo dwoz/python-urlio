@@ -3,7 +3,7 @@
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-from urlio import __version__
+from urlio.__main__ import __version__
 
 USE_TOX=False
 
