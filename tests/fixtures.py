@@ -20,7 +20,7 @@ def aws_secret_access_key():
 
 
 @pytest.fixture(scope='session')
-def session_name(suffix='-traxcommon'):
+def session_name(suffix='-urlio'):
     return tempfile.mktemp(suffix="{}{}".format(time.time(), suffix)).split('/')[-1]
 
 
