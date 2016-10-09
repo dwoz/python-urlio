@@ -38,7 +38,7 @@ class LocalUrl(BasicIO):
     def __init__(self, uri, mode='r'):
         uri = Uri(uri)
         if uri.protocol != 'file':
-            raise Exception('wrong protocol type: {}'.format(uri.protcol))
+            raise Exception('wrong protocol type: {}'.format(uri.protocol))
         if not uri.path:
             raise Exception()
         self.uri = Uri(uri)
