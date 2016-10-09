@@ -2,4 +2,18 @@
 
 .tox
 .cache
+.pybuild
 urlio.egg-info/
+
+.pybuild/
+debian/files
+debian/python-urlio.debhelper.log
+debian/python-urlio.postinst.debhelper
+debian/python-urlio.prerm.debhelper
+debian/python-urlio.substvars
+debian/python-urlio/
+debian/python3-urlio.debhelper.log
+debian/python3-urlio.postinst.debhelper
+debian/python3-urlio.prerm.debhelper
+debian/python3-urlio.substvars
+debian/python3-urlio/

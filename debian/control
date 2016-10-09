@@ -1,30 +1,27 @@
-Source: python-traxcommon
+Source: python-urlio
 Maintainer: Trax DevOps <devops@traxtech.com>
 Section: python
 Priority: optional
-Build-Depends: python-dev, debhelper (>= 9), python3-dev, dh-python,
+Build-Depends: python, debhelper (>= 9), python3, dh-python,
  python-setuptools, python3-setuptools, python-pytest (>= 2.8.5), python-tox,
- python-pytest-cov, python-cryptography, python-pysmb, python-magic,
- python-requests, python3-pytest-cov, python3-pytest (>= 2.8.5), python3-cryptography,
- python3-requests, python3-magic
+ python-pytest-cov, python-pysmb, python-requests, python3-pytest-cov,
+ python3-pytest (>= 2.8.5), python3-requests
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.4
 Standards-Version: 3.9.6
 
-Package: python-traxcommon
+Package: python-urlio
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-pysmb,
- python-requests, python-repoze.lru, python-magic,
- python-cryptography, python-six, python-xmltodict
+ python-requests, python-repoze.lru
 Provides: ${python:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars. virtual package
 
-Package: python3-traxcommon
+Package: python3-urlio
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}, python3-pysmb,
- python3-requests, python3-repoze.lru, python3-magic,
- python3-cryptography, python3-six, python3-xmltodict
+ python3-requests, python3-repoze.lru
 Provides: ${python3:Provides}
 Description: Common python functionality for trax technologies developers and
  devops rockstars. virtual package
