@@ -543,6 +543,67 @@ def getBIOSName(remote_smb_ip, timeout=30):
         return srv_name[0]
 
 
+class NetBiosCache(object):
+
+    def __init__(self, cache=None, expirations=None, ttl=3600):
+        if cache is None:
+            cache = {}
+        if expirations is None:
+            expirations = {}
+        self.ttl = ttl
+        self.cache = cache
+        self.expirations = expirations
+
+    def __call__(self, remote_ip, timeout=5):
+        if remote_ip not in self.cache or self._is_expired(remote_ip):
+            server_bios_name = getBIOSName(remote_ip, timeout=timeout)
+            self.cache[remote_ip] = server_bios_name
+            self.expirations[remote_ip] = time.time() + self.ttl
+        return self.cache[remote_ip]
+
+    def _is_expired(self, name):
+        if name not in self.expirations:
+            return True
+        exp = self.expirations[name]
+        if exp <= time.time():
+            self.cache.pop(name)
+            self.expirations.pop(name)
+            return True
+        return False
+
+
+nbcache = NetBiosCache()
+
+class DnsCache(object):
+
+    def __init__(self, cache=None, expirations=None, ttl=1200):
+        if cache is None:
+            cache = {}
+        if expirations is None:
+            expirations = {}
+        self.ttl = ttl
+        self.cache = cache
+        self.expirations = expirations
+
+    def __call__(self, name, timeout=15):
+        if name not in self.cache or self._is_expired(name):
+            ip = socket.gethostbyname(name)
+            self.cache[name] = ip
+            self.expirations[name] = time.time() + self.ttl
+        return self.cache[name]
+
+    def _is_expired(self, name):
+        if name not in self.expirations:
+            return True
+        exp = self.expirations[name]
+        if exp <= time.time():
+            self.cache.pop(name)
+            self.expirations.pop(name)
+            return True
+        return False
+
+dnscache = DnsCache()
+
 def get_smb_connection(
         server, domain, user, pas, port=139, timeout=30, client=CLIENTNAME,
         is_direct_tcp=False,
@@ -551,14 +612,14 @@ def get_smb_connection(
         port = 445
     hostname = "{0}.{1}".format(server, domain)
     try:
-        server_ip = socket.gethostbyname(hostname)
+        server_ip = dnscache(hostname)
     except socket.gaierror as e:
         log.error(
             "Couldn't resolve hostname: %s",
             hostname
         )
         raise
-    server_bios_name = getBIOSName(server_ip)
+    server_bios_name = nbcache(server_ip)
     if server_bios_name:
         server_name = server_bios_name
     else:
@@ -646,6 +707,7 @@ class SMBPath(BasePath):
         self.WRITELOCK = write_lock
         self._attrs = _attrs
         self.ignore_filenames = SMB_IGNORE_FILENAMES
+        self._is_direct_tcp = None
 
     @property
     def uri(self):
@@ -676,16 +738,34 @@ class SMBPath(BasePath):
         return fp.read()
 
     def get_connection(self):
+        from socket import error
         if not self._conn:
-            self._conn = get_smb_connection(
-                self.server_name, self.domain, self.user, self.password,
-                timeout=self.timeout
-            )
+            if self._is_direct_tcp is None:
+                try:
+                    self._conn = get_smb_connection(
+                        self.server_name, self.domain, self.user, self.password,
+                        timeout=self.timeout, is_direct_tcp = True
+                    )
+                    self._is_direct_tcp = True
+                except error as e:
+                    if e.errno != 61 and e.errno != 104:
+                        raise
+                    self._conn = get_smb_connection(
+                        self.server_name, self.domain, self.user, self.password,
+                        timeout=self.timeout, is_direct_tcp = False
+                    )
+                    self._is_direct_tcp = False
+            else:
+                self._conn = get_smb_connection(
+                    self.server_name, self.domain, self.user, self.password,
+                    timeout=self.timeout, is_direct_tcp=self._is_direct_tcp
+                )
+
             self._conn.timestamp = time.time()
         elif time.time() - self.MAX_CONNECTION_TIME > self._conn.timestamp:
             self._conn = get_smb_connection(
                 self.server_name, self.domain, self.user, self.password,
-                timeout=self.timeout
+                timeout=self.timeout, is_direct_tcp=self._is_direct_tcp
             )
             self._conn.timestamp = time.time()
         return self._conn
