@@ -243,6 +243,7 @@ class SMBUrl(SMBPath, BasicIO):
         self._conn = None
         self.WRITELOCK = write_lock
         self._attrs = _attrs
+        self._is_direct_tcp = None
 
     def __repr__(self):
         return '<SMBUrl({}, mode={}) at {}>'.format(
