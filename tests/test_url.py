@@ -8,13 +8,20 @@ from urlio.url import *
 def test_local_url():
     a = LocalUrl('file:///tmp/foo.txt')
     instance_attrs = dir(a)
+    # iobase_expected_attrs = [
+    #     'atime', 'basename', 'close', 'closed', 'ctime', 'dirname', 'dirnames',
+    #     'dirs', 'exists', 'filenames', 'fileno', 'files', 'flush', 'fp',
+    #     'isatty', 'isdir', 'join', 'ls', 'ls_names', 'makedirs', 'mode',
+    #     'mtime', 'read', 'readable', 'readline', 'readlines', 'remove',
+    #     'rename', 'rmtree', 'seek', 'seekable', 'size', 'stat', 'static_join',
+    #     'tell', 'truncate', 'writable', 'write', 'writelines',
+    # ]
     expected_attrs = [
-        'atime', 'basename', 'close', 'closed', 'ctime', 'dirname', 'dirnames',
-        'dirs', 'exists', 'filenames', 'fileno', 'files', 'flush', 'fp',
-        'isatty', 'isdir', 'join', 'ls', 'ls_names', 'makedirs', 'mode',
-        'mtime', 'read', 'readable', 'readline', 'readlines', 'remove',
-        'rename', 'rmtree', 'seek', 'seekable', 'size', 'stat', 'static_join',
-        'tell', 'truncate', 'writable', 'write', 'writelines',
+        'atime', 'basename', 'close', 'ctime', 'dirname', 'dirnames', 'dirs',
+        'exists', 'filenames', 'fp', 'isdir', 'join', 'ls', 'ls_names',
+        'makedirs', 'mode', 'mtime', 'read',  'readline', 'readlines',
+        'remove', 'rename', 'rmtree', 'seek', 'size', 'stat', 'static_join',
+        'tell',  'write',
     ]
     for i in expected_attrs:
         assert i in instance_attrs
