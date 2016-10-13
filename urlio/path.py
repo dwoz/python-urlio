@@ -398,7 +398,7 @@ class LocalPath(BasePath):
         path.
         """
         for a in self.ls_names(glb, limit=limit):
-            yield Path(a)
+            yield LocalPath(a)
 
     def ls_names(self, glb='*', limit=0, recurse=False):
         """
@@ -1057,7 +1057,7 @@ class SMBPath(BasePath):
         return self._attrs.isDirectory
 
     def rename(self, newname):
-        newp = Path(newname)
+        newp = SMBPath(newname)
         if newp.server_name != self.server_name or newp.share != self.share:
             raise Exception("Can only rename on the same server and share")
         c = self.get_connection()
