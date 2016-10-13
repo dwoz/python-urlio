@@ -2,7 +2,10 @@ from __future__ import unicode_literals, print_function, absolute_import
 import io
 import os
 
-class BasicIO(io.IOBase):
+
+# TODO: Inheriting from io.IOBase cuases issues downstream in the router. Need
+# to figure out what is going on there still.
+class BasicIO(object):
     """
     Base class for out implimentations of io streams
     """
