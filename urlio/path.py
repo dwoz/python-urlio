@@ -25,26 +25,22 @@ import threading
 import logging
 import repoze.lru
 from .smb_ext import iter_listPath, listPath, storeFileFromOffset
+from .dfs import default_find_dfs_share as find_dfs_share
 from .baseio import BasicIO
 log = logging.getLogger(__name__)
 
-ONLINE = u'ONLINE'
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
-DFS_REF_API = "http://dfs-reference-service.s03.filex.com/cache"
 SMB_IGNORE_FILENAMES = (
     '.', '..', '$RECYCLE.BIN', '.DS_Store',
 )
 SMB_USER = os.environ.get('SMBUSER', None)
 SMB_PASS = os.environ.get('SMBPASS', None)
-DFSCACHE_PATH = '/tmp/traxcommon.dfscache.json'
-AUTO_UPDATE_DFSCACHE = True
 if sys.version_info <= (3,):
     EDIDET = re.compile('^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     EDIFACTDET = re.compile('^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
 else:
     EDIDET = re.compile(b'^.{0,3}ISA.*', re.MULTILINE|re.DOTALL)
     EDIFACTDET = re.compile(b'^.{0,3}UN(A|B).*', re.MULTILINE|re.DOTALL)
-DFSCACHE = {}
 DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_READONLY |
     SMB2_FILE_ATTRIBUTE_HIDDEN |
@@ -54,87 +50,14 @@ DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_NORMAL
 )
 
-class DfsCache(dict):
-    def __init__(self, *args, **opts):
-        super(DfsCache, self).__init__(*args, **opts)
-        self.fetch_event = multiprocessing.Event()
-        self.last_update = datetime.datetime(1970, 1, 1)
-
-    def load(self, path=DFSCACHE_PATH):
-        if not os.path.exists(path):
-            self.fetch(path)
-        if os.path.exists(path):
-            with io.open(path, 'r') as f:
-                self.update(json.loads(f.read()))
-            cache_time = datetime.datetime.utcfromtimestamp(
-                int(str(DFSCACHE['timestamp'])[:-3])
-            )
-            dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=20)
-            if cache_time < dlt:
-                log.warn("Dfs cache timestamp is more than 20 minutes old")
-
-    def fetch(self, path=DFSCACHE_PATH, uri=DFS_REF_API):
-        if self.fetch_event.is_set():
-            return False
-        self.fetch_event.set()
-        try:
-            response = requests.get(uri, stream=True)
-            if response.status_code != 200:
-                raise TraxCommonException(
-                    "Non 200 response: {}".format(response.status_code)
-                )
-            data = response.json()
-            tmp = tempfile.mktemp(dir=os.path.dirname(DFSCACHE_PATH))
-            with io.open(tmp, 'wb') as f:
-                f.write(
-                    json.dumps(
-                        data,
-                        sort_keys=True,
-                        indent=4,
-                    ).encode('utf-8')
-                )
-            try:
-                os.chmod(tmp, int('666', 8))
-                os.rename(tmp, path)
-            except:
-                log.exception("Exception renaming cache")
-                os.remove(tmp)
-            return path
-        except Exception as e:
-            log.exception("Exception fetching cache")
-            return False
-        finally:
-            self.last_update = datetime.datetime.utcnow()
-            self.fetch_event.clear()
-
 class TraxCommonException(Exception):
     """
     Base class for traxcommon exceptions
     """
 
-DFSCACHE = DfsCache()
-load_dfs_cache = DFSCACHE.load
-fetch_dfs_caceh = DFSCACHE.fetch
-
 class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
 
-
-def depth_first_resources(domain_cache):
-    resources = []
-    for ns in domain_cache.copy():
-        for resource in domain_cache[ns]:
-            path = "{0}\\{1}".format(
-                ns.rstrip('\\'), resource.lstrip('\\')
-            ).rstrip('\\')
-            resources.append(
-                (
-                    path,
-                    domain_cache[ns][resource]
-                )
-            )
-    sorted_resources = sorted(resources, key=cmp_to_key(by_depth), reverse=True)
-    return sorted_resources
 
 def cmp_to_key(mycmp):
     'Convert a cmp= function into a key= function'
@@ -156,34 +79,7 @@ def cmp_to_key(mycmp):
     return K
 
 
-def find_target_in_cache(uri, cache, case_sensative=False):
-    if not case_sensative:
-        test_uri = uri.lower()
-    else:
-        test_uri = uri
-    if not 'depth_first_resources' in cache:
-        cache['depth_first_resources'] = depth_first_resources(cache)
-    for path, conf in cache['depth_first_resources']:
-        if not case_sensative:
-            test_path = path.lower().rstrip('\\')
-        else:
-            test_path = path.rstrip('\\')
-        if test_uri.startswith(test_path + '\\') or test_path == test_uri:
-            for tgt in conf['targets']:
-                if tgt['state'] == ONLINE:
-                    if test_path.rstrip('\\') == test_uri:
-                        return path.rstrip('\\'), tgt
-                    return path, tgt
 
-
-def split_host_path(s):
-    """
-    Given a uri split a hostname/domain from path.
-
-    \\\\filex.com\\foo => filex.com, foo
-    \\\\fxaws0108\\foo => fxaws0108, foo
-    """
-    return s.lstrip('\\').split('\\', 1)
 
 
 def by_depth(x, y):
@@ -196,72 +92,7 @@ def by_depth(x, y):
     else:
         return 1
 
-def find_dfs_share(uri, **opts):
-    case_sensative = opts.get('case_sensative', False)
-    log.debug("find dfs share: %s", uri)
-    uri = normalize_domain(uri)
-    if case_sensative:
-        test_uri = uri
-    else:
-        test_uri = uri.lower()
-    parts = uri.split('\\')
-    if len(parts[2].split('.')) > 2:
-        hostname = parts[2].split('.', 1)[0]
-        domain = parts[2].split('.', 1)[1]
-        service = parts[3]
-        dfspath = u'\\'.join(parts[4:])
-        log.debug("Using parts from uri %s %s %s %s",
-            hostname, service, domain, dfspath
-        )
-        return hostname, service, domain, dfspath.lstrip('\\')
-    domain, _ = split_host_path(uri)
-    if not DFSCACHE:
-        load_dfs_cache()
-        log.warn("No dfs cache present")
-    elif AUTO_UPDATE_DFSCACHE:
-        dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
-        if DFSCACHE.last_update < dlt:
-            if DFSCACHE.fetch():
-                load_dfs_cache()
-    slashed_domain = u'\\\\{0}'.format(domain).lower()
-    if slashed_domain in DFSCACHE:
-        domain_cache = DFSCACHE[slashed_domain]
-    else:
-        errmsg = "Domain not in cache: {}".format(domain)
-        raise FindDfsShare(errmsg)
-    result = find_target_in_cache(test_uri, domain_cache, case_sensative)
-    if not result:
-        raise FindDfsShare("No dfs cache result found")
-    path, tgt = result
-    server, service = split_host_path(tgt['target'])
-    sharedir = ''
-    if '\\' in service:
-        service, sharedir = service.split('\\', 1)
-    if domain.count('.') > 1:
-        domain = '.'.join(domain.split('.')[-2:])
-    part = uri.lower().split(path.lower(), 1)[1]
-    if len(part):
-        path = u"{0}\\{1}".format(
-            sharedir, uri[-len(part):].lstrip('\\')
-        ).strip('\\')
-    else:
-        path = sharedir
-    data = {
-        'host': server,
-        'service': service,
-        'domain': domain,
-        'path': path,
-    }
-    server = server
-    service = service
-    path = path
-    domain = domain
-    return server, service, domain, path
 
-
-@repoze.lru.lru_cache(100, timeout=500)
-def default_find_dfs_share(uri, **opts):
-    return find_dfs_share(uri, **opts)
 
 
 def normalize_path(path):
@@ -685,13 +516,13 @@ class SMBPath(BasePath):
 
     def __init__(
             self, path, mode='r', user=None, password=None, api=None,
-            clientname=CLIENTNAME, find_dfs_share=None, write_lock=None,
+            clientname=CLIENTNAME, find_dfs_share=find_dfs_share, write_lock=None,
             timeout=120, _attrs=None,
             ):
         #if type(path) == str:
         #    path = path.decode('utf-8')
         self._set_path(path)
-        self.find_dfs_share = find_dfs_share or default_find_dfs_share
+        self.find_dfs_share = find_dfs_share
         server_name, share, domain, relpath = self.find_dfs_share(self.path)
         self.server_name = server_name
         self.share = share

@@ -10,9 +10,9 @@ import os
 import errno
 import tempfile
 from urlio import path
+from urlio.dfs import find_dfs_share, FindDfsShare
 from urlio.path import (
-    PathFactory, SMBPath, LocalPath, smb_dirname, find_dfs_share, FindDfsShare,
-    getBIOSName, OperationFailure
+    PathFactory, SMBPath, LocalPath, smb_dirname, getBIOSName, OperationFailure
 )
 
 from .fixtures import data_path
@@ -364,7 +364,7 @@ def test_mtime():
         find_dfs_share=mock_find_dfs_share
     )
     expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825794)
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3,) and sys.platform != 'darwin':
         expect = datetime.datetime(2014, 10, 29, 3, 17, 15, 825793)
     assert (
         p.mtime == expect
