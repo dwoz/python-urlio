@@ -1,7 +1,7 @@
 """
 Access Universal Resource Locators
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 import io
 import os
 import time
@@ -23,6 +23,8 @@ class UrlFactory(object):
         uri = Uri(uri)
         if uri.protocol in ['cifs', 'smb']:
             return SMBUrl(str(uri))
+        elif uri.protocol in ['s3']:
+            return S3Url(str(uri))
         return LocalUrl(str(uri))
 
 

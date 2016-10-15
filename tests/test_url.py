@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*
 from __future__ import absolute_import, unicode_literals, print_function
 
 import pytest
@@ -59,6 +60,7 @@ def test_smb_url_read_write_bytes(smbtestdir):
     a = SMBUrl(file, 'rb')
     assert a.read() == testbytes
 
+
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_smb_url_exists(smbtestdir):
     fullname, share, path = smbtestdir
@@ -71,11 +73,28 @@ def test_smb_url_exists(smbtestdir):
     a.write(testbytes)
     assert a.exists()
 
-@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+
 def test_smb_url_repr():
     a = SMBUrl('smb://filex.com/it/stg/test.txt', mode='wb')
     s = repr(a)
     assert s.startswith('<SMBUrl(\'smb://filex.com/it/stg/test.txt\', mode=\'wb\')')
+
+
+def test_smb_url_join_a():
+    url = SMBUrl('smb://fxb04fs0301.filex.com/everyone')
+    joined_url = url.join('foo.txt')
+    assert joined_url.uri == 'smb://fxb04fs0301.filex.com/everyone/foo.txt'
+
+def test_smb_url_join_b():
+    url = SMBUrl('smb://fxb04fs0301.filex.com/everyone')
+    joined_url = url.join('foo', 'bar.txt')
+    assert joined_url.uri == 'smb://fxb04fs0301.filex.com/everyone/foo/bar.txt'
+
+def test_smb_url_join_c():
+    asciiurl = b'smb://fxb04fs0301.filex.com/everyone'.decode('ascii')
+    url = SMBUrl(asciiurl)
+    joined_url = url.join('foo', 'クール.txt')
+    assert joined_url.uri == 'smb://fxb04fs0301.filex.com/everyone/foo/クール.txt'
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_s3_url_instantiation():
