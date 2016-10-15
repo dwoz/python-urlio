@@ -55,6 +55,20 @@ DFLTSEARCH = (
     SMB2_FILE_ATTRIBUTE_NORMAL
 )
 
+def set_smb_username(username):
+    """
+    Set the default username used by SMBPath objects
+    """
+    global SMB_USER
+    SMB_USER = username
+
+def set_smb_password(password):
+    """
+    Set the default password used by SMBPath objects
+    """
+    global SMB_PASS
+    SMB_PASS = password
+
 class TraxCommonException(Exception):
     """
     Base class for traxcommon exceptions

@@ -15,7 +15,8 @@ try:
     from urllib.parse import urlparse, parse_qs, urlencode
 except ImportError:
     # Fallback to python2 import locations
-    from urlparse import urlparse, prase_qs, urlencode
+    from urlparse import urlparse, parse_qs
+    from urllib import urlencode
 
 
 
