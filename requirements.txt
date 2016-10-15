@@ -6,4 +6,4 @@ pytest-cov==1.8.0
 tox==1.8.0
 future
 boto3==1.4.0
-dnspython==1.11.0
+dnspython==1.15.0
