@@ -1,3 +1,11 @@
+"""
+The urlio.base module provides basic common classes and methods for use in the
+rest of the library.
+
+- A base exception class (UrlIOException) for all urlio exceptions
+- Parsing helper methods and class (Uri)
+- BaseIO class for urlio Path and Url like objects to inherit from
+"""
 from __future__ import unicode_literals, print_function, absolute_import
 import io
 import os

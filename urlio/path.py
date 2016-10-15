@@ -1,3 +1,8 @@
+"""
+Interact with filesystems using 'paths' instead of 'urls'. In other words
+access things using '\\\\foo\\bar' or '/foo/bar' instead of 'smb://foo/bar' or
+'file:///foo/bar'. Local file system and cifs file systems are supported.
+"""
 from __future__ import absolute_import
 import sys
 import json
