@@ -26,7 +26,7 @@ import logging
 import repoze.lru
 from .smb_ext import iter_listPath, listPath, storeFileFromOffset
 from .dfs import default_find_dfs_share as find_dfs_share
-from .baseio import BasicIO
+from .base import BasicIO
 log = logging.getLogger(__name__)
 
 CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))

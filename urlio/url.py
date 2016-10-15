@@ -13,8 +13,7 @@ from .dfs import default_find_dfs_share
 from .path import (
     SMBPath, LocalPath, CLIENTNAME, SMB_USER, SMB_PASS, get_smb_connection
 )
-from .baseio import BasicIO
-from .uri import Uri
+from .base import BasicIO, Uri
 
 
 class UrlFactory(object):

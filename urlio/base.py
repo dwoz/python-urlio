@@ -1,8 +1,15 @@
-"""
-Create and parse uriversal resource identifiers
-"""
-from six.moves.urllib.parse import urlparse, parse_qs, urlencode
+from __future__ import unicode_literals, print_function, absolute_import
+import io
+import os
 import re
+
+try:
+    from urllib.parse import urlparse, parse_qs, urlencode
+except ImportError:
+    # Fallback to python2 import locations
+    from urlparse import urlparse, prase_qs, urlencode
+
+
 
 class STRINGRE:
     quad      = '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
@@ -27,6 +34,7 @@ def is_ipv6(s):
     Return True if given string is an IPv6 address.
     """
     return not is_ipv4(s) and bool(RE.ipv6.search(s))
+
 
 class DataDict(dict):
     def __init__(self, *args, **kwargs):
@@ -344,3 +352,78 @@ def relative_uri(uri, referer):
                 referer = '/'.join(saneref.split('/')[:-1])
             uri = Uri('{0}/{1}'.format(referer, uri.path))
     return uri
+class UrlIOException(Exception):
+    "Basic exception raised by urlio"
+
+
+# TODO: Inheriting from io.IOBase cuases issues downstream in the router. Need
+# to figure out what is going on there still.
+class BasicIO(object):
+    """
+    Base class for out implimentations of io streams
+    """
+    #close
+    #closed
+    #fileno
+    #flush
+    #isatty
+    #readable
+    #readline
+    #readlines
+    #seekable
+    #tell
+    #writable
+    #writelines
+    def seek(self, index):
+        raise NotImplementedError()
+
+    def tell(self):
+        raise NotImplementedError()
+
+    def read(self, size=-1):
+        raise NotImplementedError()
+
+    def write(self, data):
+        raise NotImplementedError()
+
+    def exists(self):
+        raise NotImplementedError()
+
+    def size(self):
+        raise NotImplementedError()
+
+    def ctime(self):
+        raise NotImplementedError()
+
+    def mtime(self):
+        raise NotImplementedError()
+
+    def atime(self):
+        raise NotImplementedError()
+
+    def stat(self):
+        raise NotImplementedError()
+
+    def ls(self, glb='*', limit=0):
+        raise NotImplementedError()
+
+    def close(self):
+        raise NotImplementedError()
+
+    def makedirs(self, is_dir=False, exist_ok=False):
+        raise NotImplementedError()
+
+    def remove(self):
+        raise NotImplementedError()
+
+    def rmtree(self):
+        raise NotImplementedError()
+
+    def rename(self, newname):
+        raise NotImplementedError()
+
+    def walk(self, top_down=False):
+        raise NotImplementedError()
+
+    def join(self, *joins, **kwargs):
+        raise NotImplementedError()

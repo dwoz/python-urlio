@@ -1,4 +1,4 @@
-from urlio.uri import Uri, relative_uri, is_ipv6
+from urlio.base import Uri, relative_uri, is_ipv6
 
 import pytest
 

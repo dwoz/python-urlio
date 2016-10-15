@@ -10,6 +10,7 @@ import time
 from smb.SMBConnection import SMBConnection
 import repoze.lru
 
+from .base import UrlIOException
 from .smb_ext import getDfsReferral
 
 log = logging.getLogger(__name__)
@@ -269,7 +270,7 @@ class DfsCache(dict):
         try:
             response = requests.get(uri, stream=True)
             if response.status_code != 200:
-                raise TraxCommonException(
+                raise UrlIOException(
                     "Non 200 response: {}".format(response.status_code)
                 )
             data = response.json()
