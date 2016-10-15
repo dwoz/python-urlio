@@ -15,13 +15,13 @@ Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, python-pysmb,
  python-requests, python-repoze.lru
 Provides: ${python:Provides}
-Description: Common python functionality for trax technologies developers and
- devops rockstars. virtual package
+Description: Filesystem like access to urls for python 2x
+ This library provides filesystem like access to urls for python2x
 
 Package: python3-urlio
 Architecture: any
 Depends: ${misc:Depends}, ${python3:Depends}, ${shlibs:Depends}, python3-pysmb,
  python3-requests, python3-repoze.lru
 Provides: ${python3:Provides}
-Description: Common python functionality for trax technologies developers and
- devops rockstars. virtual package
+Description: Filesystem like access to urls
+ This library provides filesystem like access to urls
