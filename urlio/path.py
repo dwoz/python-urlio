@@ -59,42 +59,6 @@ class FindDfsShare(Exception):
     "Raised when dfs share is not mapped"
 
 
-def cmp_to_key(mycmp):
-    'Convert a cmp= function into a key= function'
-    class K:
-        def __init__(self, obj, *args):
-            self.obj = obj
-        def __lt__(self, other):
-            return mycmp(self.obj, other.obj) < 0
-        def __gt__(self, other):
-            return mycmp(self.obj, other.obj) > 0
-        def __eq__(self, other):
-            return mycmp(self.obj, other.obj) == 0
-        def __le__(self, other):
-            return mycmp(self.obj, other.obj) <= 0
-        def __ge__(self, other):
-            return mycmp(self.obj, other.obj) >= 0
-        def __ne__(self, other):
-            return mycmp(self.obj, other.obj) != 0
-    return K
-
-
-
-
-
-def by_depth(x, y):
-    nx = len(x[0].split('\\'))
-    ny = len(y[0].split('\\'))
-    if nx < ny:
-        return -1
-    elif nx == ny:
-        return 0
-    else:
-        return 1
-
-
-
-
 def normalize_path(path):
     "Convert an nt style path to posix style"
     return path.replace('\\', '/')

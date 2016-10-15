@@ -318,6 +318,35 @@ def split_host_path(s):
     """
     return s.lstrip('\\').split('\\', 1)
 
+def by_depth(x, y):
+    nx = len(x[0].split('\\'))
+    ny = len(y[0].split('\\'))
+    if nx < ny:
+        return -1
+    elif nx == ny:
+        return 0
+    else:
+        return 1
+
+
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 def depth_first_resources(domain_cache):
     resources = []
