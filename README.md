@@ -1,7 +1,7 @@
 urlio
 =====
 
-File system like access to urls
+Filesystem like access to urls
 
 Getting Started
 ---------------
@@ -12,7 +12,7 @@ Installation
 pip install git+git@github.com:TraxTechnologies/python-urlio.git#egg=urlio
 ```
 
-Useing urlio
+Using urlio
 ```
 from urlio import Url
 
@@ -32,6 +32,11 @@ url = Url('smb://filex.com/comm/ftp/foo/bar.txt', 'r')
 assert url.exists()
 assert url.read() == 'kewl example text'
 ```
+
+Issues
+------
+
+Issues can be reported to devops@traxtech.com or via the [github issue tracker](https://github.com/TraxTechnologies/python-urlio/issues/new)
 
 Contributing
 ------------
