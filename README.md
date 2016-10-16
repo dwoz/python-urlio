@@ -13,7 +13,7 @@ pip install git+git@github.com:TraxTechnologies/python-urlio.git#egg=urlio
 ```
 
 Using urlio
-```
+```python
 from urlio import Url
 
 url = Url('smb://filex.com/comm/ftp/foo')
