@@ -6,6 +6,8 @@ import os
 import json
 import socket
 import time
+import tempfile
+import requests
 
 from smb.SMBConnection import SMBConnection
 import repoze.lru
