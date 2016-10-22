@@ -262,7 +262,7 @@ class LocalPath(BasePath):
 
     def remove(self):
         if os.path.isdir(self.path):
-            os.removedirs(self.path)
+            os.rmdir(self.path)
         else:
             self.fp.close()
             os.remove(self.path)
