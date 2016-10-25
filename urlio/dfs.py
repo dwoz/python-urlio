@@ -247,30 +247,25 @@ class DfsCache(dict):
     A local copy of the cache file from a dfs reference service instance
         https://github.com/TraxTechnologies/dfs_reference_service
     """
-    def __init__(self, cache_file=None):
-        super(DfsCache, self).__init__()
+    def __init__(self, *args, **opts):
+        super(DfsCache, self).__init__(*args, **opts)
         self.fetch_event = multiprocessing.Event()
         self.last_update = datetime.datetime(1970, 1, 1)
-        fileno, filename = tempfile.mkstemp(prefix='urlio.dfscache')
-        self.filename = filename
 
-    def __del__(self):
-        os.remove(self.filename)
-
-    def load(self):
-        if not os.path.exists(self.filename) or not self:
-            self.fetch()
-        if os.path.exists(self.filename):
-            with io.open(self.filename, 'r') as f:
+    def load(self, path=DFSCACHE_PATH):
+        if not os.path.exists(path):
+            self.fetch(path)
+        if os.path.exists(path):
+            with io.open(path, 'r') as f:
                 self.update(json.loads(f.read()))
             cache_time = datetime.datetime.utcfromtimestamp(
-                int(str(self['timestamp'])[:-3])
+                int(str(DFSCACHE['timestamp'])[:-3])
             )
             dlt = datetime.datetime.utcnow() - datetime.timedelta(minutes=20)
             if cache_time < dlt:
                 log.warn("Dfs cache timestamp is more than 20 minutes old")
 
-    def fetch(self, uri=DFS_REF_API):
+    def fetch(self, path=DFSCACHE_PATH, uri=DFS_REF_API):
         if self.fetch_event.is_set():
             return False
         self.fetch_event.set()
@@ -281,8 +276,8 @@ class DfsCache(dict):
                     "Non 200 response: {}".format(response.status_code)
                 )
             data = response.json()
-            fileno, tmp_filename = tempfile.mkstemp(prefix='urlio.dfscache.download')
-            with io.open(tmp_filename, 'wb') as f:
+            tmp = tempfile.mktemp(dir=os.path.dirname(DFSCACHE_PATH))
+            with io.open(tmp, 'wb') as f:
                 f.write(
                     json.dumps(
                         data,
@@ -291,19 +286,20 @@ class DfsCache(dict):
                     ).encode('utf-8')
                 )
             try:
-                os.chmod(tmp_filename, int('666', 8))
-                os.rename(tmp_filename, self.filename)
-            except Exception as e:
-                log.error("Exception renaming cache %s", str(e)[:75])
-            finally:
-                os.remove(tmp_filename)
-            return self.filename
+                os.chmod(tmp, int('666', 8))
+                os.rename(tmp, path)
+            except:
+                log.exception("Exception renaming cache")
+                os.remove(tmp)
+            return path
         except Exception as e:
             log.exception("Exception fetching cache")
             return False
         finally:
             self.last_update = datetime.datetime.utcnow()
             self.fetch_event.clear()
+
+
 
 
 def normalize_domain(path):
