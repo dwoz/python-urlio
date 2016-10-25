@@ -558,17 +558,17 @@ class SMBPath(BasePath):
                 try:
                     self._conn = get_smb_connection(
                         self.server_name, self.domain, self.user, self.password,
-                        timeout=self.timeout, is_direct_tcp = True
+                        timeout=self.timeout, is_direct_tcp = False
                     )
-                    self._is_direct_tcp = True
+                    self._is_direct_tcp = False
                 except error as e:
                     if e.errno != 61 and e.errno != 104:
                         raise
                     self._conn = get_smb_connection(
                         self.server_name, self.domain, self.user, self.password,
-                        timeout=self.timeout, is_direct_tcp = False
+                        timeout=self.timeout, is_direct_tcp = True
                     )
-                    self._is_direct_tcp = False
+                    self._is_direct_tcp = True
             else:
                 self._conn = get_smb_connection(
                     self.server_name, self.domain, self.user, self.password,
