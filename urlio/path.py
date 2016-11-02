@@ -562,7 +562,7 @@ class SMBPath(BasePath):
                     )
                     self._is_direct_tcp = False
                 except error as e:
-                    if e.errno != 61 and e.errno != 104:
+                    if e.errno != 61 and e.errno != 104 and e.errno != 111:
                         raise
                     self._conn = get_smb_connection(
                         self.server_name, self.domain, self.user, self.password,
