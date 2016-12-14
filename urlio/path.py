@@ -541,6 +541,8 @@ class SMBPath(BasePath):
         self._index = index
 
     def read(self, size=-1, conn=None):
+        if size is None:
+            size = -1
         if conn is None:
             conn = self.get_connection()
         fp = io.BytesIO()
