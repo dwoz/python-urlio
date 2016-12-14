@@ -1,3 +1,29 @@
+python-urlio (0.6.2) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #9. Started by GitHub push by GCannonFodder.
+
+  [ Daniel Wozniak ]
+  * Direct tcp fallback fix
+  * Merge pull request #4 from TraxTechnologies/dtcp
+  * None for size will read the whole thing to be consistant with py2
+  * Fix tests to account for network changes
+  * Adding regression tests for FR-78
+  * fix file location for url regression test
+  * Fix for FR-78, no limit on read when passing None
+  * Patch version bump
+
+  [ Mike Palmer ]
+  * Merge pull request #6 from TraxTechnologies/fr78
+
+  [ Daniel Wozniak ]
+  * Expect prod version of dnspython
+
+  [ GCannonFodder ]
+  * Merge pull request #7 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Wed, 14 Dec 2016 22:57:33 +0000
+
 python-urlio (0.6.1) testing; urgency=medium
 
   [ Jenkins ]
