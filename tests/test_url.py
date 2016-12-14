@@ -104,3 +104,12 @@ def test_s3_url_instantiation():
     s3.close()
     s3 = S3Url('s3://traxtech-testbucket-internal/test', 'rb')
     assert s3.read() == testbytes
+
+@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+def test_url_fr78():
+    u = SMBUrl(
+        "smb://filex.com/it/stg/test_smbc_read/test.txt",
+    )
+    s = u.read(None)
+    assert len(s) == 10, len(s)
+    assert s == b'Nice test.', s

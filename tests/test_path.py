@@ -652,3 +652,14 @@ def test_smb_makedirs(tmp_smb):
         p.join('bar', 'bang').makedirs(is_dir=True)
     except OperationFailure:
         pytest.fail("Unexpected OperationFailure")
+
+@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+def test_path_fr78():
+    path = SMBPath(
+        "{0}\\{1}".format(BASE, "test_smbc_read\\test.txt"),
+        find_dfs_share=mock_find_dfs_share
+    )
+    s = path.read(None)
+    assert len(s) == 10, len(s)
+    assert s == b'Nice test.', s
+
