@@ -95,7 +95,7 @@ def test_find_dfs_share_h():
 
 def test_find_dfs_share_i():
     rslt = find_dfs_share('\\\\filex.com\\Comm\\DDS Bad Packs\\bar.jpeg', case_sensative=True)
-    assert rslt == ('fxs01cs0093', 'ddsftp', 'filex.com', 'BadPacks\\bar.jpeg'), rslt
+    assert rslt == ('FXB05FS0300', 'DDSFTP', 'filex.com', 'BadPacks\\bar.jpeg'), rslt
 
 def test_patha():
     Path = PathFactory()
