@@ -108,7 +108,7 @@ def test_s3_url_instantiation():
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
 def test_url_fr78():
     u = SMBUrl(
-        "smb://filex.com/it/stg/test_smbc_read/test.txt",
+        "smb://filex.com/it/stg/static_tests/test_smbc_read/test.txt",
     )
     s = u.read(None)
     assert len(s) == 10, len(s)
