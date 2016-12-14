@@ -65,7 +65,7 @@ setup(
     packages=['urlio'],
     install_requires=[
         'pysmb==1.1.13',
-        'dnspython==1.15.0',
+        'dnspython>=1.12.0',
         'requests>=2.0.0',
         'repoze.lru==0.6',
         'pytest==2.8.5',
