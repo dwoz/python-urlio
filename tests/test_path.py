@@ -663,3 +663,10 @@ def test_path_fr78():
     assert len(s) == 10, len(s)
     assert s == b'Nice test.', s
 
+def test_local_path___str__():
+    smb_path = LocalPath('/mnt/foo')
+    assert str(smb_path) == '/mnt/foo'
+
+def test_smb_path___str__():
+    smb_path = SMBPath('\\\\filex.com\\it\\stg')
+    assert str(smb_path) == '\\\\filex.com\\it\\stg'

@@ -113,3 +113,11 @@ def test_url_fr78():
     s = u.read(None)
     assert len(s) == 10, len(s)
     assert s == b'Nice test.', s
+
+def test_local_url___str__():
+    smb_path = LocalUrl('file:///tmp/foo')
+    assert str(smb_path) == 'file:///tmp/foo'
+
+def test_smb_url___str__():
+    smb_path = SMBUrl('smb://smb1.s03.filex.com/it/stg')
+    assert str(smb_path) == 'smb://smb1.s03.filex.com/it/stg'

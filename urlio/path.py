@@ -165,8 +165,7 @@ class BasePath(BasicIO):
             pass
 
     def __str__(self):
-        return self.path.encode('utf-8')
-
+        return self.path
 
 class LocalPath(BasePath):
 
