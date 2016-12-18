@@ -48,6 +48,9 @@ class LocalUrl(BasicIO):
         self.__fp = None
         self._mode = mode
 
+    def __str__(self):
+        return self.url
+
     @property
     def fp(self):
         if not hasattr(self, '_fp') or not self._fp or self._fp.closed:
@@ -252,6 +255,9 @@ class SMBUrl(SMBPath, BasicIO):
         return '<SMBUrl({}, mode={}) at {}>'.format(
             repr(str(self.uri)), repr(str(self.mode)), hex(id(self))
         )
+
+    def __str__(self):
+        return str(self.uri)
 
     @property
     def uri(self):
