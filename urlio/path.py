@@ -172,6 +172,7 @@ class LocalPath(BasePath):
     def __init__(self, path, mode='rb'):
         self._set_path(path)
         self.mode = mode
+        self._fp = None
 
     @property
     def uri(self):
@@ -257,7 +258,8 @@ class LocalPath(BasePath):
             yield LocalPath(a)
 
     def close(self):
-        self.fp.close()
+        if self._fp:
+            self._fp.close()
 
     def remove(self):
         if os.path.isdir(self.path):
