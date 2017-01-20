@@ -8,10 +8,11 @@ import time
 
 import boto3
 from smb.SMBConnection import OperationFailure
-from .smb_ext import storeFileFromOffset
+from .smb_ext import storeFileFromOffset, iter_listPath
 from .dfs import default_find_dfs_share
 from .path import (
-    SMBPath, LocalPath, CLIENTNAME, SMB_USER, SMB_PASS, get_smb_connection
+    SMBPath, LocalPath, CLIENTNAME, SMB_USER, SMB_PASS, get_smb_connection,
+    SMB_IGNORE_FILENAMES
 )
 from .base import BasicIO, Uri
 
@@ -250,6 +251,7 @@ class SMBUrl(SMBPath, BasicIO):
         self.WRITELOCK = write_lock
         self._attrs = _attrs
         self._is_direct_tcp = None
+        self.ignore_filenames = SMB_IGNORE_FILENAMES
 
     def __repr__(self):
         return '<SMBUrl({}, mode={}) at {}>'.format(
