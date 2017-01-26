@@ -40,6 +40,12 @@ def teardown_module():
     #    p.remove()
 
 
+@pytest.yield_fixture
+def tmpdir():
+    dtemp = tempfile.mkdtemp()
+    yield dtemp
+    LocalPath(dtemp).rmtree()
+
 def mock_find_dfs_share(path, api=None):
     path = path.replace('\\\\filex.com\\it\\stg\\', '')
     return (
@@ -662,4 +668,24 @@ def test_path_fr78():
     s = path.read(None)
     assert len(s) == 10, len(s)
     assert s == b'Nice test.', s
+
+def test_local_path___str__():
+    smb_path = LocalPath('/mnt/foo')
+    assert str(smb_path) == '/mnt/foo'
+
+def test_smb_path___str__():
+    smb_path = SMBPath('\\\\filex.com\\it\\stg')
+    assert str(smb_path) == '\\\\filex.com\\it\\stg'
+
+def test_local_path_close(tmpdir):
+    'Calling close multiple times does not effect file'
+    pth = '{}/{}'.format(tmpdir, 'path_close')
+    lp = LocalPath(pth, 'w')
+    lp.write('path close test')
+    lp.close()
+    assert os.path.exists(lp.path)
+    assert os.stat(lp.path).st_size == 15
+    lp.close()
+    assert os.path.exists(lp.path)
+    assert os.stat(lp.path).st_size == 15
 
