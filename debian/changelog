@@ -1,3 +1,26 @@
+python-urlio (0.6.3) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #10. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Upgrade tox, bump version
+
+  [ franciste9 ]
+  * Merge pull request #8 from TraxTechnologies/toxupdate
+
+  [ Daniel Wozniak ]
+  * Fix / validate class str methods
+  * Fix wart in close method
+  * Merge pull request #9 from TraxTechnologies/ptstr
+  * Fix import warts
+  * Merge pull request #10 from TraxTechnologies/urlfix
+
+  [ Mike Palmer ]
+  * Merge pull request #11 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 26 Jan 2017 00:55:27 +0000
+
 python-urlio (0.6.2) testing; urgency=medium
 
   [ Jenkins ]
