@@ -1,3 +1,20 @@
+python-urlio (0.6.4) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #11. Started by GitHub push by johntbush.
+
+  [ Daniel Wozniak ]
+  * Validate conformace to io interfaces
+  * Patch version bump
+
+  [ GCannonFodder ]
+  * Merge pull request #12 from TraxTechnologies/iointerfaces
+
+  [ john bush ]
+  * Merge pull request #13 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 09 Feb 2017 20:23:49 +0000
+
 python-urlio (0.6.3) testing; urgency=medium
 
   [ Jenkins ]
