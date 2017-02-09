@@ -39,12 +39,33 @@ def teardown_module():
     #if p.exists():
     #    p.remove()
 
-
 @pytest.yield_fixture
 def tmpdir():
     dtemp = tempfile.mkdtemp()
     yield dtemp
     LocalPath(dtemp).rmtree()
+
+@pytest.yield_fixture
+def tmpfile():
+    stemp = tempfile.mktemp()
+    with open(stemp, 'wb') as fp:
+        fp.write(stemp.encode())
+    yield stemp
+    os.remove(stemp)
+
+@pytest.yield_fixture
+def smbtmpfile():
+    stemp = tempfile.mktemp(dir='')
+    smbtmp = '{}\\{}'.format(BASE, stemp)
+    fp = SMBPath(
+        smbtmp,
+        mode='wb',
+        find_dfs_share=mock_find_dfs_share,
+    )
+    fp.write(smbtmp.encode())
+    fp.close()
+    yield smbtmp
+    SMBPath(smbtmp).remove()
 
 def mock_find_dfs_share(path, api=None):
     path = path.replace('\\\\filex.com\\it\\stg\\', '')
@@ -548,6 +569,7 @@ def test_large_file_2008():
     assert w == r, (w, r)
 
 @pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+@pytest.mark.skipif(not pytest.config.getvalue('slow'), reason='--slow was not specifified')
 @pytest.mark.xfail(reason='UDP Netbios blocked')
 def test_netbios_lookup():
     a = getBIOSName('205.159.43.10')
@@ -689,3 +711,17 @@ def test_local_path_close(tmpdir):
     assert os.path.exists(lp.path)
     assert os.stat(lp.path).st_size == 15
 
+def test_wrap_paths_in_io_wrappers(tmpfile):
+    pth = LocalPath(tmpfile)
+    fp = io.TextIOWrapper(pth)
+    assert fp.read() == tmpfile
+
+@pytest.mark.skipif(not pytest.config.getvalue('network'), reason='--network was not specifified')
+def test_wrap_smb_paths_in_io_wrappers(smbtmpfile):
+    pth = SMBPath(
+        smbtmpfile,
+        mode='rb',
+        find_dfs_share=mock_find_dfs_share,
+    )
+    fp = io.TextIOWrapper(pth)
+    assert fp.read() == smbtmpfile
