@@ -12,7 +12,7 @@ from .smb_ext import storeFileFromOffset, iter_listPath
 from .dfs import default_find_dfs_share
 from .path import (
     SMBPath, LocalPath, CLIENTNAME, SMB_USER, SMB_PASS, get_smb_connection,
-    SMB_IGNORE_FILENAMES
+    SMB_IGNORE_FILENAMES, getFiletime
 )
 from .base import BasicIO, Uri
 
@@ -36,6 +36,7 @@ def uri_to_path(uri):
     if not isinstance(uri, Uri):
         uri = Uri(uri)
     return uri.path
+
 
 class LocalUrl(BasicIO):
 
@@ -221,6 +222,21 @@ class LocalUrl(BasicIO):
     def rename(self, newname):
         os.rename(self.path, newname)
         self.path = newname
+
+    def readable(self):
+        return self.fp.readable()
+
+    def writable(self):
+        return self.fp.writable()
+
+    def seekable(self):
+        return self.fp.seekable()
+
+    @property
+    def closed(self):
+        if self._fp:
+            return self._fp.closed
+        return False
 
 
 class SMBUrl(SMBPath, BasicIO):
@@ -627,6 +643,22 @@ class SMBUrl(SMBPath, BasicIO):
                 f.remove()
             _.remove()
 
+    def readable(self):
+        return 'r' in self.mode
+
+    def writable(self):
+        return 'w' in self.mode or 'b' in self.mode
+
+    def seekable(self):
+        "No known casees where this shouldn't be True"
+        return True
+
+    @property
+    def closed(self):
+        if self.get_connection().sock is None:
+            return True
+        return False
+
 
 class _S3Upload(object):
 
@@ -652,6 +684,7 @@ class S3Url(BasicIO):
         self._access_key = ''
         self._access_key_id = ''
         self._upload = None
+        self.mode = mode
 
     def _bucket(self):
         session = boto3.Session(
@@ -686,6 +719,24 @@ class S3Url(BasicIO):
         resp = key.get()
         return resp['Body'].read()
 
+    def remove(self):
+        self._key().delete()
+
     def close(self):
         """No op close method"""
         pass
+
+    def readable(self):
+        return 'r' in self.mode
+
+    def writable(self):
+        return 'w' in self.mode or 'b' in self.mode
+
+    def seekable(self):
+        "Always False for S3 objects"
+        return False
+
+    @property
+    def closed(self):
+        "Always False for S3 objects"
+        return False

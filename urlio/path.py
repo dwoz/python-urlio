@@ -345,6 +345,21 @@ class LocalPath(BasePath):
         os.rename(self.path, newname)
         self.path = newname
 
+    def readable(self):
+        return self.fp.readable()
+
+    def writable(self):
+        return self.fp.writable()
+
+    def seekable(self):
+        return self.fp.seekable()
+
+    @property
+    def closed(self):
+        if self._fp:
+            return self._fp.closed
+        return False
+
 def getBIOSName(remote_smb_ip, timeout=30):
     """
     Lookup the NetBIOS name for the given ip
@@ -889,3 +904,19 @@ class SMBPath(BasePath):
             for f in files:
                 f.remove()
             _.remove()
+
+    def readable(self):
+        return 'r' in self.mode
+
+    def writable(self):
+        return 'w' in self.mode or 'b' in self.mode
+
+    def seekable(self):
+        "No known casees where this shouldn't be True"
+        return True
+
+    @property
+    def closed(self):
+        if self.get_connection().sock is None:
+            return True
+        return False
