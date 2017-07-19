@@ -48,7 +48,10 @@ class TestCmd(TestCommand):
     def tests_require(cls):
         if USE_TOX:
             return ['tox==1.8.0']
-        return ['pytest==2.8.5']
+        return [
+            'pytest>=2.8.5'
+            'pytest-cov==1.8.0',
+        ]
 
 
 setup(
@@ -68,8 +71,6 @@ setup(
         'dnspython>=1.12.0',
         'requests>=2.0.0',
         'repoze.lru==0.6',
-        'pytest==2.8.5',
-        'pytest-cov==1.8.0',
     ],
     tests_require=TestCmd.tests_require(),
     cmdclass = {'test': TestCmd},
