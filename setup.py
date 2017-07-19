@@ -49,7 +49,7 @@ class TestCmd(TestCommand):
         if USE_TOX:
             return ['tox==1.8.0']
         return [
-            'pytest>=2.8.5'
+            'pytest>=2.8.5',
             'pytest-cov==1.8.0',
         ]
 
