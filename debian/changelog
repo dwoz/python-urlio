@@ -1,3 +1,23 @@
+python-urlio (0.6.5) jessie; urgency=medium
+
+  [ Jenkins ]
+  * Build #12. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Bump pytest version
+  * Remove pytest from setup requires
+  * Fix typo
+  * Account for changes to dfs
+  * Windows fix
+  * Merge branch release
+  * Bump patch version
+  * Default to jessie codename
+
+  [ Mike Palmer ]
+  * Merge pull request #14 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Tue, 25 Jul 2017 19:22:18 +0000
+
 python-urlio (0.6.4) jessie; urgency=medium
 
   [ Jenkins ]
