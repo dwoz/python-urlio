@@ -34,7 +34,11 @@ from .dfs import default_find_dfs_share as find_dfs_share
 from .base import BasicIO
 log = logging.getLogger(__name__)
 
-CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
+if hasattr(os, 'uname'):
+    CLIENTNAME = 'FileRouter/{}'.format('/'.join(os.uname()))
+else:
+    CLIENTNAME = 'FileRouter/windows'
+
 SMB_IGNORE_FILENAMES = (
     '.', '..', '$RECYCLE.BIN', '.DS_Store',
 )

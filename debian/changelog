@@ -1,4 +1,4 @@
-python-urlio (0.6.4) testing; urgency=medium
+python-urlio (0.6.4) jessie; urgency=medium
 
   [ Jenkins ]
   * Build #11. Started by GitHub push by johntbush.
