@@ -1,3 +1,346 @@
+python-urlio (0.6.4) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #11. Started by GitHub push by johntbush.
+
+  [ Daniel Wozniak ]
+  * Validate conformace to io interfaces
+  * Patch version bump
+
+  [ GCannonFodder ]
+  * Merge pull request #12 from TraxTechnologies/iointerfaces
+
+  [ john bush ]
+  * Merge pull request #13 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 09 Feb 2017 20:23:49 +0000
+
+python-urlio (0.6.3) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #10. Started by GitHub push by mkhpalm.
+
+  [ Daniel Wozniak ]
+  * Upgrade tox, bump version
+
+  [ franciste9 ]
+  * Merge pull request #8 from TraxTechnologies/toxupdate
+
+  [ Daniel Wozniak ]
+  * Fix / validate class str methods
+  * Fix wart in close method
+  * Merge pull request #9 from TraxTechnologies/ptstr
+  * Fix import warts
+  * Merge pull request #10 from TraxTechnologies/urlfix
+
+  [ Mike Palmer ]
+  * Merge pull request #11 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Thu, 26 Jan 2017 00:55:27 +0000
+
+python-urlio (0.6.2) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #9. Started by GitHub push by GCannonFodder.
+
+  [ Daniel Wozniak ]
+  * Direct tcp fallback fix
+  * Merge pull request #4 from TraxTechnologies/dtcp
+  * None for size will read the whole thing to be consistant with py2
+  * Fix tests to account for network changes
+  * Adding regression tests for FR-78
+  * fix file location for url regression test
+  * Fix for FR-78, no limit on read when passing None
+  * Patch version bump
+
+  [ Mike Palmer ]
+  * Merge pull request #6 from TraxTechnologies/fr78
+
+  [ Daniel Wozniak ]
+  * Expect prod version of dnspython
+
+  [ GCannonFodder ]
+  * Merge pull request #7 from TraxTechnologies/master
+
+ -- Jenkins <devops@traxtech.com>  Wed, 14 Dec 2016 22:57:33 +0000
+
+python-urlio (0.6.1) testing; urgency=medium
+
+  [ Jenkins ]
+  * Build #8. Started by user Daniel.Wozniak.
+
+  [ Daniel Wozniak ]
+  * Merge tag release/0.5.29
+  * Patch version bump
+  * Clean up temp file when rename doesnt work
+  * Make dfscache file world writable
+  * Fix tests that broke due to dfs changes
+  * Hopefully prevent dependency conflict
+  * Reverting last change since I found the issue elsewhere
+  * Ignore server 2003 tests for now
+  * Fix up parser to handle erronious CRLF
+
+  [ Mike Palmer ]
+  * Merge pull request #106 from TraxTechnologies/parsefixw
+
+  [ Daniel Wozniak ]
+  * Updating readme to include cryptography install
+  * Merge branch master of github.com:TraxTechnologies/python-common
+  * Bump minor version
+  * Add delimiter transform method
+
+  [ Will Button ]
+  * Merge pull request #108 from TraxTechnologies/delimtransform
+
+  [ Daniel Wozniak ]
+  * Adding a test for the x12transform function
+
+  [ Mike Palmer ]
+  * Merge pull request #109 from TraxTechnologies/delimtransform
+
+  [ Daniel Wozniak ]
+  * Fix a typo causing a bug
+
+  [ Will Button ]
+  * Merge pull request #110 from TraxTechnologies/xfrom
+
+  [ Daniel Wozniak ]
+  * Honor empty strings as delim
+  * Fix bugalishiousness
+
+  [ Mike Palmer ]
+  * Merge pull request #111 from TraxTechnologies/xfrom
+
+  [ Daniel Wozniak ]
+  * Bump patch version
+
+  [ dwoz ]
+  * Merge pull request #112 from TraxTechnologies/xfrom
+
+  [ Daniel Wozniak ]
+  * Make sure we are working with bytes
+
+  [ Mike Palmer ]
+  * Merge pull request #113 from TraxTechnologies/xfrom
+
+  [ Daniel Wozniak ]
+  * Actually change user id
+
+  [ dwoz ]
+  * Merge pull request #115 from TraxTechnologies/uid
+
+  [ Daniel Wozniak ]
+  * Add rename method on smb path
+
+  [ Mike Palmer ]
+  * Merge pull request #116 from TraxTechnologies/rename
+
+  [ Daniel Wozniak ]
+  * Manage max smb session time
+  * Connection timestamp isnt a method
+  * fix typo
+
+  [ Mike Palmer ]
+  * Merge pull request #118 from TraxTechnologies/maxsmbsession
+
+  [ Daniel Wozniak ]
+  * Write temp file to same path as destination
+  * Parse edi that is missing final segmant delimiter
+
+  [ Mike Palmer ]
+  * Merge pull request #121 from TraxTechnologies/edip
+
+  [ Daniel Wozniak ]
+  * Re-enable 2003 tests & add big test for samba
+  * Fix for big files going to samba server
+
+  [ Mike Palmer ]
+  * Merge pull request #122 from TraxTechnologies/smbbig
+
+  [ Daniel Wozniak ]
+  * Bump patch version
+
+  [ dwoz ]
+  * Merge pull request #123 from TraxTechnologies/smbbig
+
+  [ Daniel Wozniak ]
+  * Initial commit of dfs resolution using pysmb
+  * Remove cruft
+
+  [ Mike Palmer ]
+  * Merge pull request #125 from TraxTechnologies/dfs
+  * Merge pull request #119 from TraxTechnologies/maxsmbsession
+
+  [ Daniel Wozniak ]
+  * Fix wart in edifact parsing
+
+  [ dwoz ]
+  * Merge pull request #126 from TraxTechnologies/edifactbug
+
+  [ Daniel Wozniak ]
+  * Bump patch version
+  * Merge branch master of github.com:TraxTechnologies/python-common
+  * Seeking wont mess up edifact parser
+  * Support both python2 and python3
+  * Clean up cruft
+  * Dont commit debian packaging files
+  * Ignore more files we dont want in git
+
+  [ dwoz ]
+  * Merge pull request #127 from TraxTechnologies/py2and3
+
+  [ Daniel Wozniak ]
+  * Fix bad python3 import
+  * Can instantiate the class directly now
+  * Remove unwanted log
+  * Dont pin requests version
+  * Include python3 source in package
+  * Adding missing dependency
+  * Dont write anything to stdout
+  * Fix wart in python2 samba file writter
+  * Fix this for python2 only for now
+  * Bump version again
+  * Fix bad py2 name
+
+  [ Mike Palmer ]
+  * Merge pull request #131 from TraxTechnologies/bugfix
+
+  [ Daniel Wozniak ]
+  * Remove un-used class
+  * Lookup netbios name for smb connections
+  * Bump patch version
+  * Use hostname when netbios lookup fails
+
+  [ Mike Palmer ]
+  * Merge pull request #133 from TraxTechnologies/bugfix
+
+  [ Daniel Wozniak ]
+  * Ignore coverage files
+  * Merge branch master of github.com:TraxTechnologies/python-common
+  * Bump patch version
+  * Add edifact test that have been sitting around
+  * FR-51 Keep consuming until we find another ISA
+  * Add test for oddly spaced file with multiple ISAs
+  * Adding test data file
+
+  [ Mike Palmer ]
+  * Merge pull request #135 from TraxTechnologies/FR-51
+
+  [ Daniel Wozniak ]
+  * Adding pytest and tox
+  * Adding tox to requirements.txt
+  * Run tests under python 2.7 & 3.4
+  * Build fixup
+
+  [ Mike Palmer ]
+  * Merge pull request #136 from TraxTechnologies/FR-51
+
+  [ Daniel Wozniak ]
+  * Add version of pytest to debian/control
+  * Adding MANIFEST.in to include static files
+  * Adding full test runs
+  * Work around issue caused by old setuptools in stable
+  * Use separate coverage dirs
+  * Coverage output option not in our version
+  * Override dh_auto_test
+  * Remove old coverage reports
+  * Do not fail when missing the directory
+  * Fix some warts in tox.ini
+  * Bump minor version, add future module test
+  * Adding -bb testing option
+  * SMBPath object return bytes for now
+  * Adding some more unicode file tests
+  * Merge pull request #138 from TraxTechnologies/py3harden
+  * Add missing network tag
+  * Adding tests from fucntions using libmagic
+  * Merge pull request #139 from TraxTechnologies/testlibmagic
+  * Hanlde both text and byte streams
+  * Merge pull request #140 from TraxTechnologies/hardenpy3
+  * Clean up annoyances
+  * The file keyword no longer exits/add tests
+  * We should probably always prefer the io module
+  * Redirect before changing user
+  * Punt on redirects
+  * Simplify smb makedirs
+  * Fix bad instantiation of endoding attribute
+  * Add ability to pass in multiple join paths
+
+  [ Mike Palmer ]
+  * Merge pull request #141 from TraxTechnologies/multijoin
+
+  [ Daniel Wozniak ]
+  * Make makedirs methods consistant
+  * Adding rmtree methods
+
+  [ Mike Palmer ]
+  * Merge pull request #142 from TraxTechnologies/makedirs
+
+  [ Daniel Wozniak ]
+  * Move tests out of module dir
+
+  [ Mike Palmer ]
+  * Merge pull request #143 from TraxTechnologies/makedirs
+
+  [ Daniel Wozniak ]
+  * Fix broken imports in test suite
+  * Rename method fixup
+  * fix typo
+  * Fix typo cuased by moving method to instance
+  * Support smb1 dfs and streamline smb2 dfs support
+
+  [ Mike Palmer ]
+  * Merge pull request #144 from TraxTechnologies/smb1dfs
+
+  [ Daniel Wozniak ]
+  * Moved edi stuff to python-edi repo
+  * Merge branch master of github.com:TraxTechnologies/python-common
+  * Ignore netbios test which started failing
+  * Adding baseio module flesh out Url class
+  * Fork traxcommon to urlio removing unwanted modules
+  * Clean up remnants
+  * Fix up tests and package
+  * Remove cruft from debian directory update gitignore
+  * Fix coverage
+  * Consolidate / cruft cleanup
+  * Merge pull request #1 from TraxTechnologies/testfixup
+  * More informative exception
+  * typo
+  * Add test for join
+  * Attempt to work around py2 setuptools issue
+  * Fix broken attempt and py2 setup
+  * Default to directsmb port
+  * Fix SMBUrl constructor
+  * Fix a few straggling references to Path
+  * Fix issues downstream in router
+  * Account for recent change in test (fixes build)
+  * Ceneralize dfs stuff to dfs module
+  * Move dfs cache helper methods to dfs module
+  * bump dnspython requirement
+  * Simplify and rename
+  * Update module docstrings
+  * Fix python2 urlencode import
+  * Add some tests for smb url join
+  * Clean up debian package cruft
+  * Update readme
+  * Add a not about issues
+  * Add python hit for code highlighting
+  * Add missing dependency to setup.py
+  * Remove un-needed pytest.ini
+  * Fix missing imports
+
+  [ Freecy Asoy ]
+  * Merge pull request #2 from TraxTechnologies/routerbugfix
+
+  [ Daniel Wozniak ]
+  * Make local path act like smb path
+  * Merge pull request #3 from TraxTechnologies/routerbugfix
+  * Better dfs cache file handling
+  * Merge branch routerbugfix
+  * re-default to non direct tcp connecitons
+  * Revert dfs cache changes for now
+
+ -- Jenkins <devops@traxtech.com>  Mon, 31 Oct 2016 18:32:41 +0000
+
 python-urlio (0.5.0) testing; urgency=medium
 
   * Initial package
